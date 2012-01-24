@@ -11,7 +11,7 @@ Array.prototype.pushOnce = (item) ->
 		this.push(item)
 
 ## PAGETIMER
-class PageTimer
+class @PageTimer
 	constructor: (func, time) ->
 		@callback = func
 		@frequency = time * 1000
@@ -30,7 +30,7 @@ class PageTimer
 		@setFrequency( @getFrequency() + (@getFrequency() % 5 == 0 ? 9 : 1) )
 
 ## NOTIFIER
-class Notifier
+class @Notifier
 	constructor: ->
 		@popup = null
 		@tid = null
@@ -83,7 +83,7 @@ class Notifier
 			return false
 
 ## OVERLAY
-class Overlay
+class @Overlay
 	constructor : ->
 		@zindex = 100
 		@notifyTimer = null
@@ -152,7 +152,7 @@ link_to_rel = (text, url) ->
 link_to_span = (text) ->
 	return $('<span>').addClass('clickable').html(text)
 
-fadeInElement(elem) ->
+fadeInElement = (elem) ->
 	$(elem).hide().fadeIn()
 
 initKO = ->
@@ -472,6 +472,7 @@ class @AppViewModel
 		@path(path)
 		@parts = @path().split('/')
 		@handlePath(path)
+	setUser : (user)->
 	redirectTo : (path) ->
 		$.history.load(path)
 	handlePath : (path) ->
