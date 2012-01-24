@@ -18,7 +18,7 @@ module QuickScript
     dest = File.join(Rails.root.to_s, 'vendor', 'assets', 'javascripts', 'quick_script')
     main_js = File.join(dest, 'quick_script.js')
 
-    unless File.exists?(main_js) && FileUtils.identical?(File.join(orig, 'quick_script.js'), tiny_mce_js)
+    unless File.exists?(main_js) && FileUtils.identical?(File.join(orig, 'quick_script.js'), main_js)
       if File.exists?(main_js)
         # upgrade
         begin
@@ -52,18 +52,6 @@ module QuickScript
       end
     end
 
-    tiny_mce_yaml_filepath = File.join(Rails.root.to_s, 'config', 'tiny_mce.yml')
-    unless File.exists?(tiny_mce_yaml_filepath)
-      File.open(tiny_mce_yaml_filepath, 'w') do |f|
-        f.puts '# Here you can specify default options for TinyMCE across all controllers'
-        f.puts '#'
-        f.puts '# theme: advanced'
-        f.puts '# plugins:'
-        f.puts '#  - table'
-        f.puts '#  - fullscreen'
-      end
-      puts "Written configuration example to #{tiny_mce_yaml_filepath}"
-    end
   end
 	
 end
