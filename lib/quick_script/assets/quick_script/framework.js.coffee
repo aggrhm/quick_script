@@ -487,3 +487,23 @@ class @AppViewModel
 			view.show()
 			window.onbeforeunload = @view.events.before_unload
 
+appViewModel = null
+overlay = null
+
+@initApp = ->
+	appViewModel = @appViewModel
+	overlay = @overlay
+
+	appViewModel.setUser(@CURRENT_USER)
+
+	# navigation
+	$.history.init (hash) ->
+			if hash == ""
+				appViewModel.route('/')
+			else
+				appViewModel.route(hash)
+		, { unescape : ",/" }
+
+	# layout bindings
+	$('body').koBind(appViewModel)
+
