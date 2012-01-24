@@ -15,7 +15,7 @@ module QuickScript
 				overlay = null;
 
 				$(function() {
-					CURRENT_USER = (<%= jsify current_user %>);
+					CURRENT_USER = (#{jsify current_user});
 					appViewModel = new #{app_model}();
 					overlay = new Overlay();
 					initApp();

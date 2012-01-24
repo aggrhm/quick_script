@@ -26,7 +26,7 @@ module QuickScript
           FileUtils.rm_rf dest
           puts "Creating directory #{dest}..."
           FileUtils.mkdir_p dest
-          puts "Copying TinyMCE to #{dest}..."
+          puts "Copying QuickScript to #{dest}..."
           FileUtils.cp_r "#{orig}/.", dest
           puts "Successfully updated QuickScript."
         rescue
