@@ -1,0 +1,215 @@
+$blue: #06C
+$white: #FFF
+$red: #C60
+$green: #6C0
+$black: #000
+$dark-gray: rgba(0,0,0,.75)
+
+=bold
+  font-weight: bold
+=t-4
+  font-size: 30px
+.t-4
+  +t-4
+=t-3
+  font-size: 20px
+.t-3
+  +t-3
+=t-2
+  font-size: 18px
+=t-1
+  font-size: 14px
+.t-1
+  +t-1
+=t-0
+  font-size: 12px
+=t-upper
+  text-transform: uppercase
+.t-upper
+  +t-upper
+=t-center
+  text-align: center
+=f-ga
+  font-family: 'Georgia'
+=bfg($bg, $fg)
+  background-color: $bg
+  color: $fg
+=mb($val)
+  margin-bottom: $val
+=ls($val)
+  letter-spacing: $val
+=inline
+  display: inline-block
+=padded
+  padding: 10px
+=pad-lr
+  padding: 0px 10px
+=p-rel
+  position: relative
+=p-abs
+  position: absolute
+=p-fix
+  position: fixed
+=t-shadow
+  text-shadow: 0px 1px 1px #AAA
+=t-shadow-dark
+  text-shadow: 0px 1px 1px #444
+=clear-border($color: 0.5)
+  +box-shadow(0 0 0 5px rgba(0,0,0,$color),0 0 0 1px rgba(0,0,0,($color + 0.1)))
+=img-shadow($op:.3)
+  +box-shadow(0px 0px 8px 1px rgba(0, 0, 0, $op))
+=img-shadow-dark
+  +box-shadow(0px 0px 8px 1px rgba(0,0,0,.7))
+=box-shadow-1
+  +box-shadow(0px 1px 3px rgba(34, 25, 25, 0.4))
+=bfg-grad($bg, $fg, $dark)
+  +background-image(linear-gradient($bg, $bg, darken($bg, $dark)))
+  color: $fg
+=animate($time : 0.16s)
+  -moz-transition: all $time ease-in-out
+  -webkit-transition: all $time ease-in-out
+=no-select
+  -webkit-user-select: none
+  -moz-user-select: none
+  pointer-events: none
+
+body
+  .mceContentBody
+    font-size: 20px
+
+h1
+  +t-shadow
+  +t-center
+  +bold
+  margin-top: 0px
+h2
+  +t-shadow
+
+hr
+  +colruler
+
+.field 
+  +p-rel
+  +inline
+  input, textarea
+    +animate
+    +box-shadow(0 1px 1px rgba(0,0,0,0.2) inset)
+  label
+    +animate
+    +p-abs
+    +no-select
+    top: 20px
+    left: 10px
+    z-index: 20
+    color: #D7D7D7
+  input:focus + label, textarea:focus + label
+    opacity: 0.5
+  input:focus, textarea:focus
+    +box-shadow(0 1px 1px rgba(0,0,0,0.2) inset,0 0 6px #8ed928)
+
+
+.container
+  +clear-border
+  .colborder
+    +colborder
+
+.backdrop
+  +animate(0.5s)
+  position: fixed
+  width: 100%
+  height: 100%
+  background-color: rgba(0,0,0,.4)
+  top: 0px
+  left: 0px
+  z-index: 10
+
+.overlay
+  +animate(0.5s)
+  +p-fix
+  width: 800px
+  top: 50px
+  left: 50%
+  margin: 0px -400px
+
+  .content
+    +clear-border(0.1)
+    +bfg-grad($white, #000, 20)
+    +p-rel
+    +border-radius
+    padding: 10px
+
+  .header
+    +bfg-grad($blue, $white, 10)
+    +t-shadow-dark
+    +bold
+    +t-4
+    +padded
+    +t-center
+    +border-radius
+    margin-bottom: 10px
+
+.notify
+  +padded
+  +p-fix
+  +img-shadow
+  +t-4
+  +t-center
+  +t-shadow-dark
+  width: 500px
+  top: 0px
+  left: 50%
+  margin-left: -265px
+  z-index: 10000
+  background: $green
+  color: white
+  border-left: 2px solid $white
+  border-right: 2px solid $white
+  border-bottom: 2px solid $white
+  font-weight: bold
+  opacity: 0.9
+
+.loading-overlay
+  +p-abs
+  +border-radius
+  +img-shadow
+  background-color: rgba(0,0,0,.4)
+  width: 100%
+  height: 100%
+  z-index: 10
+
+  span
+    +p-abs
+    +border-radius
+    +padded
+    +clear-border(0.1)
+    text-transform: uppercase
+    letter-spacing: 3px
+    display: block
+    height: 30px
+    top: 50%
+    left: 50%
+    margin: -25px -100px
+    color: #FFF
+    text-align: center
+    font-size: 20px
+    font-weight: bold
+    width: 200px
+    background-color: rgba(255, 255, 255, .2)
+
+    
+#overlay-settings
+  width: 500px
+  margin: 0px -250px
+
+.section-header
+  +t-0
+  +f-ga
+  +t-center
+  +t-upper
+  +ls(2px)
+  +bfg($red, $white)
+  +img-shadow-dark
+  &.title
+    +bold
+    font-size: 20px
+

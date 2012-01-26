@@ -8,6 +8,10 @@ module QuickScript
 			raw "<script id='#{name}' type='text/html'>#{capture(&block)}</script>"
 		end
 
+		def include_view_box
+			raw "<div class='view-box' data-bind=\"template: {name : 'app-view', foreach : viewList() }\"></div>"
+		end
+
 		def include_quick_script_init(app_model)
 			javascript_tag do
 				"CURRENT_USER = null;
