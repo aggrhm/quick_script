@@ -218,6 +218,12 @@ initKO = ->
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			$(element).fileupload(ko.utils.unwrapObservable(valueAccessor()))
 
+	ko.bindingHandlers.center =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			setTimeout ->
+					$(element).center()
+				, 1
+
 	ko.bindingHandlers.progress =
 		update: (element, valueAccessor) ->
 			$(element).progressbar({value : ko.utils.unwrapObservable(valueAccessor())})
@@ -300,6 +306,11 @@ initKO = ->
 jQuery.fn.extend
 	to_s : ->
 		$('<div>').append(this.clone()).remove().html()
+	center : ->
+    this.css("position","absolute")
+    this.css("top", (($(window).height() - this.outerHeight()) / 2) + $(window).scrollTop() + "px")
+    this.css("left", (($(window).width() - this.outerWidth()) / 2) + $(window).scrollLeft() + "px")
+    return this
 	koBind : (viewModel) ->
 		this.each ->
 			ko.cleanNode(this)
@@ -450,48 +461,62 @@ class @Collection
 		@items([])
 
 class @View
-	constructor : ->
-		@is_visible = ko.observable(false)
+	init : ->
+	constructor : (@name, @owner)->
+		@views = {}
 		@events = {}
+		@is_visible = ko.observable(false)
+		@view = null
+		@init()
+		@addViews()
+	addViews : ->
 	show : ->
 		@is_visible(true)
 	hide : ->
 		@events.on_hide() if @events.on_hide?
 		@is_visible(false)
-
-class @AppViewModel
-	init : ->
-	constructor : ->
-		@views = {}
-		@init()
-		@path = ko.observable(null)
-		@has_view = ko.observable(false)
-		@view = null
-	route : (path) ->
-		console.log("Loading path '#{path}'")
-		@path(path)
-		@parts = @path().split('/')
-		@handlePath(path)
-	setUser : (user)->
-	redirectTo : (path) ->
-		$.history.load(path)
-	handlePath : (path) ->
+	embed : ->
+		console.log("Adding #{@name} to #{@owner}...")
+		$(".view-#{@owner} .view-box").append("<div class='view-#{@name}' data-bind=\"visible : views.#{@name}.is_visible(), template : {name : 'view-#{@name}', data : views.#{@name}}\"></div>")
 	addView : (name, view_class) ->
-		@views[name] = new view_class(this)
-		$('.view-box').append("<div class='view-#{name}' data-bind=\"slideVisible : views.#{name}.is_visible(), template : {name : 'view-#{name}', data : views.#{name}}\"></div>")
+		@views[name] = new view_class(name, @name)
+	viewList : ->
+		list = for name, view of @views
+			view
+	embedViews : =>
+		console.log("Embedding views...")
+		for name, view of @views
+			@views[name].embed()
 	selectView : (view) ->
-		@has_view(true)
 		last_view = @view
 		if (last_view != view)
 			@view = view
 			last_view.hide() if last_view?
 			view.show()
 			window.onbeforeunload = @view.events.before_unload
+	getViewName : (view) ->
+		console.log("Name: " + view.name)
+		"view-#{view.name}"
+
+class @AppViewModel extends @View
+	constructor : ->
+		super('app', null)
+		@path = ko.observable(null)
+	route : (path) ->
+		console.log("Loading path '#{path}'")
+		@handlePath(path)
+	setUser : (user)->
+	redirectTo : (path) ->
+		$.history.load(path)
+	handlePath : (path) ->
+		@path(path)
+		@parts = @path().split('/')
 
 appViewModel = null
 overlay = null
 
 @initApp = ->
+	initKO()
 	appViewModel = @appViewModel
 	overlay = @overlay
 
