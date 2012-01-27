@@ -513,6 +513,38 @@ class @View
 		console.log("Name: " + view.name)
 		"view-#{view.name}"
 
+class @Account
+	constructor : (@user_model)->
+		@user = new @user_model()
+		@login_url = "/"
+		@reset_url = "/"
+		@login_key = "email"
+		@password_key = "password"
+		@is_loading = ko.observable(false)
+		@isLoggedIn = ko.dependentObservable ->
+				!@user.is_new()
+			, this
+	setUser : (val)->
+		if val != null
+			@user.handleData(val)
+	login : (login, password, callback)->
+		@is_loading(true)
+		opts = {}
+		opts[@login_key] = login
+		opts[@password_key] = password
+		$.post @login_url, opts, (resp) =>
+			@is_loading(false)
+			if resp.meta == 200
+				@setUser(resp.data)
+			callback(resp) if callback?
+	resetPassword : (login, callback)->
+		@is_loading(true)
+		opts = {}
+		opts[@login_key] = login
+		$.post @reset_url, opts, (resp) =>
+				@is_loading(false)
+				callback(resp) if callback?
+
 class @AppViewModel extends @View
 	constructor : ->
 		super('app', null)
