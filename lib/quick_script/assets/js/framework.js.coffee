@@ -229,11 +229,19 @@ initKO = ->
 			$(element).progressbar({value : ko.utils.unwrapObservable(valueAccessor())})
 
 	ko.bindingHandlers.placeholder =
+		init: (element, valueAccessor) ->
+			fn = ->
+				if ($(element).val().length > 0)
+					$(element).siblings('label').hide()
+				else
+					$(element).siblings('label').show()
+			$(element).live('blur change keyup', fn)
 		update: (element, valueAccessor) ->
 			if ($(element).val().length > 0)
 				$(element).siblings('label').hide()
 			else
 				$(element).siblings('label').show()
+
 
 	ko.absorbModel = (data, self) ->
 		for prop in data
@@ -466,6 +474,8 @@ class @View
 		@views = {}
 		@events = {}
 		@is_visible = ko.observable(false)
+		@path = ko.observable(null)
+		@parts = []
 		@view = null
 		@init()
 		@addViews()
@@ -476,6 +486,7 @@ class @View
 		@events.on_hide() if @events.on_hide?
 		@is_visible(false)
 	handlePath : (path) ->
+		console.log("View [#{@name}] handling path '#{path}'")
 		@path(path)
 		@parts = @path().split('/')
 	embed : ->
@@ -493,6 +504,7 @@ class @View
 	selectView : (view) ->
 		last_view = @view
 		if (last_view != view)
+			console.log("View [#{view.name}] selected.")
 			@view = view
 			last_view.hide() if last_view?
 			view.show()
@@ -504,7 +516,6 @@ class @View
 class @AppViewModel extends @View
 	constructor : ->
 		super('app', null)
-		@path = ko.observable(null)
 	route : (path) ->
 		console.log("Loading path '#{path}'")
 		@handlePath(path)
