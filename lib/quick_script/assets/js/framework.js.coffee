@@ -559,7 +559,6 @@ appViewModel = null
 overlay = null
 
 @initApp = ->
-	initKO()
 	appViewModel = @appViewModel
 	overlay = @overlay
 

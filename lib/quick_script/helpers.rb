@@ -19,6 +19,7 @@ module QuickScript
 				overlay = null;
 
 				$(function() {
+					initKO();
 					CURRENT_USER = (#{jsify current_user});
 					appViewModel = new #{app_model}();
 					overlay = new Overlay();
