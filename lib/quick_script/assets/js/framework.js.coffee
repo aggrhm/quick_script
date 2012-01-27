@@ -1,6 +1,6 @@
 ## EXTENSIONS
 Array.prototype.indexAt = (val) ->
-	for i in this.length
+	for i in [0...this.length]
 		if this[i] == val
 			return i
 	return -1
@@ -155,7 +155,7 @@ link_to_span = (text) ->
 fadeInElement = (elem) ->
 	$(elem).hide().fadeIn()
 
-initKO = ->
+@initKO = ->
 	ko.bindingHandlers.fadeVisible =
 		init : (element, valueAccessor) ->
 			shouldDisplay = ko.utils.unwrapObservable(valueAccessor())
@@ -244,11 +244,11 @@ initKO = ->
 
 
 	ko.absorbModel = (data, self) ->
-		for prop in data
+		for prop, val of data
 			if (typeof(self[prop]) != "function")
-				self[prop] = ko.observable(data[prop])
+				self[prop] = ko.observable(val)
 			else
-				self[prop](data[prop])
+				self[prop](val)
 			self.fields.pushOnce(prop)
 		self.model_state(ko.modelStates.READY)
 
@@ -259,8 +259,7 @@ initKO = ->
 		opts = {}
 		if (fields instanceof Array)
 			fields.push('id')
-			for i in fields
-				prop = fields[i]
+			for prop in fields
 				opts[prop] = self[prop]()
 		else
 			opts = fields
@@ -270,8 +269,7 @@ initKO = ->
 		self.model_state(ko.modelStates.SAVING)
 
 	ko.addFields = (fields, val, self) ->
-		for i in fields
-			prop = fields[i]
+		for prop in fields
 			if (typeof(self[prop]) != "function")
 				if (val instanceof Array)
 					self[prop] = ko.observableArray()
@@ -554,9 +552,6 @@ class @AppViewModel extends @View
 	setUser : (user)->
 	redirectTo : (path) ->
 		$.history.load(path)
-
-appViewModel = null
-overlay = null
 
 @initApp = ->
 	appViewModel = @appViewModel
