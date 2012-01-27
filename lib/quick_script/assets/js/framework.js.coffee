@@ -475,6 +475,9 @@ class @View
 	hide : ->
 		@events.on_hide() if @events.on_hide?
 		@is_visible(false)
+	handlePath : (path) ->
+		@path(path)
+		@parts = @path().split('/')
 	embed : ->
 		console.log("Adding #{@name} to #{@owner}...")
 		$(".view-#{@owner} .view-box").append("<div class='view-#{@name}' data-bind=\"visible : views.#{@name}.is_visible(), template : {name : 'view-#{@name}', data : views.#{@name}}\"></div>")
@@ -508,9 +511,6 @@ class @AppViewModel extends @View
 	setUser : (user)->
 	redirectTo : (path) ->
 		$.history.load(path)
-	handlePath : (path) ->
-		@path(path)
-		@parts = @path().split('/')
 
 appViewModel = null
 overlay = null
