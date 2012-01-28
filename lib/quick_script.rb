@@ -1,5 +1,6 @@
 require 'quick_script/base'
 require 'quick_script/helpers'
+require 'quick_script/interaction'
 
 module QuickScript
   # Your code goes here...

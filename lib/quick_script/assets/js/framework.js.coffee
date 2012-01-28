@@ -468,7 +468,7 @@ class @Collection
 
 class @View
 	init : ->
-	constructor : (@name, @owner)->
+	constructor : (@name, @owner, @app)->
 		@views = {}
 		@events = {}
 		@is_visible = ko.observable(false)
@@ -491,7 +491,7 @@ class @View
 		console.log("Adding #{@name} to #{@owner}...")
 		$(".view-#{@owner} .view-box").append("<div class='view-#{@name}' data-bind=\"visible : views.#{@name}.is_visible(), template : {name : 'view-#{@name}', data : views.#{@name}}\"></div>")
 	addView : (name, view_class) ->
-		@views[name] = new view_class(name, @name)
+		@views[name] = new view_class(name, this, @app)
 	viewList : ->
 		list = for name, view of @views
 			view
@@ -518,6 +518,7 @@ class @Account
 		@reset_url = "/"
 		@login_key = "email"
 		@password_key = "password"
+		@redirect = null
 		@is_loading = ko.observable(false)
 		@isLoggedIn = ko.dependentObservable ->
 				!@user.is_new()
@@ -545,7 +546,7 @@ class @Account
 
 class @AppViewModel extends @View
 	constructor : ->
-		super('app', null)
+		super('app', null, this)
 	route : (path) ->
 		console.log("Loading path '#{path}'")
 		@handlePath(path)
