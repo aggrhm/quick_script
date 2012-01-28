@@ -182,6 +182,18 @@ fadeInElement = (elem) ->
 					action.call(viewModel)
 					return false
 
+	ko.bindingHandlers.cropImage =
+		init : (element, valueAccessor) ->
+			opts = valueAccessor()
+			$(element).css
+				background : 'url(' + ko.utils.unwrapObservable(opts[0]) + ')',
+				backgroundSize: 'cover',
+				'background-position': 'center',
+				backgroundColor: '#FFF',
+				width: opts[1],
+				height: opts[2],
+				display: 'inline-block'
+
 	ko.bindingHandlers.tinymce =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			options = {
@@ -332,16 +344,16 @@ class @Model
 		ko.addFields(['id'], '', this)
 		@models = {}
 		@events = {}
-		@collection = collection
-		@db_state = ko.observable({})
-		@init()
-		@model_state = ko.observable(0)
-		@doDelete = ko.observable(false)
 		@load_key = 'id'
 		@load_url = "/"
 		@save_url = "/"
 		@uploadParams = {}
+		@collection = collection
+		@db_state = ko.observable({})
+		@model_state = ko.observable(0)
+		@doDelete = ko.observable(false)
 		@uploadProgress = ko.observable(0)
+		@init()
 		@is_ready = ko.dependentObservable ->
 				@model_state() == ko.modelStates.READY
 			, this
@@ -473,6 +485,9 @@ class @View
 		@events = {}
 		@is_visible = ko.observable(false)
 		@path = ko.observable(null)
+		@view_name = ko.computed ->
+				"view-#{@name}"
+			, this
 		@parts = []
 		@view = null
 		@init()
@@ -508,7 +523,6 @@ class @View
 			view.show()
 			window.onbeforeunload = @view.events.before_unload
 	getViewName : (view) ->
-		console.log("Name: " + view.name)
 		"view-#{view.name}"
 
 class @Account

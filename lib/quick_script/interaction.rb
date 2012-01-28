@@ -26,11 +26,11 @@ module QuickScript
 				scope.each do |m, args|
 					# validate scope
 					next unless can? m.to_sym, model
-					args = current_user.id.to_s if m.include?("my_") && current_user
+					args = [current_user.id.to_s] if m.include?("my_") && current_user
 					if args == []
 						@items = @items.send(m)
 					else
-						@items = @items.send(m, args)
+						@items = @items.send(m, *args)
 					end
 				end
 				return [] if @items == model
