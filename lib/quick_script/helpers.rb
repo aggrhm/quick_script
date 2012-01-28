@@ -13,7 +13,7 @@ module QuickScript
 		end
 
 		def include_quick_script_init(app_model)
-			raw javascript_tag do
+			javascript_tag do
 				"CURRENT_USER = null;
 				appViewModel = null;
 				overlay = null;
