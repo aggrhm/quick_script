@@ -13,7 +13,7 @@ module QuickScript
 		end
 
 		def include_quick_script_init(app_model)
-			javascript_tag do
+			raw javascript_tag do
 				"CURRENT_USER = null;
 				appViewModel = null;
 				overlay = null;
@@ -25,7 +25,7 @@ module QuickScript
 					overlay = new Overlay();
 					initApp();
 					console.log('Initialized...');
-				});"
+				});".html_safe
 			end
 		end
 	end
