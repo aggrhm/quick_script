@@ -97,7 +97,7 @@ class @Overlay
 		$('body').prepend("<div class='backdrop'></div><div id='overlay-" + id + "' class='overlay'><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
 		$('#overlay-' + id).css(options)
 		$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
-		$('.backdrop').click ->
+		$('.backdrop').click =>
 			console.log('backdrop clicked.')
 			@remove(id)
 		$('#overlay-' + id).koBind(vm)
@@ -174,7 +174,7 @@ fadeInElement = (elem) ->
 
 	ko.bindingHandlers.handleEnter =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
-			$(element).keypress ->
+			$(element).keypress (ev)->
 				if (ev.keyCode == 13)
 					action = valueAccessor()
 					val = bindingsAccessor().value
@@ -277,7 +277,14 @@ fadeInElement = (elem) ->
 			opts = fields
 		if (self.doDelete())
 			opts['_delete'] = true
-		$.post(path, opts, callback)
+		$.ajax
+			type : 'POST'
+			url : path
+			data : opts
+			success : callback
+			error : ->
+				console.log("Save error encountered")
+				self.model_state(ko.modelStates.READY)
 		self.model_state(ko.modelStates.SAVING)
 
 	ko.addFields = (fields, val, self) ->
@@ -350,6 +357,7 @@ class @Model
 		@uploadParams = {}
 		@collection = collection
 		@db_state = ko.observable({})
+		@errors = ko.observable([])
 		@model_state = ko.observable(0)
 		@doDelete = ko.observable(false)
 		@uploadProgress = ko.observable(0)
@@ -372,10 +380,17 @@ class @Model
 		@is_dirty = ko.dependentObservable ->
 				JSON.stringify(@db_state()) != JSON.stringify(@toJS())
 			, this
+		@is_valid = ko.dependentObservable ->
+				@errors().length == 0
+			, this
 		@handleData(data || {})
 	handleData : (resp) ->
 		ko.absorbModel(resp, this)
 		@db_state(@toJS())
+		for name, model of @models
+			model.handleData(resp[name]) if resp[name]?
+	addSubModel : (name, model) ->
+		@models[name] = new model()
 	load : (id, callback)->
 		opts = {}
 		opts[@load_key] = id
