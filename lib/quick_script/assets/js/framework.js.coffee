@@ -544,6 +544,7 @@ class @Account
 	constructor : (@user_model)->
 		@user = new @user_model()
 		@login_url = "/"
+		@register_url = "/"
 		@reset_url = "/"
 		@login_key = "email"
 		@password_key = "password"
@@ -561,6 +562,15 @@ class @Account
 		opts[@login_key] = login
 		opts[@password_key] = password
 		$.post @login_url, opts, (resp) =>
+			@is_loading(false)
+			if resp.meta == 200
+				@setUser(resp.data)
+			callback(resp) if callback?
+	register : (login, password, opts, callback)->
+		@is_loading(true)
+		opts[@login_key] = login
+		opts[@password_key] = password
+		$.post @register_url, opts, (resp) =>
 			@is_loading(false)
 			if resp.meta == 200
 				@setUser(resp.data)
