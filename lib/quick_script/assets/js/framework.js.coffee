@@ -100,8 +100,10 @@
 
 	ko.absorbModel = (data, self) ->
 		for prop, val of data
-			if (typeof(self[prop]) != "function")
+			if !self[prop]?
 				self[prop] = ko.observable(val)
+			else if (typeof(self[prop].handleData) == "function")
+				self[prop].handleData(val)
 			else
 				self[prop](val)
 			self.fields.pushOnce(prop)
@@ -141,6 +143,9 @@
 				self[prop](val)
 			if (typeof(prop) == "string")
 				self.fields.pushOnce(prop)
+
+	ko.addSubModel = (field, model, self) ->
+		self[field] = new model()
 
 	ko.intercepter = (observable, write_fn, self) ->
 		underlying_observable = observable
@@ -192,7 +197,6 @@ class @Model
 	constructor: (data, collection) ->
 		@fields = []
 		ko.addFields(['id'], '', this)
-		@models = {}
 		@events = {}
 		@load_key = 'id'
 		@load_url = "/"
@@ -230,10 +234,6 @@ class @Model
 	handleData : (resp) ->
 		ko.absorbModel(resp, this)
 		@db_state(@toJS())
-		for name, model of @models
-			model.handleData(resp[name]) if resp[name]?
-	addSubModel : (name, model) ->
-		@models[name] = new model()
 	load : (id, callback)->
 		opts = {}
 		opts[@load_key] = id
@@ -263,7 +263,10 @@ class @Model
 	toJS : =>
 		obj = {}
 		for prop in @fields
-			obj[prop] = @[prop]()
+			if typeof(@[prop].toJS) == 'function'
+				obj[prop] = @[prop].toJS()
+			else
+				obj[prop] = @[prop]()
 		obj
 	absorb : (model) =>
 		@reset()
@@ -313,13 +316,15 @@ class @Collection
 		opts = {}
 		opts[scp] = args
 		@scope(opts)
-	load : (opts)->
+	load : (opts, callback)->
 		@extra_params(opts.extra_params) if opts? && opts.extra_params?
 		console.log("Loading items for #{@scope()}")
-		$.getJSON(@path_url, @loadOptions(), @handleData)
+		$.getJSON @path_url, @loadOptions(), (resp) =>
+			@handleData(resp.data)
+			callback(resp) if callback?
 		@model_state(ko.modelStates.LOADING)
 	handleData : (resp) =>
-		mapped = (new @model(item, this) for item in resp.data)
+		mapped = (new @model(item, this) for item in resp)
 		@items(mapped)
 		@model_state(ko.modelStates.READY)
 	nextPage : ->
@@ -335,6 +340,11 @@ class @Collection
 	reset : ->
 		@page(1)
 		@items([])
+	toJS : =>
+		objs = []
+		for item in @items
+			objs.push(item.toJS())
+		objs
 
 class @View
 	init : ->

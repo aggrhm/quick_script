@@ -124,7 +124,7 @@ class @Overlay
 		$('#overlay-' + id).remove()
 		$('.backdrop').remove()
 
-class TimeLength
+class @TimeLength
 	constructor : (@date1, @date2)->
 		@date2 = new Date() unless @date2?
 	seconds : ->
@@ -137,21 +137,36 @@ class TimeLength
 		Math.floor( @seconds() / (24 * 60 * 60) )
 	weeks : ->
 		Math.floor( @seconds() / (24 * 60 * 60 * 7) )
+	months : ->
+		Math.floor( @seconds() / (24 * 60 * 60 * 31) )
 	years : ->
 		Math.floor( @seconds() / (24 * 60 * 60 * 365) )
 	toString : ->
-		if @years() > 1
-			"#{@years()} years"
-		else if @weeks() > 1
-			"#{@weeks()} weeks"
-		else if @days() > 1
-			"#{@days()} days"
-		else if @hours() > 1
-			"#{@hours()} hours"
-		else if @minutes() > 1
-			"#{@minutes()} minutes"
+		val = 0
+		str = ""
+		if @years() > 0
+			val = @years()
+			str = "year"
+		else if @months() > 0
+			val = @months()
+			str = "month"
+		else if @weeks() > 0
+			val = @weeks()
+			str = "week"
+		else if @days() > 0
+			val = @days()
+			str = "day"
+		else if @hours() > 0
+			val = @hours()
+			str = "hour"
+		else if @minutes() > 0
+			val = @minutes()
+			str = "minute"
 		else
-			"#{@seconds()} seconds"
+			val = @seconds()
+			str = "second"
+		attr = str + ( if (val > 1) then "s" else "" )
+		"#{val} #{attr}"
 
 # Helpful functions
 loadScript = (u, d) ->
