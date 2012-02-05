@@ -16,7 +16,7 @@ module QuickScript
 				@names[scope[:name]].call
 			end
 			def method_missing(method_sym, *args, &block)
-				@names[method_sym] = args.first
+				@names[method_sym] = block
 			end
 		end
 
