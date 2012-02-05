@@ -73,6 +73,11 @@
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			$(element).fileupload(ko.utils.unwrapObservable(valueAccessor()))
 
+	ko.bindingHandlers.calendar =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			$(element).fullCalendar('destroy')
+			$(element).fullCalendar(ko.utils.unwrapObservable(valueAccessor()))
+
 	ko.bindingHandlers.center =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			setTimeout ->
