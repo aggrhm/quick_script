@@ -28,8 +28,8 @@ module QuickScript
 
 		def handle_params
 			@scope = {}
-			@scope[:name] = params[:scope].first if params[:first]
-			@scope[:args] = params[:scope][1..-1] if params[:first]
+			@scope[:name] = params[:scope].first.to_sym if params[:scope]
+			@scope[:args] = params[:scope][1..-1] if params[:scope]
 			@scope[:limit] = params[:limit].to_i if params[:limit]
 			@scope[:page] = params[:page].to_i if params[:page]
 			@scope[:offset] = (@page - 1) * @limit if params[:page] && params[:limit]
