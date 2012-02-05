@@ -9,6 +9,8 @@ Array.prototype.includes = (val) ->
 Array.prototype.pushOnce = (item) ->
 	if (!this.includes(item))
 		this.push(item)
+Date.from_utc = (utc) ->
+	new Date(utc * 1000)
 
 ## PAGETIMER
 class @PageTimer
@@ -93,14 +95,15 @@ class @Overlay
 		@remove('dialog')
 	add : (id, template, vm, options) =>
 		options = {} if !options?
-		options['z-index'] = @zindex
-		$('body').prepend("<div class='backdrop'></div><div id='overlay-" + id + "' class='overlay'><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
+		options['z-index'] = @zindex + 10
+		$('body').prepend("<div class='backdrop' id='backdrop-#{id}' style='z-index: #{(@zindex + 9)}'></div><div id='overlay-" + id + "' class='overlay'><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
 		$('#overlay-' + id).css(options)
 		$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
-		$('.backdrop').click =>
+		$('#backdrop-' + id).click =>
 			console.log('backdrop clicked.')
 			@remove(id)
 		$('#overlay-' + id).koBind(vm)
+		@zindex = @zindex + 10
 	dialog : (tpl, title, msg) ->
 		@title(title)
 		@message(msg)
@@ -122,7 +125,7 @@ class @Overlay
 	remove : (id) ->
 		$('#overlay-' + id).koClean()
 		$('#overlay-' + id).remove()
-		$('.backdrop').remove()
+		$('#backdrop-' + id).remove()
 
 class @TimeLength
 	constructor : (@date1, @date2)->

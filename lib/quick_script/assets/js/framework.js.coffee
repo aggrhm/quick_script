@@ -77,6 +77,7 @@
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			$(element).fullCalendar('destroy')
 			$(element).fullCalendar(ko.utils.unwrapObservable(valueAccessor()))
+			viewModel.calendar = $(element).fullCalendar
 
 	ko.bindingHandlers.center =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
@@ -320,7 +321,7 @@ class @Collection
 		@scope = ko.intercepter @scope, (obs, prev, curr) ->
 				obs(curr)
 				console.log("Scope changed from #{prev} to #{curr}")
-				@load()
+				#@load()
 			, this
 		@scopeSelector = ko.observable()
 		@scopeSelector.subscribe (val) ->
@@ -342,6 +343,9 @@ class @Collection
 			@handleData(resp.data)
 			callback(resp) if callback?
 		@model_state(ko.modelStates.LOADING)
+	loadScope : (scope, callback)->
+		@scope(scope)
+		@load(null, callback)
 	handleData : (resp) =>
 		mapped = (new @model(item, this) for item in resp)
 		@items(mapped)
