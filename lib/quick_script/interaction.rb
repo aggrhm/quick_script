@@ -32,7 +32,7 @@ module QuickScript
 			@scope[:args] = params[:scope][1..-1] if params[:scope]
 			@scope[:limit] = params[:limit].to_i if params[:limit]
 			@scope[:page] = params[:page].to_i if params[:page]
-			@scope[:offset] = (@page - 1) * @limit if params[:page] && params[:limit]
+			@scope[:offset] = (@scope[:page] - 1) * @scope[:limit] if params[:page] && params[:limit]
 		end
 
 		def get_scoped_items(model, scope, limit, offset)
