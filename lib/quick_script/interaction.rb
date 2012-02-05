@@ -8,6 +8,18 @@ module QuickScript
 			end
 		end
 
+		class ScopeResponder
+			def initialize
+				@names = {}
+			end
+			def respond(scope)
+				@names[scope[:name]].call
+			end
+			def method_missing(method_sym, *args, &block)
+				@names[method_sym] = args.first
+			end
+		end
+
 		def json_resp(data, meta)
 			meta = 200 if meta == true 
 			meta = 404 if meta == false 
@@ -15,10 +27,12 @@ module QuickScript
 		end
 
 		def handle_params
-			@scope = ActiveSupport::JSON.decode(params[:scope]) if params[:scope]
-			@limit = params[:limit].to_i if params[:limit]
-			@page = params[:page].to_i if params[:page]
-			@offset = (@page - 1) * @limit if params[:page] && params[:limit]
+			@scope = {}
+			@scope[:name] = params[:scope].first if params[:first]
+			@scope[:args] = params[:scope][1..-1] if params[:first]
+			@scope[:limit] = params[:limit].to_i if params[:limit]
+			@scope[:page] = params[:page].to_i if params[:page]
+			@scope[:offset] = (@page - 1) * @limit if params[:page] && params[:limit]
 		end
 
 		def get_scoped_items(model, scope, limit, offset)
@@ -37,5 +51,10 @@ module QuickScript
 				@items = @items.limit(limit).offset(offset)
 		end
 
+		def respond_to_scope(&block)
+			responder = ScopeResponder.new
+			block.call(responder)
+			responder.respond @scope
+		end
 	end
 end

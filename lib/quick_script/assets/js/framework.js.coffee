@@ -100,6 +100,7 @@
 
 	ko.absorbModel = (data, self) ->
 		for prop, val of data
+			continue if typeof(val) == "function"
 			if !self[prop]?
 				self[prop] = ko.observable(val)
 			else if (typeof(self[prop].handleData) == "function")
@@ -169,6 +170,12 @@
 
 			return result
 
+	ko.copyObject = (obj, fields) ->
+		ret = {}
+		for prop in fields
+			ret[prop] = obj[prop]
+		return ret
+
 	ko.modelStates = {}
 	ko.modelStates.READY = 1
 	ko.modelStates.LOADING = 2
@@ -192,13 +199,14 @@ jQuery.fn.extend
 		this.each ->
 			ko.cleanNode(this)
 
+
 class @Model
 	init : ->
 	constructor: (data, collection) ->
 		@fields = []
 		ko.addFields(['id'], '', this)
 		@events = {}
-		@load_key = 'id'
+		@load_fields = ['id']
 		@load_url = "/"
 		@save_url = "/"
 		@uploadParams = {}
@@ -234,13 +242,19 @@ class @Model
 	handleData : (resp) ->
 		ko.absorbModel(resp, this)
 		@db_state(@toJS())
-	load : (id, callback)->
-		opts = {}
-		opts[@load_key] = id
+	load : (opts, callback)->
 		$.getJSON @load_url, opts, (resp) =>
-			@handleData(resp.data)
+			ret_data = if opts.fields? then ko.copyObject(resp.data, opts.fields) else resp.data
+			@handleData(ret_data)
 			callback(resp) if callback?
 		@model_state(ko.modelStates.LOADING)
+	reloadFields : (fields, callback)->
+		opts = ko.copyObject(@toJS(), @load_fields)
+		opts['fields'] = fields
+		@load(opts, callback)
+	reload : (callback)->
+		opts = ko.copyObject(@toJS(), @load_fields)
+		@load(opts, callback)
 	save : (fields, callback) ->
 		opts = fields
 		opts.push('id')
@@ -275,7 +289,7 @@ class @Model
 class @Collection
 	constructor: (opts) ->
 		@opts = opts || {}
-		@scope = ko.observable(@opts.scope || {})
+		@scope = ko.observable(@opts.scope || [])
 		@items = ko.observableArray([])
 		@page = ko.observable(1)
 		@limit = ko.observable(@opts.limit || 4)
@@ -293,7 +307,7 @@ class @Collection
 			, this
 		@loadOptions = ko.dependentObservable ->
 				opts = @extra_params()
-				opts['scope'] = ko.toJSON(@scope())
+				opts['scope'] = @scope()
 				opts['limit'] = @limit()
 				opts['page'] = @page()
 				opts
@@ -313,8 +327,8 @@ class @Collection
 				@items().length > 0
 			, this
 	setScope : (scp, args) =>
-		opts = {}
-		opts[scp] = args
+		opts = args
+		opts.unshift(scp)
 		@scope(opts)
 	load : (opts, callback)->
 		@extra_params(opts.extra_params) if opts? && opts.extra_params?
@@ -342,7 +356,7 @@ class @Collection
 		@items([])
 	toJS : =>
 		objs = []
-		for item in @items
+		for item in @items()
 			objs.push(item.toJS())
 		objs
 
