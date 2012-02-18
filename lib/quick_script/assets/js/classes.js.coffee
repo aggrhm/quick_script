@@ -11,6 +11,10 @@ Array.prototype.pushOnce = (item) ->
 		this.push(item)
 Date.from_utc = (utc) ->
 	new Date(utc * 1000)
+String.prototype.endsWith = (suffix) ->
+	this.indexOf(suffix, this.length - suffix.length) != -1
+String.prototype.includes = (str) ->
+	this.indexOf(str) != -1
 
 ## PAGETIMER
 class @PageTimer
@@ -93,7 +97,9 @@ class @Overlay
 		@message = ko.observable()
 	closeDialog : =>
 		@remove('dialog')
-	add : (id, template, vm, options) =>
+	add : (vm, options) =>
+		id = vm.name
+		template = vm.templateID
 		options = {} if !options?
 		options['z-index'] = @zindex + 10
 		$('body').prepend("<div class='backdrop' id='backdrop-#{id}' style='z-index: #{(@zindex + 9)}'></div><div id='overlay-" + id + "' class='overlay'><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")

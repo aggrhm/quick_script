@@ -71,13 +71,19 @@
 
 	ko.bindingHandlers.fileupload =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
-			$(element).fileupload(ko.utils.unwrapObservable(valueAccessor()))
+			model = valueAccessor()
+			$(element).fileupload(model.input.options)
+			$(element).change (evt)->
+				model.input.files(evt.target.files)
+			model.fileupload = $(element).fileupload.bind($(element))
+			model.selectFile = ->
+				$(element).click()
 
 	ko.bindingHandlers.calendar =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			$(element).fullCalendar('destroy')
 			$(element).fullCalendar(ko.utils.unwrapObservable(valueAccessor()))
-			viewModel.calendar = $(element).fullCalendar
+			viewModel.calendar = $(element).fullCalendar.bind($(element))
 
 	ko.bindingHandlers.center =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
@@ -85,7 +91,7 @@
 					$(element).center()
 				, 1
 
-	ko.bindingHandlers.progress =
+	ko.bindingHandlers.progressbar =
 		update: (element, valueAccessor) ->
 			$(element).progressbar({value : ko.utils.unwrapObservable(valueAccessor())})
 
@@ -124,7 +130,10 @@
 		if (fields instanceof Array)
 			fields.push('id')
 			for prop in fields
-				opts[prop] = self[prop]()
+				if self[prop].toJS?
+					opts[prop] = self[prop].toJS()
+				else
+					opts[prop] = self[prop]()
 		else
 			opts = fields
 		if (self.doDelete())
@@ -137,6 +146,40 @@
 			error : ->
 				console.log("Save error encountered")
 				self.model_state(ko.modelStates.READY)
+		self.model_state(ko.modelStates.SAVING)
+
+	ko.saveModelWithFile = (fields, fileparam, path, callback, self) ->
+		if (self.model_state() != ko.modelStates.READY)
+			console.log("Save postponed.")
+			return
+		opts = {}
+		if (fields instanceof Array)
+			fields.push('id')
+			for prop in fields
+				if self[prop].toJS?
+					opts[prop] = self[prop].toJS()
+				else
+					opts[prop] = self[prop]()
+		else
+			opts = fields
+		if (self.doDelete())
+			opts['_delete'] = true
+		filemodel = self[fileparam]
+		up_opts = {}
+		up_opts.paramName = fileparam
+		up_opts.url = path
+		up_opts.formData = opts
+		up_opts.files = filemodel.input.files()
+		filemodel.input.events.progress = (e, data)->
+			val = parseInt( data.loaded / data.total * 100, 10 )
+			self.saveProgress(val)
+		filemodel.input.events.done = (e, data)->
+			self.saveProgress(0)
+			callback(data)
+		filemodel.input.events.always = ->
+			self.model_state(ko.modelStates.READY)
+
+		filemodel.fileupload('add', up_opts)
 		self.model_state(ko.modelStates.SAVING)
 
 	ko.addFields = (fields, val, self) ->
@@ -152,7 +195,10 @@
 				self.fields.pushOnce(prop)
 
 	ko.addSubModel = (field, model, self) ->
-		self[field] = new model()
+		if self[field]?
+			self[field].reset()
+		else
+			self[field] = new model()
 
 	ko.intercepter = (observable, write_fn, self) ->
 		underlying_observable = observable
@@ -208,6 +254,7 @@ jQuery.fn.extend
 
 class @Model
 	init : ->
+	extend : ->
 	constructor: (data, collection) ->
 		@fields = []
 		ko.addFields(['id'], '', this)
@@ -215,13 +262,13 @@ class @Model
 		@load_fields = ['id']
 		@load_url = "/"
 		@save_url = "/"
-		@uploadParams = {}
 		@collection = collection
 		@db_state = ko.observable({})
 		@errors = ko.observable([])
 		@model_state = ko.observable(0)
 		@doDelete = ko.observable(false)
-		@uploadProgress = ko.observable(0)
+		@saveProgress = ko.observable(0)
+		@extend()
 		@init()
 		@is_ready = ko.dependentObservable ->
 				@model_state() == ko.modelStates.READY
@@ -262,20 +309,27 @@ class @Model
 		opts = ko.copyObject(@toJS(), @load_fields)
 		@load(opts, callback)
 	save : (fields, callback) ->
-		opts = fields
-		opts.push('id')
-		console.log("Saving fields #{opts}")
-		ko.saveModel opts, @save_url, (resp) =>
+		console.log("Saving fields #{fields}")
+		ko.saveModel fields, @save_url, (resp) =>
 				@handleData(resp.data)
 				callback(resp) if callback?
 				#@collection.load() if @collection?
 			, this
+	saveWithFile : (fields, fileparam, callback) ->
+		console.log("Saving fields #{fields} with file")
+		if @[fileparam].input.present()
+			ko.saveModelWithFile fields, fileparam, @save_url, (resp) =>
+					@handleData(resp.data)
+					callback(resp) if callback?
+				, this
+		else
+			@save(fields, callback)
 	reset : ->
 		@model_state(ko.modelStates.LOADING)
 		@id('')
 		@init()
 		@db_state(@toJS())
-		@uploadProgress(0)
+		@saveProgress(0)
 		@model_state(ko.modelStates.READY)
 	deleteModel : (callback)=>
 		@doDelete(true)
@@ -292,9 +346,37 @@ class @Model
 		@reset()
 		@handleData(model.toJS())
 
+class @FileModel extends @Model
+	extend : ->
+		@input = {events: {}}
+		@input.options =
+			fileInput : null
+			progress : (e, data)=>
+				@input.events.progress(e, data)
+			done : (e, data)=>
+				@input.events.done(e, data)
+			always : (e, data)=>
+				@input.events.always(e, data)
+		@input.files = ko.observable([])
+		@input.present = ko.computed ->
+				@input.files().length > 0
+			, this
+		@input.file = ko.computed ->
+				if @input.present() then @input.files()[0] else null
+			, this
+		@input.filename = ko.computed ->
+				if @input.present() then @input.file().name else ""
+			, this
+		@input.isImage = ->
+			if @input.present() then @input.file().type.match('image.*') else false
+	reset : ->
+		super
+		@input.files([])
+
 class @Collection
 	constructor: (opts) ->
 		@opts = opts || {}
+		@events = {}
 		@scope = ko.observable(@opts.scope || [])
 		@items = ko.observableArray([])
 		@page = ko.observable(1)
@@ -342,6 +424,7 @@ class @Collection
 		$.getJSON @path_url, @loadOptions(), (resp) =>
 			@handleData(resp.data)
 			callback(resp) if callback?
+			@events.onchange() if @events.onchange?
 		@model_state(ko.modelStates.LOADING)
 	loadScope : (scope, callback)->
 		@scope(scope)
@@ -416,6 +499,14 @@ class @View
 	getViewName : (view) ->
 		"view-#{view.name}"
 
+class @OverlayView extends @View
+	constructor : (@name, @templateID, @owner, @app)->
+		super(@name, @owner, @app)
+	show : (opts)=>
+		overlay.add(this, opts)
+	hide : =>
+		overlay.remove(@name)
+
 class @Account
 	constructor : (@user_model)->
 		@user = new @user_model()
@@ -451,6 +542,14 @@ class @Account
 			if resp.meta == 200
 				@setUser(resp.data)
 			callback(resp) if callback?
+	save : (model, fields, callback) ->
+		console.log("Saving fields #{fields}")
+		ko.saveModel fields, @save_url, (resp) =>
+				model.handleData(resp.data)
+				@user.absorb(model) if model.is_valid()
+				callback(resp) if callback?
+				#@collection.load() if @collection?
+			, model
 	resetPassword : (login, callback)->
 		@is_loading(true)
 		opts = {}
