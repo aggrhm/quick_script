@@ -233,6 +233,8 @@
 	ko.modelStates.LOADING = 2
 	ko.modelStates.SAVING = 3
 	ko.modelStates.EDITING = 4
+	ko.modelStates.INSERTING = 5
+	ko.modelStates.APPENDING = 6
 	ko.editors = {}
 
 jQuery.fn.extend
@@ -377,8 +379,12 @@ class @Collection
 	constructor: (opts) ->
 		@opts = opts || {}
 		@events = {}
+		@_reqid = 0
 		@scope = ko.observable(@opts.scope || [])
 		@items = ko.observableArray([])
+		@views = ko.observableArray([])
+		@view_class = ko.observable(@opts.view || View)
+		@view_owner = ko.observable(@opts.view_owner || null)
 		@page = ko.observable(1)
 		@limit = ko.observable(@opts.limit || 4)
 		@title = ko.observable(@opts.title || 'Collection')
@@ -392,6 +398,12 @@ class @Collection
 			, this
 		@is_loading = ko.dependentObservable ->
 				@model_state() == ko.modelStates.LOADING
+			, this
+		@is_appending = ko.dependentObservable ->
+				@model_state() == ko.modelStates.APPENDING
+			, this
+		@is_inserting = ko.dependentObservable ->
+				@model_state() == ko.modelStates.INSERTING
 			, this
 		@loadOptions = ko.dependentObservable ->
 				opts = @extra_params()
@@ -418,51 +430,95 @@ class @Collection
 		opts = args
 		opts.unshift(scp)
 		@scope(opts)
-	load : (opts, callback)->
-		@extra_params(opts.extra_params) if opts? && opts.extra_params?
-		console.log("Loading items for #{@scope()}")
-		$.getJSON @path_url, @loadOptions(), (resp) =>
-			@handleData(resp.data)
+	setView : (view_class, view_owner) =>
+		@view_class(view_class)
+		@view_owner(view_owner)
+	_load : (scope, op, callback)->
+		console.log("Loading items for #{scope}")
+		op ||= Collection.REPLACE
+		reqid = ++@_reqid
+		opts = @loadOptions()
+		opts.scope = scope
+		$.getJSON @path_url, opts, (resp) =>
+			return if @_reqid != reqid
+			@handleData(resp.data, op)
 			callback(resp) if callback?
 			@events.onchange() if @events.onchange?
-		@model_state(ko.modelStates.LOADING)
-	loadScope : (scope, callback)->
-		@scope(scope)
-		@load(null, callback)
-	handleData : (resp) =>
-		mapped = (new @model(item, this) for item in resp)
-		@items(mapped)
+		if op == Collection.REPLACE
+			@model_state(ko.modelStates.LOADING)
+		else if op == Collection.APPEND
+			@model_state(ko.modelStates.APPENDING)
+		else if op == Collection.INSERT
+			@model_state(ko.modelStates.INSERTING)
+	load : (scope, callback)->
+		@scope(scope) if scope?
+		@_load(@scope(), Collection.REPLACE, callback)
+	update : (callback)->
+		@_load(@scope(), Collection.REPLACE, callback)
+	insert : (scope, callback)->
+		@_load(scope, Collection.INSERT, callback)
+	append : (scope, callback)->
+		@_load(scope, Collection.APPEND, callback)
+	handleData : (resp, op) =>
+		op ||= Collection.REPLACE
+		cls = @view_class()
+		if op == Collection.REPLACE
+			@items([]); @views([])
+		for item, idx in resp
+			model = new @model(item, this)
+			view_model = new cls("view-#{model.id()}", @view_owner(), (if @view_owner()? then @view_owner().app else null), model)
+			if !op? || op == Collection.REPLACE
+				@items.push(model)
+				@views.push(view_model)
+			else if op == Collection.INSERT
+				@items.splice(idx, 0, model)
+				@views.splice(idx, 0, view_model)
+			else if op == Collection.APPEND
+				@items.push(model)
+				@views.push(view_model)
+		#console.log("Items loaded")
 		@model_state(ko.modelStates.READY)
 	nextPage : ->
 		@page(@page() + 1)
-		@load()
+		@update()
 	prevPage : ->
 		@page(@page() - 1)
-		@load()
+		@update()
 	hasItems : ->
 		@items().length > 0
+	removeDuplicates : ->
+		ids = []
+		@items().forEach (item, idx, array)->
+			if ids.includes(item.id())
+				@items.splice(idx, 1)
+				@views.splice(idx, 1)
+			else
+				ids.push(item.id())
 	getTemplate : ->
 		@template()
 	reset : ->
 		@page(1)
 		@items([])
+		@views([])
 	toJS : =>
 		objs = []
 		for item in @items()
 			objs.push(item.toJS())
 		objs
 
+Collection.REPLACE = 0
+Collection.INSERT = 1
+Collection.APPEND = 2
+
 class @View
 	init : ->
-	constructor : (@name, @owner, @app)->
+	constructor : (@name, @owner, @app, @model)->
 		@views = {}
 		@events = {}
 		@is_visible = ko.observable(false)
-		@path = ko.observable(null)
 		@view_name = ko.computed ->
 				"view-#{@name}"
 			, this
-		@parts = []
 		@view = null
 		@init()
 		@addViews()
@@ -470,15 +526,8 @@ class @View
 	show : ->
 		@is_visible(true)
 	hide : ->
-		@events.on_hide() if @events.on_hide?
+		@events.before_hide() if @events.before_hide?
 		@is_visible(false)
-	handlePath : (path) ->
-		console.log("View [#{@name}] handling path '#{path}'")
-		@path(path)
-		@parts = @path().split('/')
-	embed : ->
-		console.log("Adding #{@name} to #{@owner}...")
-		$(".view-#{@owner} .view-box").append("<div class='view-#{@name}' data-bind=\"visible : views.#{@name}.is_visible(), template : {name : 'view-#{@name}', data : views.#{@name}}\"></div>")
 	addView : (name, view_class) ->
 		@views[name] = new view_class(name, this, @app)
 	viewList : ->
@@ -561,9 +610,15 @@ class @Account
 class @AppViewModel extends @View
 	constructor : ->
 		super('app', null, this)
+		@path = ko.observable(null)
+		@path_parts = []
 	route : (path) ->
 		console.log("Loading path '#{path}'")
 		@handlePath(path)
+	handlePath : (path) ->
+		console.log("View [#{@name}] handling path '#{path}'")
+		@path(path)
+		@path_parts = @path().split('/')
 	setUser : (user)->
 	redirectTo : (path) ->
 		$.history.load(path)

@@ -22,18 +22,18 @@ class @PageTimer
 		@callback = func
 		@frequency = time * 1000
 		@t_id = -1
-	start : ->
+	start : =>
 		@t_id = setInterval(@callback, @frequency)
-	stop : ->
+	stop : =>
 		clearInterval(@t_id)
-	setFrequency : (time) ->
+	setFrequency : (time) =>
 		@stop()
 		@frequency = time * 1000
 		@start()
-	getFrequency : (time) ->
+	getFrequency : =>
 		return @frequency / 1000
-	increasePollTime : ->
-		@setFrequency( @getFrequency() + (@getFrequency() % 5 == 0 ? 9 : 1) )
+	increasePollTime : =>
+		@setFrequency( @getFrequency() + (if @getFrequency() % 5 == 0 then 9 else 1) )
 
 ## NOTIFIER
 class @Notifier
