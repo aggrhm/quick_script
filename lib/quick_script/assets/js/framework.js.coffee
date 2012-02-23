@@ -198,7 +198,8 @@
 		if self[field]?
 			self[field].reset()
 		else
-			self[field] = new model()
+			self[field] = new model({}, self)
+		self.fields.pushOnce(field) if typeof(field) == "string"
 
 	ko.intercepter = (observable, write_fn, self) ->
 		underlying_observable = observable
@@ -333,9 +334,10 @@ class @Model
 		@db_state(@toJS())
 		@saveProgress(0)
 		@model_state(ko.modelStates.READY)
-	deleteModel : (callback)=>
+	deleteModel : (fields, callback)=>
+		fields ||= []
 		@doDelete(true)
-		@save(['id'], callback)
+		@save(fields, callback)
 	toJS : =>
 		obj = {}
 		for prop in @fields
@@ -376,14 +378,16 @@ class @FileModel extends @Model
 		@input.files([])
 
 class @Collection
-	constructor: (opts) ->
+	init : ->
+	constructor: (opts, parent) ->
 		@opts = opts || {}
 		@events = {}
 		@_reqid = 0
+		@parent = parent
 		@scope = ko.observable(@opts.scope || [])
 		@items = ko.observableArray([])
 		@views = ko.observableArray([])
-		@view_class = ko.observable(@opts.view || View)
+		@view_model = ko.observable(@opts.view || View)
 		@view_owner = ko.observable(@opts.view_owner || null)
 		@page = ko.observable(1)
 		@limit = ko.observable(@opts.limit || 4)
@@ -426,12 +430,13 @@ class @Collection
 		@hasItems = ko.dependentObservable ->
 				@items().length > 0
 			, this
+		@init()
 	setScope : (scp, args) =>
 		opts = args
 		opts.unshift(scp)
 		@scope(opts)
-	setView : (view_class, view_owner) =>
-		@view_class(view_class)
+	setView : (view_model, view_owner) =>
+		@view_model(view_model)
 		@view_owner(view_owner)
 	_load : (scope, op, callback)->
 		console.log("Loading items for #{scope}")
@@ -461,7 +466,7 @@ class @Collection
 		@_load(scope, Collection.APPEND, callback)
 	handleData : (resp, op) =>
 		op ||= Collection.REPLACE
-		cls = @view_class()
+		cls = @view_model()
 		if op == Collection.REPLACE
 			@items([]); @views([])
 		for item, idx in resp

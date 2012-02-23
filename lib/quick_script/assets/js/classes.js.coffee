@@ -105,6 +105,7 @@ class @Overlay
 		$('body').prepend("<div class='backdrop' id='backdrop-#{id}' style='z-index: #{(@zindex + 9)}'></div><div id='overlay-" + id + "' class='overlay'><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
 		$('#overlay-' + id).css(options)
 		$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
+		$('.overlay .content').css({'max-height' : ($(window).height() - 100)})
 		$('#backdrop-' + id).click =>
 			console.log('backdrop clicked.')
 			@remove(id)
