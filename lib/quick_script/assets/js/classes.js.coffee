@@ -97,13 +97,15 @@ class @Overlay
 		@message = ko.observable()
 	closeDialog : =>
 		@remove('dialog')
-	add : (vm, options) =>
+	add : (vm, tmp, options, cls) =>
 		id = vm.name
-		template = vm.templateID
+		template = tmp
+		cls = cls || ''
 		options = {} if !options?
 		options['z-index'] = @zindex + 10
 		$('body').prepend("<div class='backdrop' id='backdrop-#{id}' style='z-index: #{(@zindex + 9)}'></div><div id='overlay-" + id + "' class='overlay'><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
 		$('#overlay-' + id).css(options)
+		$('#overlay-' + id).addClass(cls)
 		$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
 		$('.overlay .content').css({'max-height' : ($(window).height() - 100)})
 		$('#backdrop-' + id).click =>

@@ -552,12 +552,16 @@ class @View
 			window.onbeforeunload = @view.events.before_unload
 	getViewName : (view) ->
 		"view-#{view.name}"
+	showAsOverlay : (tmp, opts, cls)=>
+		overlay.add(this, tmp, opts, cls)
+	hideOverlay : =>
+		overlay.remove(@name)
 
 class @OverlayView extends @View
 	constructor : (@name, @templateID, @owner, @app)->
 		super(@name, @owner, @app)
-	show : (opts)=>
-		overlay.add(this, opts)
+	show : (opts, cls)=>
+		overlay.add(this, @templateID, opts, cls)
 	hide : =>
 		overlay.remove(@name)
 
