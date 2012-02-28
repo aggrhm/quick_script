@@ -471,7 +471,7 @@ class @Collection
 			@items([]); @views([])
 		for item, idx in resp
 			model = new @model(item, this)
-			view_model = new cls("view-#{model.id()}", @view_owner(), (if @view_owner()? then @view_owner().app else null), model)
+			view_model = new cls("view-#{model.id()}", @view_owner(), model)
 			if !op? || op == Collection.REPLACE
 				@items.push(model)
 				@views.push(view_model)
@@ -517,7 +517,8 @@ Collection.APPEND = 2
 
 class @View
 	init : ->
-	constructor : (@name, @owner, @app, @model)->
+	constructor : (@name, @owner, @model)->
+		@app = @owner.app if @owner?
 		@views = {}
 		@events = {}
 		@is_visible = ko.observable(false)
@@ -526,15 +527,14 @@ class @View
 			, this
 		@view = null
 		@init()
-		@addViews()
-	addViews : ->
 	show : ->
 		@is_visible(true)
 	hide : ->
 		@events.before_hide() if @events.before_hide?
 		@is_visible(false)
+	load : ->
 	addView : (name, view_class) ->
-		@views[name] = new view_class(name, this, @app)
+		@views[name] = new view_class(name, this)
 	viewList : ->
 		list = for name, view of @views
 			view
@@ -555,14 +555,6 @@ class @View
 	showAsOverlay : (tmp, opts, cls)=>
 		overlay.add(this, tmp, opts, cls)
 	hideOverlay : =>
-		overlay.remove(@name)
-
-class @OverlayView extends @View
-	constructor : (@name, @templateID, @owner, @app)->
-		super(@name, @owner, @app)
-	show : (opts, cls)=>
-		overlay.add(this, @templateID, opts, cls)
-	hide : =>
 		overlay.remove(@name)
 
 class @Account
@@ -618,9 +610,10 @@ class @Account
 
 class @AppViewModel extends @View
 	constructor : ->
-		super('app', null, this)
+		@app = this
 		@path = ko.observable(null)
 		@path_parts = []
+		super('app', null)
 	route : (path) ->
 		console.log("Loading path '#{path}'")
 		@handlePath(path)
