@@ -122,48 +122,12 @@
 			self.fields.pushOnce(prop)
 		self.model_state(ko.modelStates.READY)
 
-	ko.saveModel = (fields, path, callback, self) ->
-		if (self.model_state() != ko.modelStates.READY)
-			console.log("Save postponed.")
-			return
-		opts = {}
-		if (fields instanceof Array)
-			fields.push('id')
-			for prop in fields
-				if self[prop].toJS?
-					opts[prop] = self[prop].toJS()
-				else
-					opts[prop] = self[prop]()
-		else
-			opts = fields
-		if (self.doDelete())
-			opts['_delete'] = true
-		$.ajax
-			type : 'POST'
-			url : path
-			data : opts
-			success : callback
-			error : ->
-				console.log("Save error encountered")
-				self.model_state(ko.modelStates.READY)
-		self.model_state(ko.modelStates.SAVING)
-
 	ko.saveModelWithFile = (fields, fileparam, path, callback, self) ->
 		if (self.model_state() != ko.modelStates.READY)
 			console.log("Save postponed.")
 			return
-		opts = {}
-		if (fields instanceof Array)
-			fields.push('id')
-			for prop in fields
-				if self[prop].toJS?
-					opts[prop] = self[prop].toJS()
-				else
-					opts[prop] = self[prop]()
-		else
-			opts = fields
-		if (self.doDelete())
-			opts['_delete'] = true
+		opts = self.toJS(fields)
+		opts['id'] = self.id()
 		filemodel = self[fileparam]
 		up_opts = {}
 		up_opts.paramName = fileparam
@@ -262,14 +226,11 @@ class @Model
 		@fields = []
 		ko.addFields(['id'], '', this)
 		@events = {}
-		@load_fields = ['id']
-		@load_url = "/"
-		@save_url = "/"
+		@adapter = new ModelAdapter()
 		@collection = collection
 		@db_state = ko.observable({})
 		@errors = ko.observable([])
 		@model_state = ko.observable(0)
-		@doDelete = ko.observable(false)
 		@saveProgress = ko.observable(0)
 		@extend()
 		@init()
@@ -291,18 +252,20 @@ class @Model
 		@is_dirty = ko.dependentObservable ->
 				JSON.stringify(@db_state()) != JSON.stringify(@toJS())
 			, this
-		@is_valid = ko.dependentObservable ->
-				@errors().length == 0
+		@has_errors = ko.dependentObservable ->
+				@errors().length > 0
 			, this
 		@handleData(data || {})
 	handleData : (resp) ->
 		ko.absorbModel(resp, this)
 		@db_state(@toJS())
 	load : (opts, callback)->
-		$.getJSON @load_url, opts, (resp) =>
-			ret_data = if opts.fields? then ko.copyObject(resp.data, opts.fields) else resp.data
-			@handleData(ret_data)
-			callback(resp) if callback?
+		@adapter.load
+			data : opts
+			success : (resp)=>
+				ret_data = if opts.fields? then ko.copyObject(resp.data, opts.fields) else resp.data
+				@handleData(ret_data)
+				callback(resp) if callback?
 		@model_state(ko.modelStates.LOADING)
 	reloadFields : (fields, callback)->
 		opts = ko.copyObject(@toJS(), @load_fields)
@@ -313,15 +276,24 @@ class @Model
 		@load(opts, callback)
 	save : (fields, callback) ->
 		console.log("Saving fields #{fields}")
-		ko.saveModel fields, @save_url, (resp) =>
+		if (@model_state() != ko.modelStates.READY)
+			console.log("Save postponed.")
+			return
+		opts = @toJS(fields)
+		opts['id'] = @id()
+		@adapter.save
+			data: opts
+			success : (resp)=>
 				@handleData(resp.data)
 				callback(resp) if callback?
-				#@collection.load() if @collection?
-			, this
+			error : =>
+				console.log("Save error encountered")
+				@model_state(ko.modelStates.READY)
+		@model_state(ko.modelStates.SAVING)
 	saveWithFile : (fields, fileparam, callback) ->
 		console.log("Saving fields #{fields} with file")
 		if @[fileparam].input.present()
-			ko.saveModelWithFile fields, fileparam, @save_url, (resp) =>
+			ko.saveModelWithFile fields, fileparam, @adapter.save_url, (resp) =>
 					@handleData(resp.data)
 					callback(resp) if callback?
 				, this
@@ -334,13 +306,26 @@ class @Model
 		@db_state(@toJS())
 		@saveProgress(0)
 		@model_state(ko.modelStates.READY)
-	deleteModel : (fields, callback)=>
-		fields ||= []
-		@doDelete(true)
-		@save(fields, callback)
-	toJS : =>
+	delete : (fields, callback)=>
+		fields ||= ['id']
+		if (@model_state() != ko.modelStates.READY)
+			console.log("Delete postponed.")
+			return
+		opts = @toJS(fields)
+		opts['id'] = @id()
+		@adapter.delete
+			data : opts
+			success : (resp)=>
+				@handleData(resp.data)
+				callback(resp) if callback?
+			error : =>
+				console.log("Delete error encountered")
+				@model_state(ko.modelStates.READY)
+		@model_state(ko.modelStates.SAVING)
+	toJS : (flds)=>
+		flds ||= @fields
 		obj = {}
-		for prop in @fields
+		for prop in flds
 			if typeof(@[prop].toJS) == 'function'
 				obj[prop] = @[prop].toJS()
 			else
@@ -394,7 +379,7 @@ class @Collection
 		@title = ko.observable(@opts.title || 'Collection')
 		@extra_params = ko.observable(@opts.extra_params || {})
 		@model = @opts.model
-		@path_url = @opts.path_url
+		@adapter = new ModelAdapter()
 		@template = ko.observable(@opts.template)
 		@model_state = ko.observable(0)
 		@is_ready = ko.dependentObservable ->
@@ -444,11 +429,13 @@ class @Collection
 		reqid = ++@_reqid
 		opts = @loadOptions()
 		opts.scope = scope
-		$.getJSON @path_url, opts, (resp) =>
-			return if @_reqid != reqid
-			@handleData(resp.data, op)
-			callback(resp) if callback?
-			@events.onchange() if @events.onchange?
+		@adapter.load
+			data : opts
+			success : (resp)=>
+				return if @_reqid != reqid
+				@handleData(resp.data, op)
+				callback(resp) if callback?
+				@events.onchange() if @events.onchange?
 		if op == Collection.REPLACE
 			@model_state(ko.modelStates.LOADING)
 		else if op == Collection.APPEND
@@ -557,63 +544,83 @@ class @View
 	hideOverlay : =>
 		overlay.remove(@name)
 
-class @Account
-	constructor : (@user_model)->
-		@user = new @user_model()
+class @ModelAdapter
+	constructor : (opts)->
+		@save_url = "/"
+		@load_url = "/"
+		for prop,val of opts
+			@[prop] = val
+	load : (opts)->
+		$.getJSON @load_url, opts.data, (resp)->
+			opts.success(resp)
+	save : (opts)->
+		$.ajax
+			type : 'POST'
+			url : @save_url
+			data : opts.data
+			success : opts.success
+			error : opts.error
+	delete : (opts)->
+		$.ajax
+			type : 'DELETE'
+			url : @save_url
+			data : opts.data
+			success : opts.success
+			error : opts.error
+
+class @AccountAdapter
+	constructor : ->
 		@login_url = "/"
 		@register_url = "/"
 		@reset_url = "/"
-		@login_key = "email"
+		@save_url = "/"
+		@username_key = "email"
 		@password_key = "password"
-		@redirect = null
-		@is_loading = ko.observable(false)
-		@isLoggedIn = ko.dependentObservable ->
-				!@user.is_new()
-			, this
-	setUser : (val)->
-		if val != null
-			@user.handleData(val)
-	login : (login, password, callback)->
-		@is_loading(true)
+	login : (username, password, callback)->
 		opts = {}
-		opts[@login_key] = login
+		opts[@username_key] = username
 		opts[@password_key] = password
 		$.post @login_url, opts, (resp) =>
-			@is_loading(false)
-			if resp.meta == 200
-				@setUser(resp.data)
-			callback(resp) if callback?
-	register : (login, password, opts, callback)->
+			callback(resp)
+	register : (opts, callback)->
 		@is_loading(true)
-		opts[@login_key] = login
-		opts[@password_key] = password
+		@errors([])
+		opts[@username_key] = @username()
+		opts[@password_key] = @password()
 		$.post @register_url, opts, (resp) =>
 			@is_loading(false)
 			if resp.meta == 200
 				@setUser(resp.data)
+				@app.current_user(@user.toJS())
+			else
+				@errors(resp.data)
 			callback(resp) if callback?
-	save : (model, fields, callback) ->
+	save : (user, fields, callback) ->
 		console.log("Saving fields #{fields}")
-		ko.saveModel fields, @save_url, (resp) =>
-				model.handleData(resp.data)
-				@user.absorb(model) if model.is_valid()
+		@user.save fields, @save_url, (resp) =>
+				@setUser(resp.data)
+				@app.current_user(@user.toJS())
 				callback(resp) if callback?
-				#@collection.load() if @collection?
-			, model
-	resetPassword : (login, callback)->
+			, @user
+	resetPassword : (callback)->
 		@is_loading(true)
 		opts = {}
-		opts[@login_key] = login
+		opts[@username_key] = @username()
 		$.post @reset_url, opts, (resp) =>
 				@is_loading(false)
 				callback(resp) if callback?
 
-class @AppViewModel extends @View
-	constructor : ->
+class @AppView extends @View
+	constructor : (user_model)->
 		@app = this
 		@path = ko.observable(null)
 		@path_parts = []
+		@account_model = Model
 		super('app', null)
+		@current_user = new @account_model()
+		@is_logged_in = ko.dependentObservable ->
+				!@current_user.is_new()
+			, this
 	route : (path) ->
 		console.log("Loading path '#{path}'")
 		@handlePath(path)
@@ -621,7 +628,8 @@ class @AppViewModel extends @View
 		console.log("View [#{@name}] handling path '#{path}'")
 		@path(path)
 		@path_parts = @path().split('/')
-	setUser : (user)->
+	setUser : (data)->
+		@current_user.handleData(data) if data != null
 	redirectTo : (path) ->
 		$.history.load(path)
 
