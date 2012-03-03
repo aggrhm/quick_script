@@ -5,7 +5,7 @@
 			if shouldDisplay then $(element).show() else $(element).hide()
 		update : (element, value) ->
 			shouldDisplay = value()
-			if shouldDisplay then $(element).fadeIn('slow') else $(element).fadeOut()
+			if shouldDisplay then $(element).fadeIn('slow') else $(element).hide()
 
 	ko.bindingHandlers.slideVisible =
 		init : (element, valueAccessor) ->
@@ -509,11 +509,12 @@ class @View
 		@views = {}
 		@events = {}
 		@templateID = "view-#{@name}"
-		@is_visible = ko.observable(false)
 		@view_name = ko.computed ->
-				"view-#{@name}"
+				@templateID
 			, this
+		@is_visible = ko.observable(false)
 		@view = null
+		@task = ko.observable(null)
 		@init()
 	show : ->
 		@is_visible(true)
@@ -524,18 +525,30 @@ class @View
 	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
 		@views[name].templateID = tpl
+		@["is_task_#{name}"] = ko.computed ->
+				@task() == name
+			, this
+		@["select_task_#{name}"] = ->
+			@selectView(name)
 	viewList : ->
 		list = for name, view of @views
 			view
 	selectView : (view_name) ->
+		args = Array.prototype.slice.call(arguments)
 		last_view = @view
 		view = @views[view_name]
 		if (last_view != view)
 			console.log("View [#{view.name}] selected.")
 			@view = view
+			@task(view.name)
 			last_view.hide() if last_view?
 			view.show()
+			view.load.apply(view, args[1..])
 			window.onbeforeunload = @view.events.before_unload
+		else
+			@view.load.apply(@view, args[1..])
+	isTask : (task) ->
+		@task() == task
 	getViewName : (view) ->
 		view.templateID
 	showAsOverlay : (tmp, opts, cls)=>
@@ -568,32 +581,24 @@ class @ModelAdapter
 			error : opts.error
 
 class @AccountAdapter
-	constructor : ->
-		@login_url = "/"
-		@register_url = "/"
-		@reset_url = "/"
-		@save_url = "/"
-		@username_key = "email"
+	constructor : (opts)->
+		@login_url = "/account/login"
+		@register_url = "/account/register"
+		@reset_url = "/account/reset"
+		@save_url = "/account/save"
+		@login_key = "email"
 		@password_key = "password"
+		for prop,val of opts
+			@[prop] = val
 	login : (username, password, callback)->
 		opts = {}
-		opts[@username_key] = username
+		opts[@login_key] = username
 		opts[@password_key] = password
 		$.post @login_url, opts, (resp) =>
 			callback(resp)
 	register : (opts, callback)->
-		@is_loading(true)
-		@errors([])
-		opts[@username_key] = @username()
-		opts[@password_key] = @password()
 		$.post @register_url, opts, (resp) =>
-			@is_loading(false)
-			if resp.meta == 200
-				@setUser(resp.data)
-				@app.current_user(@user.toJS())
-			else
-				@errors(resp.data)
-			callback(resp) if callback?
+			callback(resp)
 	save : (user, fields, callback) ->
 		console.log("Saving fields #{fields}")
 		@user.save fields, @save_url, (resp) =>
@@ -622,11 +627,10 @@ class @AppView extends @View
 			, this
 	route : (path) ->
 		console.log("Loading path '#{path}'")
-		@handlePath(path)
-	handlePath : (path) ->
-		console.log("View [#{@name}] handling path '#{path}'")
 		@path(path)
 		@path_parts = @path().split('/')
+		@handlePath(path)
+	handlePath : (path) ->
 	setUser : (data)->
 		@current_user.handleData(data) if data != null
 	redirectTo : (path) ->
