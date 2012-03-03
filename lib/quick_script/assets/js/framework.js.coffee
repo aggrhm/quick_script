@@ -508,6 +508,7 @@ class @View
 		@app = @owner.app if @owner?
 		@views = {}
 		@events = {}
+		@templateID = "view-#{@name}"
 		@is_visible = ko.observable(false)
 		@view_name = ko.computed ->
 				"view-#{@name}"
@@ -520,17 +521,15 @@ class @View
 		@events.before_hide() if @events.before_hide?
 		@is_visible(false)
 	load : ->
-	addView : (name, view_class) ->
+	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
+		@views[name].templateID = tpl
 	viewList : ->
 		list = for name, view of @views
 			view
-	embedViews : =>
-		console.log("Embedding views...")
-		for name, view of @views
-			@views[name].embed()
-	selectView : (view) ->
+	selectView : (view_name) ->
 		last_view = @view
+		view = @views[view_name]
 		if (last_view != view)
 			console.log("View [#{view.name}] selected.")
 			@view = view
@@ -538,7 +537,7 @@ class @View
 			view.show()
 			window.onbeforeunload = @view.events.before_unload
 	getViewName : (view) ->
-		"view-#{view.name}"
+		view.templateID
 	showAsOverlay : (tmp, opts, cls)=>
 		overlay.add(this, tmp, opts, cls)
 	hideOverlay : =>
