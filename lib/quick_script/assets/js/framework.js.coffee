@@ -25,6 +25,18 @@
 					action.call(viewModel)
 					return false
 
+	ko.bindingHandlers.validate =
+		init : (element, valueAccessor) ->
+			opts = valueAccessor()
+			$(element).blur ->
+				if opts.test()
+					$(element).removeClass(opts.err_cls)
+					$(element).addClass(opts.ok_cls)
+				else
+					$(element).removeClass(opts.ok_cls)
+					$(element).addClass(opts.err_cls)
+					opts.on_err() if opts.on_err?
+
 	ko.bindingHandlers.cropImage =
 		init : (element, valueAccessor) ->
 			opts = valueAccessor()
