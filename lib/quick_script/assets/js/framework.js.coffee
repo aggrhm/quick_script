@@ -30,11 +30,11 @@
 			opts = valueAccessor()
 			$(element).blur ->
 				if opts.test()
-					$(element).removeClass(opts.err_cls)
-					$(element).addClass(opts.ok_cls)
+					$(element).removeClass(opts.err_css)
+					$(element).addClass(opts.ok_css)
 				else
-					$(element).removeClass(opts.ok_cls)
-					$(element).addClass(opts.err_cls)
+					$(element).removeClass(opts.ok_css)
+					$(element).addClass(opts.err_css)
 					opts.on_err() if opts.on_err?
 
 	ko.bindingHandlers.cropImage =
@@ -160,15 +160,23 @@
 
 	ko.addFields = (fields, val, self) ->
 		for prop in fields
-			if (typeof(self[prop]) != "function")
-				if (val instanceof Array)
-					self[prop] = ko.observableArray()
-				else
-					self[prop] = ko.observable(val)
+			ko.addField prop, val, self
+
+	ko.addField = (field, val, valid_fn, self) ->
+		if !self?
+			self = valid_fn
+			valid_fn = null
+		if (typeof(self[field]) != "function")
+			if (val instanceof Array)
+				self[field] = ko.observableArray()
 			else
-				self[prop](val)
-			if (typeof(prop) == "string")
-				self.fields.pushOnce(prop)
+				self[field] = ko.observable(val)
+
+			self["#{field}_valid"] = ko.computed( (-> (valid_fn.bind(self))(self[field]())), self) if valid_fn?
+		else
+			self[field](val)
+		if (typeof(field) == "string")
+			self.fields.pushOnce(field)
 
 	ko.addSubModel = (field, model, self) ->
 		if self[field]?
@@ -521,10 +529,13 @@ class @View
 		@views = {}
 		@events = {}
 		@templateID = "view-#{@name}"
+		@fields = []
 		@view_name = ko.computed ->
 				@templateID
 			, this
 		@is_visible = ko.observable(false)
+		@is_loading = ko.observable(false)
+		@errors = ko.observable([])
 		@view = null
 		@task = ko.observable(null)
 		@init()
@@ -540,7 +551,7 @@ class @View
 		@["is_task_#{name}"] = ko.computed ->
 				@task() == name
 			, this
-		@["select_task_#{name}"] = ->
+		@["select_task_#{name}"] = =>
 			@selectView(name)
 	viewList : ->
 		list = for name, view of @views
@@ -596,6 +607,7 @@ class @AccountAdapter
 	constructor : (opts)->
 		@login_url = "/account/login"
 		@register_url = "/account/register"
+		@enter_code_url = "/account/enter_code"
 		@reset_url = "/account/reset"
 		@save_url = "/account/save"
 		@login_key = "email"
@@ -611,13 +623,12 @@ class @AccountAdapter
 	register : (opts, callback)->
 		$.post @register_url, opts, (resp) =>
 			callback(resp)
-	save : (user, fields, callback) ->
-		console.log("Saving fields #{fields}")
-		@user.save fields, @save_url, (resp) =>
-				@setUser(resp.data)
-				@app.current_user(@user.toJS())
-				callback(resp) if callback?
-			, @user
+	sendInviteCode : (code, callback)->
+		$.post @enter_code_url, {code : code}, (resp) =>
+			callback(resp)
+	save : (opts, callback) ->
+		$.post @save_url, opts, (resp) =>
+			callback(resp)
 	resetPassword : (callback)->
 		@is_loading(true)
 		opts = {}
