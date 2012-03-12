@@ -5,7 +5,7 @@
 			if shouldDisplay then $(element).show() else $(element).hide()
 		update : (element, value) ->
 			shouldDisplay = value()
-			if shouldDisplay then $(element).fadeIn('slow') else $(element).fadeOut()
+			if shouldDisplay then $(element).fadeIn('slow') else $(element).hide()
 
 	ko.bindingHandlers.slideVisible =
 		init : (element, valueAccessor) ->
@@ -24,6 +24,18 @@
 					val($(element).val())
 					action.call(viewModel)
 					return false
+
+	ko.bindingHandlers.validate =
+		init : (element, valueAccessor) ->
+			opts = valueAccessor()
+			$(element).blur ->
+				if opts.test()
+					$(element).removeClass(opts.err_css)
+					$(element).addClass(opts.ok_css)
+				else
+					$(element).removeClass(opts.ok_css)
+					$(element).addClass(opts.err_css)
+					opts.on_err() if opts.on_err?
 
 	ko.bindingHandlers.cropImage =
 		init : (element, valueAccessor) ->
@@ -148,15 +160,23 @@
 
 	ko.addFields = (fields, val, self) ->
 		for prop in fields
-			if (typeof(self[prop]) != "function")
-				if (val instanceof Array)
-					self[prop] = ko.observableArray()
-				else
-					self[prop] = ko.observable(val)
+			ko.addField prop, val, self
+
+	ko.addField = (field, val, valid_fn, self) ->
+		if !self?
+			self = valid_fn
+			valid_fn = null
+		if (typeof(self[field]) != "function")
+			if (val instanceof Array)
+				self[field] = ko.observableArray()
 			else
-				self[prop](val)
-			if (typeof(prop) == "string")
-				self.fields.pushOnce(prop)
+				self[field] = ko.observable(val)
+
+			self["#{field}_valid"] = ko.computed( (-> (valid_fn.bind(self))(self[field]())), self) if valid_fn?
+		else
+			self[field](val)
+		if (typeof(field) == "string")
+			self.fields.pushOnce(field)
 
 	ko.addSubModel = (field, model, self) ->
 		if self[field]?
@@ -429,7 +449,7 @@ class @Collection
 		reqid = ++@_reqid
 		opts = @loadOptions()
 		opts.scope = scope
-		@adapter.load
+		@adapter.index
 			data : opts
 			success : (resp)=>
 				return if @_reqid != reqid
@@ -452,23 +472,27 @@ class @Collection
 	append : (scope, callback)->
 		@_load(scope, Collection.APPEND, callback)
 	handleData : (resp, op) =>
+		models = []
+		views = []
 		op ||= Collection.REPLACE
 		cls = @view_model()
 		if op == Collection.REPLACE
 			@items([]); @views([])
 		for item, idx in resp
 			model = new @model(item, this)
-			view_model = new cls("view-#{model.id()}", @view_owner(), model)
-			if !op? || op == Collection.REPLACE
-				@items.push(model)
-				@views.push(view_model)
-			else if op == Collection.INSERT
-				@items.splice(idx, 0, model)
-				@views.splice(idx, 0, view_model)
-			else if op == Collection.APPEND
-				@items.push(model)
-				@views.push(view_model)
-		#console.log("Items loaded")
+			models.push(model)
+			views.push(new cls("view-#{model.id()}", @view_owner(), model))
+
+		if !op? || op == Collection.REPLACE
+			@items(models)
+			@views(views)
+			console.log("Items loaded")
+		else if op == Collection.INSERT
+			@items(models.concat(@items()))
+			@views(views.concat(@views()))
+		else if op == Collection.APPEND
+			@items(@items().concat(models))
+			@views(@views().concat(views))
 		@model_state(ko.modelStates.READY)
 	nextPage : ->
 		@page(@page() + 1)
@@ -478,6 +502,9 @@ class @Collection
 		@update()
 	hasItems : ->
 		@items().length > 0
+	getItemById : (id)->
+		list = @items().filter ((item)=> item.id() == id)
+		ret = if list.length > 0 then list[0] else null
 	removeDuplicates : ->
 		ids = []
 		@items().forEach (item, idx, array)->
@@ -508,11 +535,16 @@ class @View
 		@app = @owner.app if @owner?
 		@views = {}
 		@events = {}
-		@is_visible = ko.observable(false)
+		@templateID = "view-#{@name}"
+		@fields = []
 		@view_name = ko.computed ->
-				"view-#{@name}"
+				@templateID
 			, this
+		@is_visible = ko.observable(false)
+		@is_loading = ko.observable(false)
+		@errors = ko.observable([])
 		@view = null
+		@task = ko.observable(null)
 		@init()
 	show : ->
 		@is_visible(true)
@@ -520,25 +552,35 @@ class @View
 		@events.before_hide() if @events.before_hide?
 		@is_visible(false)
 	load : ->
-	addView : (name, view_class) ->
+	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
+		@views[name].templateID = tpl
+		@["is_task_#{name}"] = ko.computed ->
+				@task() == name
+			, this
+		@["select_task_#{name}"] = =>
+			@selectView(name)
 	viewList : ->
 		list = for name, view of @views
 			view
-	embedViews : =>
-		console.log("Embedding views...")
-		for name, view of @views
-			@views[name].embed()
-	selectView : (view) ->
+	selectView : (view_name) ->
+		args = Array.prototype.slice.call(arguments)
 		last_view = @view
+		view = @views[view_name]
 		if (last_view != view)
 			console.log("View [#{view.name}] selected.")
 			@view = view
+			@task(view.name)
 			last_view.hide() if last_view?
 			view.show()
+			view.load.apply(view, args[1..])
 			window.onbeforeunload = @view.events.before_unload
+		else
+			@view.load.apply(@view, args[1..])
+	isTask : (task) ->
+		@task() == task
 	getViewName : (view) ->
-		"view-#{view.name}"
+		view.templateID
 	showAsOverlay : (tmp, opts, cls)=>
 		overlay.add(this, tmp, opts, cls)
 	hideOverlay : =>
@@ -548,15 +590,26 @@ class @ModelAdapter
 	constructor : (opts)->
 		@save_url = "/"
 		@load_url = "/"
+		@index_url = "/"
 		for prop,val of opts
 			@[prop] = val
 	load : (opts)->
 		$.getJSON @load_url, opts.data, (resp)->
 			opts.success(resp)
+	index : (opts)->
+		$.getJSON (@index_url || @load_url), opts.data, (resp)->
+			opts.success(resp)
 	save : (opts)->
 		$.ajax
 			type : 'POST'
 			url : @save_url
+			data : opts.data
+			success : opts.success
+			error : opts.error
+	send : (opts)->
+		$.ajax
+			type : 'POST'
+			url : opts.url
 			data : opts.data
 			success : opts.success
 			error : opts.error
@@ -567,41 +620,35 @@ class @ModelAdapter
 			data : opts.data
 			success : opts.success
 			error : opts.error
+	add_method : (fn_name, fn)->
+		@[fn_name] = fn.bind(this)
 
 class @AccountAdapter
-	constructor : ->
-		@login_url = "/"
-		@register_url = "/"
-		@reset_url = "/"
-		@save_url = "/"
-		@username_key = "email"
+	constructor : (opts)->
+		@login_url = "/account/login"
+		@register_url = "/account/register"
+		@enter_code_url = "/account/enter_code"
+		@reset_url = "/account/reset"
+		@save_url = "/account/save"
+		@login_key = "email"
 		@password_key = "password"
+		for prop,val of opts
+			@[prop] = val
 	login : (username, password, callback)->
 		opts = {}
-		opts[@username_key] = username
+		opts[@login_key] = username
 		opts[@password_key] = password
 		$.post @login_url, opts, (resp) =>
 			callback(resp)
 	register : (opts, callback)->
-		@is_loading(true)
-		@errors([])
-		opts[@username_key] = @username()
-		opts[@password_key] = @password()
 		$.post @register_url, opts, (resp) =>
-			@is_loading(false)
-			if resp.meta == 200
-				@setUser(resp.data)
-				@app.current_user(@user.toJS())
-			else
-				@errors(resp.data)
-			callback(resp) if callback?
-	save : (user, fields, callback) ->
-		console.log("Saving fields #{fields}")
-		@user.save fields, @save_url, (resp) =>
-				@setUser(resp.data)
-				@app.current_user(@user.toJS())
-				callback(resp) if callback?
-			, @user
+			callback(resp)
+	sendInviteCode : (code, callback)->
+		$.post @enter_code_url, {code : code}, (resp) =>
+			callback(resp)
+	save : (opts, callback) ->
+		$.post @save_url, opts, (resp) =>
+			callback(resp)
 	resetPassword : (callback)->
 		@is_loading(true)
 		opts = {}
@@ -623,11 +670,10 @@ class @AppView extends @View
 			, this
 	route : (path) ->
 		console.log("Loading path '#{path}'")
-		@handlePath(path)
-	handlePath : (path) ->
-		console.log("View [#{@name}] handling path '#{path}'")
 		@path(path)
 		@path_parts = @path().split('/')
+		@handlePath(path)
+	handlePath : (path) ->
 	setUser : (data)->
 		@current_user.handleData(data) if data != null
 	redirectTo : (path) ->
