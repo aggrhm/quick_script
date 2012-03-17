@@ -81,13 +81,21 @@
 		update : (element, valueAccessor) ->
 			$(element).html(ko.utils.unwrapObservable(valueAccessor()))
 
-	ko.bindingHandlers.fileupload =
+	ko.bindingHandlers.jsfileupload =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			model = valueAccessor()
 			$(element).fileupload(model.input.options)
 			$(element).change (evt)->
 				model.input.files(evt.target.files)
 			model.fileupload = $(element).fileupload.bind($(element))
+			model.selectFile = ->
+				$(element).click()
+
+	ko.bindingHandlers.fileupload =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			model = valueAccessor()
+			$(element).change (evt)->
+				model.input.files(evt.target.files)
 			model.selectFile = ->
 				$(element).click()
 
@@ -133,30 +141,6 @@
 				self[prop](val)
 			self.fields.pushOnce(prop)
 		self.model_state(ko.modelStates.READY)
-
-	ko.saveModelWithFile = (fields, fileparam, path, callback, self) ->
-		if (self.model_state() != ko.modelStates.READY)
-			console.log("Save postponed.")
-			return
-		opts = self.toJS(fields)
-		opts['id'] = self.id()
-		filemodel = self[fileparam]
-		up_opts = {}
-		up_opts.paramName = fileparam
-		up_opts.url = path
-		up_opts.formData = opts
-		up_opts.files = filemodel.input.files()
-		filemodel.input.events.progress = (e, data)->
-			val = parseInt( data.loaded / data.total * 100, 10 )
-			self.saveProgress(val)
-		filemodel.input.events.done = (e, data)->
-			self.saveProgress(0)
-			callback(data)
-		filemodel.input.events.always = ->
-			self.model_state(ko.modelStates.READY)
-
-		filemodel.fileupload('add', up_opts)
-		self.model_state(ko.modelStates.SAVING)
 
 	ko.addFields = (fields, val, self) ->
 		for prop in fields
@@ -238,6 +222,24 @@ jQuery.fn.extend
 		this.each ->
 			ko.cleanNode(this)
 
+jQuery.ajax_qs = (opts)->
+	data = new FormData()
+	req = new XMLHttpRequest()
+	for key, val of opts.data
+		data.append key, val
+	req.onreadystatechange = (ev)->
+		if req.readyState == 4
+			if req.status == 200
+				resp = eval("(" + req.responseText + ")")
+				opts.success(resp)
+			else
+				opts.error() if opts.error?
+	req.upload.addEventListener('error', opts.error) if opts.error?
+	req.upload.addEventListener('progress', opts.progress) if opts.progress?
+	req.open opts.type, opts.url, true
+	req.setRequestHeader 'X-CSRF-Token', jQuery('meta[name="csrf-token"]').attr('content')
+	req.send(data)
+	return req
 
 class @Model
 	init : ->
@@ -303,6 +305,8 @@ class @Model
 		opts['id'] = @id()
 		@adapter.save
 			data: opts
+			progress : (ev)=>
+				@saveProgress( Math.floor( ev.loaded / ev.total * 100 ) )
 			success : (resp)=>
 				@handleData(resp.data)
 				callback(resp) if callback?
@@ -310,15 +314,6 @@ class @Model
 				console.log("Save error encountered")
 				@model_state(ko.modelStates.READY)
 		@model_state(ko.modelStates.SAVING)
-	saveWithFile : (fields, fileparam, callback) ->
-		console.log("Saving fields #{fields} with file")
-		if @[fileparam].input.present()
-			ko.saveModelWithFile fields, fileparam, @adapter.save_url, (resp) =>
-					@handleData(resp.data)
-					callback(resp) if callback?
-				, this
-		else
-			@save(fields, callback)
 	reset : ->
 		@model_state(ko.modelStates.LOADING)
 		@id('')
@@ -357,15 +352,7 @@ class @Model
 
 class @FileModel extends @Model
 	extend : ->
-		@input = {events: {}}
-		@input.options =
-			fileInput : null
-			progress : (e, data)=>
-				@input.events.progress(e, data)
-			done : (e, data)=>
-				@input.events.done(e, data)
-			always : (e, data)=>
-				@input.events.always(e, data)
+		@input = {}
 		@input.files = ko.observable([])
 		@input.present = ko.computed ->
 				@input.files().length > 0
@@ -381,6 +368,8 @@ class @FileModel extends @Model
 	reset : ->
 		super
 		@input.files([])
+	toJS : =>
+		@input.file()
 
 class @Collection
 	init : ->
@@ -588,9 +577,9 @@ class @View
 
 class @ModelAdapter
 	constructor : (opts)->
-		@save_url = "/"
-		@load_url = "/"
-		@index_url = "/"
+		@save_url = null
+		@load_url = null
+		@index_url = null
 		for prop,val of opts
 			@[prop] = val
 	load : (opts)->
@@ -599,11 +588,19 @@ class @ModelAdapter
 	index : (opts)->
 		$.getJSON (@index_url || @load_url), opts.data, (resp)->
 			opts.success(resp)
-	save : (opts)->
+	save_old : (opts)->
 		$.ajax
 			type : 'POST'
 			url : @save_url
 			data : opts.data
+			success : opts.success
+			error : opts.error
+	save : (opts)->
+		$.ajax_qs
+			type : 'POST'
+			url : @save_url
+			data : opts.data
+			progress : opts.progress
 			success : opts.success
 			error : opts.error
 	send : (opts)->
