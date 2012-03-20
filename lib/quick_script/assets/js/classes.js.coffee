@@ -16,6 +16,17 @@ String.prototype.endsWith = (suffix) ->
 String.prototype.includes = (str) ->
 	this.indexOf(str) != -1
 
+class @SelectOpts
+	constructor : ->
+		@options = []
+	add : (val, str)->
+		@options.push {val : val, str : str}
+		return this
+	find : (val)->
+		for obj in @options
+			return obj.str if obj.val == val
+		return ""
+
 ## PAGETIMER
 class @PageTimer
 	constructor: (func, time) ->
@@ -93,8 +104,6 @@ class @Overlay
 	constructor : ->
 		@zindex = 100
 		@notifyTimer = null
-		@title = ko.observable()
-		@message = ko.observable()
 	closeDialog : =>
 		@remove('dialog')
 	add : (vm, tmp, options, cls) =>
@@ -113,10 +122,15 @@ class @Overlay
 			@remove(id)
 		$('#overlay-' + id).koBind(vm)
 		@zindex = @zindex + 10
-	dialog : (tpl, title, msg) ->
-		@title(title)
-		@message(msg)
-		@add('dialog', tpl, this, { width : 300 })
+	dialog : (msg, opts) ->
+		self = this
+		vm =
+			name : 'dialog'
+			message : ko.observable(msg)
+			yes : opts.yes
+			no : opts.no
+			cancel : self.remove('dialog')
+		@add(vm, 'view-dialog', { width : 300 })
 	notify : (msg, cls, tm) ->
 		cls = cls || ''
 		tm = tm || 3000
