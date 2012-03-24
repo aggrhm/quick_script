@@ -104,48 +104,48 @@ class @Overlay
 	constructor : ->
 		@zindex = 100
 		@notifyTimer = null
-	closeDialog : =>
+Overlay.instance = new Overlay()
+Overlay.closeDialog = ->
 		@remove('dialog')
-	add : (vm, tmp, options, cls) =>
+Overlay.add = (vm, tmp, options, cls) ->
 		id = vm.name
 		template = tmp
 		cls = cls || ''
 		options = {} if !options?
-		options['z-index'] = @zindex + 10
-		$('body').prepend("<div class='backdrop' id='backdrop-#{id}' style='z-index: #{(@zindex + 9)}'></div><div id='overlay-" + id + "' class='overlay'><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
+		options['z-index'] = Overlay.instance.zindex + 10
+		$('body').prepend("<div class='backdrop' id='backdrop-#{id}' style='z-index: #{(Overlay.instance.zindex + 9)}'></div><div id='overlay-" + id + "' class='overlay'><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
 		$('#overlay-' + id).css(options)
 		$('#overlay-' + id).addClass(cls)
 		$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
 		$('.overlay .content').css({'max-height' : ($(window).height() - 100)})
 		$('#backdrop-' + id).click =>
 			console.log('backdrop clicked.')
-			@remove(id)
+			Overlay.remove(id)
 		$('#overlay-' + id).koBind(vm)
-		@zindex = @zindex + 10
-	dialog : (msg, opts) ->
-		self = this
+		Overlay.instance.zindex = Overlay.instance.zindex + 10
+Overlay.dialog = (msg, opts) ->
 		vm =
 			name : 'dialog'
 			message : ko.observable(msg)
 			yes : opts.yes
 			no : opts.no
-			cancel : self.remove('dialog')
-		@add(vm, 'view-dialog', { width : 300 })
-	notify : (msg, cls, tm) ->
+			cancel : Overlay.remove('dialog')
+		Overlay.add(vm, 'view-dialog', { width : 300 })
+Overlay.notify = (msg, cls, tm) ->
 		cls = cls || ''
 		tm = tm || 3000
-		@clearNotifications()
+		Overlay.clearNotifications()
 		$('body').prepend("<div id='notify' class='notify' style='display: none;'>" + msg + "</div>")
 		if (cls)
 			$('#notify').addClass(cls)
 		$('#notify').slideDown 'slow', ->
-			@notifyTimeout = setTimeout ->
+			Overlay.instance.notifyTimeout = setTimeout ->
 					$('#notify').fadeOut('slow')
 				, tm
-	clearNotifications : ->
-		clearTimeout(@notifyTimeout)
+Overlay.clearNotifications = ->
+		clearTimeout(Overlay.instance.notifyTimeout)
 		$('#notify').remove()
-	remove : (id) ->
+Overlay.remove = (id) ->
 		$('#overlay-' + id).koClean()
 		$('#overlay-' + id).remove()
 		$('#backdrop-' + id).remove()

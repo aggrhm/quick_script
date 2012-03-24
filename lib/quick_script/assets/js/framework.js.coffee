@@ -99,6 +99,23 @@
 			model.selectFile = ->
 				$(element).click()
 
+	ko.bindingHandlers.tabs =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			$(element).addClass('ui-tabs ui-widget ui-widget-content ui-corner-all')
+			$(element).children('ul').first().addClass('ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all')
+			$(element).children('ul').first().children('li').addClass('ui-state-default ui-corner-top')
+			$(element).children('div').addClass('ui-tabs-panel ui-widget-content ui-corner-bottom')
+			$(element).children('ul').first().find('li a').each (idx, el)->
+				tab_id = $(el).parent()[0].id
+				$(el).click ->
+					valueAccessor()(tab_id)
+		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			sel_tab = ko.utils.unwrapObservable(valueAccessor())
+			$(element).children('ul').first().children('li').removeClass('ui-tabs-selected ui-state-active')
+			$(element).children('ul').first().children("li##{sel_tab}").addClass('ui-tabs-selected ui-state-active')
+			$(element).children('div').addClass('ui-tabs-hide')
+			$(element).children("div##{sel_tab}").removeClass('ui-tabs-hide')
+
 	ko.bindingHandlers.calendar =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			$(element).fullCalendar('destroy')
@@ -571,9 +588,9 @@ class @View
 	getViewName : (view) ->
 		view.templateID
 	showAsOverlay : (tmp, opts, cls)=>
-		overlay.add(this, tmp, opts, cls)
+		Overlay.add(this, tmp, opts, cls)
 	hideOverlay : =>
-		overlay.remove(@name)
+		Overlay.remove(@name)
 
 class @ModelAdapter
 	constructor : (opts)->
@@ -678,7 +695,6 @@ class @AppView extends @View
 
 @initApp = ->
 	appViewModel = @appViewModel
-	overlay = @overlay
 
 	appViewModel.setUser(@CURRENT_USER)
 

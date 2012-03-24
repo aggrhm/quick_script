@@ -22,7 +22,6 @@ module QuickScript
 					initKO();
 					CURRENT_USER = (#{jsify current_user});
 					appViewModel = new #{app_model}();
-					overlay = new Overlay();
 					initApp();
 					console.log('Initialized...');
 				});".html_safe
