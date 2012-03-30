@@ -252,7 +252,9 @@ jQuery.ajax_qs = (opts)->
 			else
 				opts.error() if opts.error?
 	req.upload.addEventListener('error', opts.error) if opts.error?
-	req.upload.addEventListener('progress', opts.progress) if opts.progress?
+	if opts.progress?
+		req.upload.addEventListener 'progress', (ev)->
+			opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
 	req.open opts.type, opts.url, true
 	req.setRequestHeader 'X-CSRF-Token', jQuery('meta[name="csrf-token"]').attr('content')
 	req.send(data)
@@ -318,12 +320,12 @@ class @Model
 		if (@model_state() != ko.modelStates.READY)
 			console.log("Save postponed.")
 			return
-		opts = @toJS(fields)
+		opts = @toAPI(fields)
 		opts['id'] = @id()
 		@adapter.save
 			data: opts
-			progress : (ev)=>
-				@saveProgress( Math.floor( ev.loaded / ev.total * 100 ) )
+			progress : (ev, prog)=>
+				@saveProgress( prog )
 			success : (resp)=>
 				@handleData(resp.data)
 				callback(resp) if callback?
@@ -363,9 +365,27 @@ class @Model
 			else
 				obj[prop] = @[prop]()
 		obj
+	toAPI : (flds)=>
+		flds ||= @fields
+		obj = {}
+		for prop in flds
+			if typeof(@[prop].toAPI) == 'function'
+				obj[prop] = @[prop].toAPI()
+			else if typeof(@[prop].toJS) == 'function'
+				obj[prop] = @[prop].toJS()
+			else
+				obj[prop] = @[prop]()
+		obj
+	toJSON : (flds)=>
+		JSON.stringify(@toJS(flds))
 	absorb : (model) =>
 		@reset()
 		@handleData(model.toJS())
+Model.includeCollection = (self)->
+	self.Collection = class extends Collection
+		init : ->
+			@adapter = self.adapter
+			@model = self
 
 class @FileModel extends @Model
 	extend : ->
@@ -382,19 +402,19 @@ class @FileModel extends @Model
 			, this
 		@input.isImage = ->
 			if @input.present() then @input.file().type.match('image.*') else false
+		@input.clear = -> @input.files([])
 	reset : ->
 		super
 		@input.files([])
-	toJS : =>
+	toAPI : =>
 		@input.file()
 
 class @Collection
 	init : ->
-	constructor: (opts, parent) ->
+	constructor: (opts) ->
 		@opts = opts || {}
 		@events = {}
 		@_reqid = 0
-		@parent = parent
 		@scope = ko.observable(@opts.scope || [])
 		@items = ko.observableArray([])
 		@views = ko.observableArray([])
@@ -404,8 +424,8 @@ class @Collection
 		@limit = ko.observable(@opts.limit || 4)
 		@title = ko.observable(@opts.title || 'Collection')
 		@extra_params = ko.observable(@opts.extra_params || {})
-		@model = @opts.model
-		@adapter = new ModelAdapter()
+		@model = @opts.model || Model
+		@adapter = @opts.adapter || new ModelAdapter()
 		@template = ko.observable(@opts.template)
 		@model_state = ko.observable(0)
 		@is_ready = ko.dependentObservable ->
@@ -492,7 +512,6 @@ class @Collection
 		if !op? || op == Collection.REPLACE
 			@items(models)
 			@views(views)
-			console.log("Items loaded")
 		else if op == Collection.INSERT
 			@items(models.concat(@items()))
 			@views(views.concat(@views()))
@@ -508,17 +527,26 @@ class @Collection
 		@update()
 	hasItems : ->
 		@items().length > 0
+	addItem : (item)->
+		cls = @view_model()
+		@items.push(item)
+		@views.push(new cls("view-#{item.id()}", @view_owner(), item))
 	getItemById : (id)->
 		list = @items().filter ((item)=> item.id() == id)
 		ret = if list.length > 0 then list[0] else null
 	removeDuplicates : ->
 		ids = []
-		@items().forEach (item, idx, array)->
+		@items().forEach (item, idx, array)=>
 			if ids.includes(item.id())
 				@items.splice(idx, 1)
 				@views.splice(idx, 1)
 			else
 				ids.push(item.id())
+	removeIf : (callback)->
+		@items().forEach (item, idx, array)=>
+			if callback(item, idx)
+				@items.splice(idx, 1)
+				@views.splice(idx, 1)
 	getTemplate : ->
 		@template()
 	reset : ->
@@ -529,6 +557,11 @@ class @Collection
 		objs = []
 		for item in @items()
 			objs.push(item.toJS())
+		objs
+	toAPI : =>
+		objs = []
+		for item in @items()
+			objs.push(item.toAPI())
 		objs
 
 Collection.REPLACE = 0
@@ -621,7 +654,7 @@ class @ModelAdapter
 			success : opts.success
 			error : opts.error
 	send : (opts)->
-		$.ajax
+		$.ajax_qs
 			type : 'POST'
 			url : opts.url
 			data : opts.data
@@ -660,9 +693,15 @@ class @AccountAdapter
 	sendInviteCode : (code, callback)->
 		$.post @enter_code_url, {code : code}, (resp) =>
 			callback(resp)
-	save : (opts, callback) ->
-		$.post @save_url, opts, (resp) =>
-			callback(resp)
+	save : (opts) ->
+		opts ||= {}
+		$.ajax_qs
+			type : 'POST'
+			url : @save_url
+			data : opts.data
+			progress : opts.progress
+			success : opts.success
+			error : opts.error
 	resetPassword : (callback)->
 		@is_loading(true)
 		opts = {}
@@ -670,6 +709,16 @@ class @AccountAdapter
 		$.post @reset_url, opts, (resp) =>
 				@is_loading(false)
 				callback(resp) if callback?
+	send : (opts)->
+		$.ajax_qs
+			type : 'POST'
+			url : opts.url
+			data : opts.data
+			progress : opts.progress
+			success : opts.success
+			error : opts.error
+	add_method : (fn_name, fn)->
+		@[fn_name] = fn.bind(this)
 
 class @AppView extends @View
 	constructor : (user_model)->
@@ -689,6 +738,7 @@ class @AppView extends @View
 		@handlePath(path)
 	handlePath : (path) ->
 	setUser : (data)->
+		console.log(data)
 		@current_user.handleData(data) if data != null
 	redirectTo : (path) ->
 		$.history.load(path)
