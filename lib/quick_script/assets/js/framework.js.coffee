@@ -267,7 +267,7 @@ class @Model
 		@fields = []
 		ko.addFields(['id'], '', this)
 		@events = {}
-		@adapter = new ModelAdapter()
+		@adapter = if @initAdapter? then @initAdapter() else null
 		@collection = collection
 		@db_state = ko.observable({})
 		@errors = ko.observable([])
@@ -383,9 +383,13 @@ class @Model
 		@handleData(model.toJS())
 Model.includeCollection = (self)->
 	self.Collection = class extends Collection
-		init : ->
-			@adapter = self.adapter
+		constructor : (opts)->
+			super(opts)
+			@adapter = self.Adapter
 			@model = self
+Model.includeAdapter = (adapter, self)->
+	self.Adapter = adapter
+	self::initAdapter = (=> adapter)
 
 class @FileModel extends @Model
 	extend : ->
@@ -529,8 +533,10 @@ class @Collection
 		@items().length > 0
 	addItem : (item)->
 		cls = @view_model()
+		view = new cls("view-#{item.id()}", @view_owner(), item)
 		@items.push(item)
-		@views.push(new cls("view-#{item.id()}", @view_owner(), item))
+		@views.push(view)
+		return view
 	getItemById : (id)->
 		list = @items().filter ((item)=> item.id() == id)
 		ret = if list.length > 0 then list[0] else null
