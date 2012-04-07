@@ -1,6 +1,7 @@
 require 'quick_script/base'
 require 'quick_script/helpers'
 require 'quick_script/interaction'
+require 'quick_script/engine'
 
 module QuickScript
   # Your code goes here...
@@ -9,8 +10,8 @@ module QuickScript
     raise "ActionController is not available yet." unless defined?(ActionController)
     ActionController::Base.send(:include, QuickScript::Base)
     ActionController::Base.send(:helper, QuickScript::Helpers)
-    QuickScript.install_or_update(:js)
-    QuickScript.install_or_update(:css)
+    #QuickScript.install_or_update(:js)
+    #QuickScript.install_or_update(:css)
     @intialized = true
   end
 

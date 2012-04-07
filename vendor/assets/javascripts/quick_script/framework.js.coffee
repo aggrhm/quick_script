@@ -54,7 +54,6 @@
 			options = {
 				width : $(element).width(),
 				height : $(element).height(),
-				content_css : '/assets/screen/tinymce.css',
 				theme : 'advanced',
 				theme_advanced_toolbar_location : 'top',
 				theme_advanced_buttons1 : 'bold, italic, underline, separator, undo, redo, separator, bullist, numlist, blockquote, separator, justifyleft, justifycenter, justifyright, separator, image, link, unlink, separator, code',
@@ -63,8 +62,10 @@
 			}
 			val = valueAccessor()
 			options.setup = (ed) ->
-				ed.onChange.add (ed, l) ->
-					val(l.content)
+				ed.onInit.add (ed, l) ->
+					tinyMCE.dom.Event.add ed.getWin(), "blur", ->
+						console.log('leaving...')
+						val(ed.getContent())
 			# handle destroying an editor (based on what jQuery plugin does)
 			ko.utils.domNodeDisposal.addDisposeCallback element, ->
 				ed = tinyMCE.get(element.id)

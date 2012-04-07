@@ -1,51 +1,6 @@
-@import mixins
+@import 'mixins'
 
-.p-rel
-  +p-rel
-.p-abs
-  +p-abs
-.bold
-  +bold
-.t-4
-  +t-4
-.t-3
-  +t-3
-.t-2
-  +t-2
-.t-1
-  +t-1
-.t-upper
-  +t-upper
-.t-center
-  +t-center
-.padded
-  +padded
-.left
-  +left
-.right
-  +right
-.inline, .inl
-  +inline
-
-.img-shadow-dark
-  +img-shadow-dark
-
-body
-  .mceContentBody
-    font-size: 20px
-
-h1
-  +t-shadow
-  +t-center
-  +bold
-  margin-top: 0px
-h2
-  +t-shadow
-
-hr
-  +colruler
-
-.field 
+.placefield 
   +p-rel
   +inline
   input, textarea
@@ -64,12 +19,6 @@ hr
     opacity: 0.5
   input:focus, textarea:focus
     +box-shadow(0 1px 1px rgba(0,0,0,0.2) inset,0 0 6px #8ed928)
-
-
-.container
-  +clear-border
-  .colborder
-    +colborder
 
 .backdrop
   +animate(0.5s)
