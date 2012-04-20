@@ -215,6 +215,9 @@
 			ret[prop] = obj[prop]
 		return ret
 
+	ko.addTemplate = (templateName, templateMarkup) ->
+		$('head').append("<script type='text/html' id='" + templateName + "'>" + templateMarkup + "<" + "/script>")
+
 	ko.modelStates = {}
 	ko.modelStates.READY = 1
 	ko.modelStates.LOADING = 2
@@ -733,6 +736,7 @@ class @AppView extends @View
 		@path = ko.observable(null)
 		@path_parts = []
 		@account_model = Model
+		ko.addTemplate "app-view", "<div data-bind=\"fadeVisible : is_visible(), template : { name : getViewName }, attr : { class : view_name}\"></div>"
 		super('app', null)
 		@current_user = new @account_model()
 		@is_logged_in = ko.dependentObservable ->
