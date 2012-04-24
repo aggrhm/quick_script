@@ -38,16 +38,17 @@
 					opts.on_err() if opts.on_err?
 
 	ko.bindingHandlers.cropImage =
-		init : (element, valueAccessor) ->
+		update : (element, valueAccessor) ->
 			opts = valueAccessor()
-			$(element).css
-				background : 'url(' + ko.utils.unwrapObservable(opts[0]) + ')',
-				backgroundSize: 'cover',
-				'background-position': 'center',
-				backgroundColor: '#FFF',
-				width: opts[1],
-				height: opts[2],
-				display: 'inline-block'
+			if opts[0]?
+				$(element).css
+					background : 'url(' + ko.utils.unwrapObservable(opts[0]) + ')',
+					backgroundSize: 'cover',
+					'background-position': 'center',
+					backgroundColor: '#FFF',
+					width: opts[1],
+					height: opts[2],
+					display: 'inline-block'
 
 	ko.bindingHandlers.tinymce =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
@@ -591,7 +592,8 @@ class @View
 			, this
 		@is_visible = ko.observable(false)
 		@is_loading = ko.observable(false)
-		@errors = ko.observable([])
+		@error = ko.observable('')
+		@has_error = ko.computed (-> @error().length > 0), this
 		@view = null
 		@task = ko.observable(null)
 		@init()
