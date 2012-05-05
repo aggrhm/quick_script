@@ -1,4 +1,5 @@
 /* QS_VERSION=0.0.52;
+ *= require_tree ./quick_script/tip-twitter
  *= require ./quick_script/basics
  *= require ./quick_script/elements
  *= require ./quick_script/buttons

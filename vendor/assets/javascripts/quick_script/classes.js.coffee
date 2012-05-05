@@ -11,10 +11,16 @@ Array.prototype.pushOnce = (item) ->
 		this.push(item)
 Date.from_utc = (utc) ->
 	new Date(utc * 1000)
+Date.prototype.to_utc = ->
+	Math.round(this.getTime() / 1000.0)
 String.prototype.endsWith = (suffix) ->
 	this.indexOf(suffix, this.length - suffix.length) != -1
 String.prototype.includes = (str) ->
 	this.indexOf(str) != -1
+String.prototype.truncate = (val)->
+	ret = this.substring(0, val)
+	ret = ret + "..." if this.length > val
+	return ret
 
 class @SelectOpts
 	constructor : ->

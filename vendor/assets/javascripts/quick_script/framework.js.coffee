@@ -148,6 +148,25 @@
 			else
 				$(element).siblings('label').show()
 
+	ko.bindingHandlers.tip =
+		init : (element, valueAccessor) ->
+			opts = valueAccessor()
+			content = ko.utils.unwrapObservable(opts['content'])
+			$(element).poshytip
+				className: 'tip-twitter',
+				showTimeout: 1,
+				alignTo: 'target',
+				alignX: 'center',
+				offsetY: 5,
+				allowTipHover: false,
+				fade: false,
+				slide: false,
+				content: content
+		update : (element, valueAccessor) ->
+			opts = valueAccessor()
+			content = ko.utils.unwrapObservable(opts['content'])
+			$(element).poshytip('update', content)
+
 
 	ko.absorbModel = (data, self) ->
 		for prop, val of data
@@ -314,12 +333,14 @@ class @Model
 				callback(resp) if callback?
 		@model_state(ko.modelStates.LOADING)
 	reloadFields : (fields, callback)->
-		opts = ko.copyObject(@toJS(), @load_fields)
+		opts = @reloadOpts()
 		opts['fields'] = fields
 		@load(opts, callback)
 	reload : (callback)->
-		opts = ko.copyObject(@toJS(), @load_fields)
+		opts = @reloadOpts()
 		@load(opts, callback)
+	reloadOpts : =>
+		{id : @id()}
 	save : (fields, callback) ->
 		console.log("Saving fields #{fields}")
 		if (@model_state() != ko.modelStates.READY)
@@ -375,14 +396,25 @@ class @Model
 		obj = {}
 		for prop in flds
 			if typeof(@[prop].toAPI) == 'function'
-				obj[prop] = @[prop].toAPI()
+				val = @[prop].toAPI()
+				obj[prop] = val if val != null
 			else if typeof(@[prop].toJS) == 'function'
 				obj[prop] = @[prop].toJS()
 			else
-				obj[prop] = @[prop]()
+				val = @[prop]()
+				if val instanceof Object
+					obj[prop] = JSON.stringify(val)
+				else
+					obj[prop] = val if val != null
 		obj
 	toJSON : (flds)=>
 		JSON.stringify(@toJS(flds))
+	getClass : =>
+		@constructor
+	toClone : =>
+		m = new(@getClass())
+		m.absorb(this)
+		return m
 	absorb : (model) =>
 		@reset()
 		@handleData(model.toJS())
@@ -400,6 +432,16 @@ class @FileModel extends @Model
 	extend : ->
 		@input = {}
 		@input.files = ko.observable([])
+		@input.file_uri = ko.observable('')
+		@input.files.subscribe (val)->
+			if val.length > 0
+				@input.file_uri('')
+				reader = new FileReader()
+				reader.onload = (ev)=>
+					console.log('input loaded')
+					@input.file_uri(ev.target.result)
+				reader.readAsDataURL(val[0])
+		, this
 		@input.present = ko.computed ->
 				@input.files().length > 0
 			, this
@@ -409,8 +451,9 @@ class @FileModel extends @Model
 		@input.filename = ko.computed ->
 				if @input.present() then @input.file().name else ""
 			, this
-		@input.isImage = ->
-			if @input.present() then @input.file().type.match('image.*') else false
+		@input.is_image = ko.computed ->
+				if @input.present() then @input.file().type.match('image.*') else false
+			, this
 		@input.clear = -> @input.files([])
 	reset : ->
 		super
