@@ -473,7 +473,7 @@ class @Collection
 		@view_model = ko.observable(@opts.view || View)
 		@view_owner = ko.observable(@opts.view_owner || null)
 		@page = ko.observable(1)
-		@limit = ko.observable(@opts.limit || 4)
+		@limit = ko.observable(@opts.limit || 100)
 		@title = ko.observable(@opts.title || 'Collection')
 		@extra_params = ko.observable(@opts.extra_params || {})
 		@model = @opts.model || Model
