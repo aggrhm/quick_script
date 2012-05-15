@@ -101,7 +101,7 @@
 			model.selectFile = ->
 				$(element).click()
 
-	ko.bindingHandlers.tabs =
+	ko.bindingHandlers.jqtabs =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			$(element).addClass('ui-tabs ui-widget ui-widget-content ui-corner-all')
 			$(element).children('ul').first().addClass('ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all')
@@ -117,6 +117,19 @@
 			$(element).children('ul').first().children("li##{sel_tab}").addClass('ui-tabs-selected ui-state-active')
 			$(element).children('div').addClass('ui-tabs-hide')
 			$(element).children("div##{sel_tab}").removeClass('ui-tabs-hide')
+
+	ko.bindingHandlers.tabs =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			$(element).children('ul').first().find('li').each (idx, el)->
+				tab_id = $(el)[0].id
+				$(el).click ->
+					valueAccessor()(tab_id)
+		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			sel_tab = ko.utils.unwrapObservable(valueAccessor())
+			$(element).children('ul').first().children('li').removeClass('selected')
+			$(element).children('ul').first().children("li##{sel_tab}").addClass('selected')
+			$(element).children('div').addClass('hidden')
+			$(element).children("div##{sel_tab}").removeClass('hidden')
 
 	ko.bindingHandlers.calendar =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
@@ -360,7 +373,7 @@ class @Model
 				@model_state(ko.modelStates.READY)
 		@model_state(ko.modelStates.SAVING)
 	reset : ->
-		@model_state(ko.modelStates.LOADING)
+		#@model_state(ko.modelStates.LOADING)
 		@id('')
 		@init()
 		@db_state(@toJS())
@@ -585,9 +598,15 @@ class @Collection
 		@items.push(item)
 		@views.push(view)
 		return view
+	removeItem : (idx)->
+		@items.splice(idx, 1)
+		@views.splice(idx, 1)
 	getItemById : (id)->
 		list = @items().filter ((item)=> item.id() == id)
 		ret = if list.length > 0 then list[0] else null
+	nthViews : (n, offset) ->
+		@views().filter (el, i)->
+			(i-offset) % n == 0
 	removeDuplicates : ->
 		ids = []
 		@items().forEach (item, idx, array)=>

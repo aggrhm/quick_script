@@ -6,6 +6,8 @@ Array.prototype.indexAt = (val) ->
 	return -1
 Array.prototype.includes = (val) ->
 	return this.indexAt(val) != -1
+Array.prototype.itemAt = (val)->
+	return this.slice(val)[0]
 Array.prototype.pushOnce = (item) ->
 	if (!this.includes(item))
 		this.push(item)
@@ -43,6 +45,9 @@ class @PageTimer
 		@t_id = setInterval(@callback, @frequency)
 	stop : =>
 		clearInterval(@t_id)
+		@t_id = -1
+	isRunning : =>
+		@t_id != -1
 	setFrequency : (time) =>
 		@stop()
 		@frequency = time * 1000
