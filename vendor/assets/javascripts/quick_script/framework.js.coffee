@@ -130,6 +130,11 @@
 			$(element).children('ul').first().children("li##{sel_tab}").addClass('selected')
 			$(element).children('div').addClass('hidden')
 			$(element).children("div##{sel_tab}").removeClass('hidden')
+	ko.bindingHandlers.tab_views =
+		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			sel_tab = ko.utils.unwrapObservable(valueAccessor())
+			$(element).children('div').addClass('hidden')
+			$(element).children("div##{sel_tab}").removeClass('hidden')
 
 	ko.bindingHandlers.calendar =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
