@@ -77,6 +77,27 @@
   font-weight: bold
   opacity: 0.9
 
+.confirm
+  +padded
+  +p-fix
+  +img-shadow
+  +t-4
+  +t-center
+  +t-shadow
+  +clear-border(0.1)
+  +bfg-grad($white, #000, 20)
+  +border-radius
+  width: 700px
+  top: -5px
+  left: 50%
+  margin-left: -360px
+  z-index: 10000
+  opacity: 0.9
+  .msg
+    float: left
+  .opts
+    float: right
+
 .loading-overlay
   +p-abs
   +border-radius

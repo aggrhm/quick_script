@@ -27,12 +27,12 @@ String.prototype.truncate = (val)->
 class @SelectOpts
 	constructor : ->
 		@options = []
-	add : (val, str)->
-		@options.push {val : val, str : str}
+	add : (val, str)=>
+		@options.push {val : val.toString(), str : str}
 		return this
-	find : (val)->
+	find : (val)=>
 		for obj in @options
-			return obj.str if obj.val == val
+			return obj.str if obj.val == val.toString()
 		return ""
 
 ## PAGETIMER
@@ -134,6 +134,7 @@ Overlay.add = (vm, tmp, options, cls) ->
 			Overlay.remove(id)
 		$('#overlay-' + id).koBind(vm)
 		Overlay.instance.zindex = Overlay.instance.zindex + 10
+
 Overlay.dialog = (msg, opts) ->
 		vm =
 			name : 'dialog'
@@ -142,6 +143,7 @@ Overlay.dialog = (msg, opts) ->
 			no : opts.no
 			cancel : Overlay.remove('dialog')
 		Overlay.add(vm, 'view-dialog', { width : 300 })
+
 Overlay.notify = (msg, cls, tm) ->
 		cls = cls || ''
 		tm = tm || 3000
@@ -153,9 +155,23 @@ Overlay.notify = (msg, cls, tm) ->
 			Overlay.instance.notifyTimeout = setTimeout ->
 					$('#notify').fadeOut('slow')
 				, tm
+
 Overlay.clearNotifications = ->
 		clearTimeout(Overlay.instance.notifyTimeout)
 		$('#notify').remove()
+
+Overlay.confirm = (msg, opts) ->
+		vm =
+			yes : ->
+				opts.yes() if opts.yes?
+				Overlay.remove('confirm')
+			no : ->
+				opts.no() if opts.no?
+				Overlay.remove('confirm')
+		$('body').prepend("<div class='backdrop' id='backdrop-confirm' style='z-index:500'></div><div id='overlay-confirm' class='confirm' style='display: none;'><div class='msg'>" + msg + "</div><div class='opts'><button class='button green' data-bind='click : yes'>yes</button><button class='button red' data-bind='click : no'>no</button></div></div>")
+		$('#overlay-confirm').koBind(vm)
+		$('#overlay-confirm').slideDown 'fast'
+
 Overlay.remove = (id) ->
 		$('#overlay-' + id).koClean()
 		$('#overlay-' + id).remove()
