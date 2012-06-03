@@ -663,12 +663,21 @@ class @View
 		@has_error = ko.computed (-> @error().length > 0), this
 		@view = null
 		@task = ko.observable(null)
+		@transition = {type : 'fade', opts : {'slide-left' : ko.observable(0)}}
 		@init()
+		@setupViewBox()
 	show : ->
 		@is_visible(true)
 	hide : ->
 		@events.before_hide() if @events.before_hide?
 		@is_visible(false)
+	setupViewBox : ->
+		if @transition.type == 'slide'
+			@task.subscribe (val)=>
+				if val != null
+					left = @getViewBoxIndex(val) * @transition.opts.width * -1
+					console.log(left)
+					@transition.opts['slide-left'](left)
 	load : ->
 	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
@@ -678,6 +687,8 @@ class @View
 			, this
 		@["select_task_#{name}"] = =>
 			@selectView(name)
+	viewCount : ->
+		Object.keys(@views).length
 	viewList : ->
 		list = for name, view of @views
 			view
@@ -699,6 +710,15 @@ class @View
 		@task() == task
 	getViewName : (view) ->
 		view.templateID
+	getViewBoxTemplate : (view) ->
+		switch view.transition.type
+			when 'slide'
+				'app-slide'
+			else
+				'app-view'
+	getViewBoxIndex : (view_name) ->
+		arr = Object.keys(@views)
+		arr.indexAt(view_name)
 	showAsOverlay : (tmp, opts, cls)=>
 		Overlay.add(this, tmp, opts, cls)
 	hideOverlay : =>
@@ -805,7 +825,8 @@ class @AppView extends @View
 		@path = ko.observable(null)
 		@path_parts = []
 		@account_model = Model
-		ko.addTemplate "app-view", "<div data-bind=\"fadeVisible : is_visible(), template : { name : getViewName }, attr : { class : view_name}\"></div>"
+		ko.addTemplate "app-view", "<div data-bind='foreach : viewList()'><div data-bind=\"fadeVisible : is_visible(), template : { name : getViewName }, attr : { id : templateID}\"></div></div>"
+		ko.addTemplate "app-slide", "<div data-bind=\"style : {width : transition.opts.width + 'px', 'overflow-x' : 'hidden'}\"><div class='view-slider' data-bind=\"style : {width : ((viewCount()+1) * transition.opts.width) + 'px', clear : 'both', 'margin-left' : transition.opts['slide-left']() + 'px'}\"><div data-bind='foreach : viewList()'><div data-bind=\"template : { name : getViewName }, attr : {id : templateID}, style : {width : owner.transition.opts.width + 'px', float : 'left'}\"></div></div></div><div style='clear: both;'></div></div>"
 		super('app', null)
 		@current_user = new @account_model()
 		@is_logged_in = ko.dependentObservable ->

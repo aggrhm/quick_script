@@ -9,7 +9,7 @@ module QuickScript
 		end
 
 		def include_view_box
-			raw "<div class='view-box' data-bind=\"template: {name : 'app-view', foreach : viewList() }\"></div>"
+			raw "<div data-bind=\"template: {name : getViewBoxTemplate}, attr : {class : 'view-box ' + transition.type}\"></div>"
 		end
 
 		def include_quick_script_init(app_model)
