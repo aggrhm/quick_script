@@ -732,9 +732,11 @@ class @ModelAdapter
 		for prop,val of opts
 			@[prop] = val
 	load : (opts)->
+		opts.data["_cv"] = Date.now() if opts.data?
 		$.getJSON @load_url, opts.data, (resp)->
 			opts.success(resp)
 	index : (opts)->
+		opts.data["_cv"] = Date.now() if opts.data?
 		$.getJSON (@index_url || @load_url), opts.data, (resp)->
 			opts.success(resp)
 	save_old : (opts)->
