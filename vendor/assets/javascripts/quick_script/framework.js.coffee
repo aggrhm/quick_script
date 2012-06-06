@@ -663,7 +663,7 @@ class @View
 		@has_error = ko.computed (-> @error().length > 0), this
 		@view = null
 		@task = ko.observable(null)
-		@transition = {type : 'fade', opts : {'slide-left' : ko.observable(0)}}
+		@transition = {type : 'fade', opts : {'slide_left' : ko.observable(0)}}
 		@init()
 		@setupViewBox()
 	show : ->
@@ -677,7 +677,7 @@ class @View
 				if val != null
 					left = @getViewBoxIndex(val) * @transition.opts.width * -1
 					console.log(left)
-					@transition.opts['slide-left'](left)
+					@transition.opts.slide_left(left)
 	load : ->
 	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
@@ -827,8 +827,21 @@ class @AppView extends @View
 		@path = ko.observable(null)
 		@path_parts = []
 		@account_model = Model
-		ko.addTemplate "app-view", "<div data-bind='foreach : viewList()'><div data-bind=\"fadeVisible : is_visible(), template : { name : getViewName }, attr : { id : templateID}\"></div></div>"
-		ko.addTemplate "app-slide", "<div data-bind=\"style : {width : transition.opts.width + 'px', 'overflow-x' : 'hidden'}\"><div class='view-slider' data-bind=\"style : {width : ((viewCount()+1) * transition.opts.width) + 'px', clear : 'both', 'margin-left' : transition.opts['slide-left']() + 'px'}\"><div data-bind='foreach : viewList()'><div data-bind=\"template : { name : getViewName }, attr : {id : templateID}, style : {width : owner.transition.opts.width + 'px', float : 'left'}\"></div></div></div><div style='clear: both;'></div></div>"
+		ko.addTemplate "app-view", """
+				<div data-bind='foreach : viewList()'>
+					<div data-bind="fadeVisible : is_visible(), template : { name : getViewName }, attr : { id : templateID}"></div>
+				</div>
+			"""
+		ko.addTemplate "app-slide", """
+				<div data-bind="style : {width : transition.opts.width + 'px', overflowX : 'hidden'}">
+					<div class='view-slider' data-bind="style : {width : ((viewCount()+1) * transition.opts.width) + 'px', height : transition.opts.height + 'px', clear : 'both', marginLeft : transition.opts.slide_left() + 'px', 'position' : 'relative'}">
+						<div data-bind='foreach : viewList()'>
+							<div data-bind="template : { name : getViewName }, attr : {id : templateID}, style : {width : owner.transition.opts.width + 'px', left : ($index() * owner.transition.opts.width) + 'px', 'position' : 'absolute'}"></div>
+						</div>
+					</div>
+					<div style='clear: both;'></div>
+				</div>
+			"""
 		super('app', null)
 		@current_user = new @account_model()
 		@is_logged_in = ko.dependentObservable ->
