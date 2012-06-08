@@ -598,6 +598,7 @@ class @Collection
 	hasItems : ->
 		@items().length > 0
 	addItem : (item)->
+		item.collection = this
 		cls = @view_model()
 		view = new cls("view-#{item.id()}", @view_owner(), item)
 		@items.push(item)
@@ -778,6 +779,7 @@ class @AccountAdapter
 		@enter_code_url = "/account/enter_code"
 		@reset_url = "/account/reset"
 		@save_url = "/account/save"
+		@load_url = "/account/load"
 		@login_key = "email"
 		@password_key = "password"
 		for prop,val of opts
@@ -799,6 +801,15 @@ class @AccountAdapter
 		$.ajax_qs
 			type : 'POST'
 			url : @save_url
+			data : opts.data
+			progress : opts.progress
+			success : opts.success
+			error : opts.error
+	load : (opts) ->
+		opts ||= {}
+		$.ajax_qs
+			type : 'POST'
+			url : @load_url
 			data : opts.data
 			progress : opts.progress
 			success : opts.success
