@@ -20,10 +20,12 @@ module QuickScript
 			end
 		end
 
-		def json_resp(data, meta)
+		def json_resp(data, meta, opts = {})
 			meta = 200 if meta == true 
 			meta = 404 if meta == false 
-			{:data => data, :meta => meta}.to_json
+			opts[:data] = data
+			opts[:meta] = meta
+			opts.to_json
 		end
 
 		def handle_params

@@ -493,6 +493,7 @@ class @Collection
 		@page = ko.observable(1)
 		@limit = ko.observable(@opts.limit || 100)
 		@title = ko.observable(@opts.title || 'Collection')
+		@count = ko.observable(0)
 		@extra_params = ko.observable(@opts.extra_params || {})
 		@model = @opts.model || Model
 		@adapter = @opts.adapter || new ModelAdapter()
@@ -550,6 +551,7 @@ class @Collection
 			success : (resp)=>
 				return if @_reqid != reqid
 				@handleData(resp.data, op)
+				@count(resp.count) if resp.count?
 				callback(resp) if callback?
 				@events.onchange() if @events.onchange?
 		if op == Collection.REPLACE
