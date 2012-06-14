@@ -396,6 +396,7 @@ class @Model
 			success : (resp)=>
 				@handleData(resp.data)
 				callback(resp) if callback?
+				@collection.removeItemById(@id()) if ((resp.meta == 200) && @collection?)
 			error : =>
 				console.log("Delete error encountered")
 				@model_state(ko.modelStates.READY)
@@ -628,6 +629,9 @@ class @Collection
 			if callback(item, idx)
 				@items.splice(idx, 1)
 				@views.splice(idx, 1)
+	removeItemById : (id)->
+		@removeIf (item)=>
+			item.id() == id
 	getTemplate : ->
 		@template()
 	reset : ->
@@ -846,10 +850,10 @@ class @AppView extends @View
 				</div>
 			"""
 		ko.addTemplate "app-slide", """
-				<div data-bind="style : {width : transition.opts.width + 'px', overflowX : 'hidden'}">
+				<div data-bind="style : {width : transition.opts.width + 'px', height : transition.opts.height + 'px', overflowX : 'hidden', overflowY : 'hidden'}">
 					<div class='view-slider' data-bind="style : {width : ((viewCount()+1) * transition.opts.width) + 'px', height : transition.opts.height + 'px', clear : 'both', marginLeft : transition.opts.slide_left() + 'px', 'position' : 'relative'}">
 						<div data-bind='foreach : viewList()'>
-							<div data-bind="template : { name : getViewName }, attr : {id : templateID}, style : {width : owner.transition.opts.width + 'px', left : ($index() * owner.transition.opts.width) + 'px', 'position' : 'absolute'}"></div>
+							<div data-bind="template : { name : getViewName }, attr : {id : templateID}, style : {width : owner.transition.opts.width + 'px', height : owner.transition.opts.height + 'px', left : ($index() * owner.transition.opts.width) + 'px', 'position' : 'absolute', overflowY : 'auto'}"></div>
 						</div>
 					</div>
 					<div style='clear: both;'></div>
