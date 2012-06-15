@@ -50,6 +50,17 @@
 					height: opts[2],
 					display: 'inline-block'
 
+	ko.bindingHandlers.checkedInt =
+		init: (element, valueAccessor, allBindingsAccessor) ->
+			observable = valueAccessor()
+			interceptor = ko.computed
+				read: ->
+					return observable().toString()
+				write: (newValue) ->
+					observable(+newValue)
+				owner: this
+			ko.applyBindingsToNode(element, { checked: interceptor })
+
 	ko.bindingHandlers.tinymce =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			options = {

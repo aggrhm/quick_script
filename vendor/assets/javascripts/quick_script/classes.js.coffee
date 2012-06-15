@@ -32,7 +32,7 @@ class @SelectOpts
 		return this
 	find : (val)=>
 		for obj in @options
-			return obj.str if obj.val == val.toString()
+			return obj.str if (obj.val == val.toString())
 		return ""
 
 ## PAGETIMER
