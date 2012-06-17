@@ -694,7 +694,7 @@ class @View
 			@task.subscribe (val)=>
 				if val != null
 					left = @getViewBoxIndex(val) * @transition.opts.width * -1
-					console.log(left)
+					#console.log(left)
 					@transition.opts.slide_left(left)
 	load : ->
 	addView : (name, view_class, tpl) ->
@@ -831,12 +831,10 @@ class @AccountAdapter
 			progress : opts.progress
 			success : opts.success
 			error : opts.error
-	resetPassword : (callback)->
-		@is_loading(true)
+	resetPassword : (login, callback)->
 		opts = {}
-		opts[@username_key] = @username()
+		opts[@login_key] = login
 		$.post @reset_url, opts, (resp) =>
-				@is_loading(false)
 				callback(resp) if callback?
 	send : (opts)->
 		$.ajax_qs
@@ -854,7 +852,6 @@ class @AppView extends @View
 		@app = this
 		@path = ko.observable(null)
 		@path_parts = []
-		@account_model = Model
 		ko.addTemplate "app-view", """
 				<div data-bind='foreach : viewList()'>
 					<div data-bind="fadeVisible : is_visible(), template : { name : getViewName }, attr : { id : templateID}"></div>
@@ -870,11 +867,11 @@ class @AppView extends @View
 					<div style='clear: both;'></div>
 				</div>
 			"""
-		super('app', null)
 		@current_user = new @account_model()
 		@is_logged_in = ko.dependentObservable ->
 				!@current_user.is_new()
 			, this
+		super('app', null)
 	route : (path) ->
 		console.log("Loading path '#{path}'")
 		@path(path)
