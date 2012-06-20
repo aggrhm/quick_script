@@ -274,6 +274,7 @@
 	ko.modelStates.EDITING = 4
 	ko.modelStates.INSERTING = 5
 	ko.modelStates.APPENDING = 6
+	ko.modelStates.UPDATING = 7
 	ko.editors = {}
 
 jQuery.fn.extend
@@ -568,6 +569,8 @@ class @Collection
 				@events.onchange() if @events.onchange?
 		if op == Collection.REPLACE
 			@model_state(ko.modelStates.LOADING)
+		if op == Collection.UPDATE
+			@model_state(ko.modelStates.UPDATING)
 		else if op == Collection.APPEND
 			@model_state(ko.modelStates.APPENDING)
 		else if op == Collection.INSERT
@@ -576,7 +579,7 @@ class @Collection
 		@scope(scope) if scope?
 		@_load(@scope(), Collection.REPLACE, callback)
 	update : (callback)->
-		@_load(@scope(), Collection.REPLACE, callback)
+		@_load(@scope(), Collection.UPDATE, callback)
 	insert : (scope, callback)->
 		@_load(scope, Collection.INSERT, callback)
 	append : (scope, callback)->
@@ -593,7 +596,7 @@ class @Collection
 			models.push(model)
 			views.push(new cls("view-#{model.id()}", @view_owner(), model))
 
-		if !op? || op == Collection.REPLACE
+		if !op? || op == Collection.REPLACE || op == Collection.UPDATE
 			@items(models)
 			@views(views)
 		else if op == Collection.INSERT
@@ -611,6 +614,8 @@ class @Collection
 		@update()
 	hasItems : ->
 		@items().length > 0
+	length : ->
+		@items().length
 	addItem : (item)->
 		item.collection = this
 		cls = @view_model()
@@ -663,6 +668,7 @@ class @Collection
 Collection.REPLACE = 0
 Collection.INSERT = 1
 Collection.APPEND = 2
+Collection.UPDATE = 3
 
 class @View
 	init : ->
@@ -851,6 +857,7 @@ class @AppView extends @View
 	constructor : (user_model)->
 		@app = this
 		@path = ko.observable(null)
+		@previous_path = ko.observable(null)
 		@path_parts = []
 		ko.addTemplate "app-view", """
 				<div data-bind='foreach : viewList()'>
@@ -874,6 +881,7 @@ class @AppView extends @View
 		super('app', null)
 	route : (path) ->
 		console.log("Loading path '#{path}'")
+		@previous_path(@path())
 		@path(path)
 		@path_parts = @path().split('/')
 		@handlePath(path)
