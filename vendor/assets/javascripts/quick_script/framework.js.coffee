@@ -664,6 +664,7 @@ class @Collection
 		for item in @items()
 			objs.push(item.toAPI())
 		objs
+		JSON.stringify(objs)
 
 Collection.REPLACE = 0
 Collection.INSERT = 1

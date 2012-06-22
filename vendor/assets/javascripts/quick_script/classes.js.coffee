@@ -124,7 +124,7 @@ Overlay.add = (vm, tmp, options, cls) ->
 		cls = cls || ''
 		options = {} if !options?
 		options['z-index'] = Overlay.instance.zindex + 10
-		$('body').prepend("<div class='backdrop' id='backdrop-#{id}' style='z-index: #{(Overlay.instance.zindex + 9)}'></div><div id='overlay-" + id + "' class='overlay'><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
+		$('body').prepend("<div class='backdrop' id='backdrop-#{id}' style='z-index: #{(Overlay.instance.zindex + 9)}'></div><div id='overlay-" + id + "' class='overlay'><img class='overlay-close' src='/assets/remove.png' data-bind='click : hideOverlay'/><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
 		$('#overlay-' + id).css(options)
 		$('#overlay-' + id).addClass(cls)
 		$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
