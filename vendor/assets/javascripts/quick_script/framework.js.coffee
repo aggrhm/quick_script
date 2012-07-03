@@ -18,7 +18,7 @@
 	ko.bindingHandlers.handleEnter =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			$(element).keypress (ev)->
-				if (ev.keyCode == 13)
+				if (ev.keyCode == 13 && !ev.shiftKey)
 					action = valueAccessor()
 					val = bindingsAccessor().value
 					val($(element).val())
@@ -688,7 +688,7 @@ class @View
 		@has_error = ko.computed (-> @error().length > 0), this
 		@view = null
 		@task = ko.observable(null)
-		@transition = {type : 'fade', opts : {'slide_left' : ko.observable(0)}}
+		@transition = {type : 'fade', opts : {'slide_left' : ko.observable(0), 'working' : ko.observable(false)}}
 		@init()
 		@setupViewBox()
 	show : ->
@@ -703,6 +703,9 @@ class @View
 					left = @getViewBoxIndex(val) * @transition.opts.width * -1
 					#console.log(left)
 					@transition.opts.slide_left(left)
+					clearTimeout(@transition.opts.wtid) if @transition.opts.wtid?
+					@transition.opts.working(true)
+					@transition.opts.wtid = setTimeout (=> @transition.opts.working(false)) , 1000
 	load : ->
 	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
@@ -869,7 +872,7 @@ class @AppView extends @View
 				<div data-bind="style : {width : transition.opts.width + 'px', height : transition.opts.height + 'px', overflowX : 'hidden', overflowY : 'hidden'}">
 					<div class='view-slider' data-bind="style : {width : ((viewCount()+1) * transition.opts.width) + 'px', height : transition.opts.height + 'px', clear : 'both', marginLeft : transition.opts.slide_left() + 'px', 'position' : 'relative'}">
 						<div data-bind='foreach : viewList()'>
-							<div data-bind="template : { name : getViewName }, attr : {id : templateID}, style : {width : owner.transition.opts.width + 'px', height : owner.transition.opts.height + 'px', left : ($index() * owner.transition.opts.width) + 'px', 'position' : 'absolute', overflowY : 'auto'}"></div>
+							<div data-bind="template : { name : getViewName }, attr : {id : templateID}, style : {width : owner.transition.opts.width + 'px', height : owner.transition.opts.height + 'px', left : ($index() * owner.transition.opts.width) + 'px', 'position' : 'absolute', overflowY : 'auto'}, visible : is_visible() || owner.transition.opts.working()"></div>
 						</div>
 					</div>
 					<div style='clear: both;'></div>
