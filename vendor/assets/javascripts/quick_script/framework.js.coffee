@@ -61,6 +61,48 @@
 				owner: this
 			ko.applyBindingsToNode(element, { checked: interceptor })
 
+	ko.bindingHandlers.untabbable =
+		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			if (valueAccessor())
+				$(element).find('iframe, input, textarea, a, iframe').attr('tabIndex', -1)
+			else
+				$(element).find('input, textarea, a, iframe').removeAttr('tabIndex')
+
+	ko.bindingHandlers.carousel =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+				idx = viewModel.getViewBoxIndex(viewModel.task())
+				new_el = $(element).find('.slide-item-' + idx)
+				new_el.addClass('active')
+		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
+				opts = viewModel.transition.opts
+				if viewModel.task() != null
+					idx = viewModel.getViewBoxIndex(viewModel.task())
+					console.log('updating slider to ' + idx)
+					old_idx = opts.slide_index()
+					new_el = $(element).find('.slide-item-' + idx)
+					old_el = $(element).find('.slide-item-' + old_idx)
+					if idx > old_idx
+						new_el.addClass('next')
+						new_el[0].offsetWidth if new_el[0]?
+						new_el.addClass('left')
+						old_el.addClass('left')
+					else
+						new_el.addClass('prev')
+						new_el[0].offsetWidth if new_el[0]?
+						new_el.addClass('right')
+						old_el.addClass('right')
+					setTimeout ->
+						new_el.removeClass('next left prev right')
+						old_el.removeClass('next left prev right')
+						old_el.removeClass('active')
+						new_el.addClass('active')
+					, 600
+					opts.slide_index(idx)
+
+	ko.bindingHandlers.bindelem =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			viewModel.element = element
+
 	ko.bindingHandlers.tinymce =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			options = {
@@ -688,7 +730,10 @@ class @View
 		@has_error = ko.computed (-> @error().length > 0), this
 		@view = null
 		@task = ko.observable(null)
-		@transition = {type : 'fade', opts : {'slide_left' : ko.observable(0), 'working' : ko.observable(false)}}
+		@prev_task = ko.observable(null)
+		@transition = {type : 'fade', opts : {'slide_pos' : ko.observable(0), 'slide_index' : ko.observable(0)}}
+		@transition.has_slide_css = (css, idx)=>
+			@transition.opts['slide_css' + css]().includes? idx
 		@init()
 		@setupViewBox()
 	show : ->
@@ -699,13 +744,29 @@ class @View
 	setupViewBox : ->
 		if @transition.type == 'slide'
 			@task.subscribe (val)=>
+				return
+				opts = @transition.opts
 				if val != null
-					left = @getViewBoxIndex(val) * @transition.opts.width * -1
-					#console.log(left)
-					@transition.opts.slide_left(left)
-					clearTimeout(@transition.opts.wtid) if @transition.opts.wtid?
-					@transition.opts.working(true)
-					@transition.opts.wtid = setTimeout (=> @transition.opts.working(false)) , 1000
+					idx = @getViewBoxIndex(val)
+					old_idx = opts.slide_index()
+					new_el = $(@element).find('.slide-item-' + idx)
+					old_el = $(@element).find('.slide-item-' + old_idx)
+					if idx > old_idx
+						new_el.addClass('next')
+						new_el[0].offsetWidth if new_el[0]?
+						new_el.addClass('left')
+						old_el.addClass('left')
+					else
+						new_el.addClass('prev')
+						new_el[0].offsetWidth if new_el[0]?
+						new_el.addClass('right')
+						old_el.addClass('right')
+					setTimeout ->
+						new_el.removeClass('next left prev right')
+						old_el.removeClass('active next left prev right')
+						new_el.addClass('active')
+					, 600
+					opts.slide_index(idx)
 	load : ->
 	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
@@ -727,6 +788,7 @@ class @View
 		if (last_view != view)
 			console.log("View [#{view.name}] selected.")
 			@view = view
+			@prev_task(@task())
 			@task(view.name)
 			last_view.hide() if last_view?
 			view.show()
@@ -747,6 +809,17 @@ class @View
 	getViewBoxIndex : (view_name) ->
 		arr = Object.keys(@views)
 		arr.indexAt(view_name)
+	getViewByIndex : (idx) ->
+		keys = Object.keys(@views)
+		@views[keys[idx]]
+	afterRender : =>
+		if @transition.type == 'slide'
+			setTimeout =>
+				console.log('after render')
+				idx = @getViewBoxIndex(@task())
+				new_el = $(@element).find('.slide-item-' + idx)
+				new_el.addClass('active')
+			500
 	showAsOverlay : (tmp, opts, cls)=>
 		Overlay.add(this, tmp, opts, cls)
 	hideOverlay : =>
@@ -865,17 +938,14 @@ class @AppView extends @View
 		@path_parts = []
 		ko.addTemplate "app-view", """
 				<div data-bind='foreach : viewList()'>
-					<div data-bind="fadeVisible : is_visible(), template : { name : getViewName }, attr : { id : templateID}"></div>
+					<div data-bind="fadeVisible : is_visible(), template : { name : getViewName, afterRender : afterRender}, attr : { id : templateID}, bindelem : true"></div>
 				</div>
 			"""
 		ko.addTemplate "app-slide", """
-				<div data-bind="style : {width : transition.opts.width + 'px', height : transition.opts.height + 'px', overflowX : 'hidden', overflowY : 'hidden'}">
-					<div class='view-slider' data-bind="style : {width : ((viewCount()+1) * transition.opts.width) + 'px', height : transition.opts.height + 'px', clear : 'both', marginLeft : transition.opts.slide_left() + 'px', 'position' : 'relative'}">
-						<div data-bind='foreach : viewList()'>
-							<div data-bind="template : { name : getViewName }, attr : {id : templateID}, style : {width : owner.transition.opts.width + 'px', height : owner.transition.opts.height + 'px', left : ($index() * owner.transition.opts.width) + 'px', 'position' : 'absolute', overflowY : 'auto'}, visible : is_visible() || owner.transition.opts.working()"></div>
-						</div>
+				<div class="view-slider" data-bind="style : {width : transition.opts.width + 'px', height : transition.opts.height + 'px'}, carousel : true">
+					<div data-bind='foreach : viewList()'>
+						<div class="slide-item" data-bind="template : { name : getViewName }, attr : {id : templateID, class : 'slide-item slide-item-' + $index()}, css : {}, style : {width : owner.transition.opts.width + 'px', height : owner.transition.opts.height + 'px'}, bindelem : true"></div>
 					</div>
-					<div style='clear: both;'></div>
 				</div>
 			"""
 		@current_user = new @account_model()
@@ -911,4 +981,5 @@ class @AppView extends @View
 
 	# layout bindings
 	$('body').koBind(appViewModel)
+	appViewModel.afterRender()
 

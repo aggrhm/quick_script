@@ -11,6 +11,9 @@ Array.prototype.itemAt = (val)->
 Array.prototype.pushOnce = (item) ->
 	if (!this.includes(item))
 		this.push(item)
+Array.prototype.remove = (item) ->
+	idx = this.indexOf(item)
+	this.splice(idx, 1) if idx > -1
 Date.from_utc = (utc) ->
 	new Date(utc * 1000)
 Date.prototype.to_utc = ->
