@@ -455,6 +455,8 @@ class @Model
 				console.log("Delete error encountered")
 				@model_state(ko.modelStates.READY)
 		@model_state(ko.modelStates.SAVING)
+	removeFromCollection : =>
+		@collection.removeItemById(@id()) if @collection?
 	toJS : (flds)=>
 		flds ||= @fields
 		obj = {}
@@ -527,7 +529,7 @@ class @FileModel extends @Model
 		@input.is_image = ko.computed ->
 				if @input.present() then @input.file().type.match('image.*') else false
 			, this
-		@input.clear = -> @input.files([])
+		@input.clear = => @input.files([])
 	reset : ->
 		super
 		@input.files([])
@@ -922,6 +924,14 @@ class @AccountAdapter
 	send : (opts)->
 		$.ajax_qs
 			type : 'POST'
+			url : opts.url
+			data : opts.data
+			progress : opts.progress
+			success : opts.success
+			error : opts.error
+	delete : (opts)->
+		$.ajax_qs
+			type : 'DELETE'
 			url : opts.url
 			data : opts.data
 			progress : opts.progress
