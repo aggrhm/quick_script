@@ -25,6 +25,10 @@
 					action.call(viewModel)
 					return false
 
+	ko.bindingHandlers.touchstart =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			element.addEventListener('touchstart', valueAccessor().bind(viewModel))
+
 	ko.bindingHandlers.validate =
 		init : (element, valueAccessor) ->
 			opts = valueAccessor()
@@ -70,34 +74,38 @@
 
 	ko.bindingHandlers.carousel =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			setTimeout ->
 				idx = viewModel.getViewBoxIndex(viewModel.task())
-				new_el = $(element).find('.slide-item-' + idx)
-				new_el.addClass('active')
+				new_el = $(element).find('.slide-item-' + idx).first()
+				#new_el.addClass('active')
+			, 0
 		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
 				opts = viewModel.transition.opts
 				if viewModel.task() != null
-					idx = viewModel.getViewBoxIndex(viewModel.task())
-					console.log('updating slider to ' + idx)
-					old_idx = opts.slide_index()
-					new_el = $(element).find('.slide-item-' + idx)
-					old_el = $(element).find('.slide-item-' + old_idx)
-					if idx > old_idx
-						new_el.addClass('next')
-						new_el[0].offsetWidth if new_el[0]?
-						new_el.addClass('left')
-						old_el.addClass('left')
-					else
-						new_el.addClass('prev')
-						new_el[0].offsetWidth if new_el[0]?
-						new_el.addClass('right')
-						old_el.addClass('right')
 					setTimeout ->
-						new_el.removeClass('next left prev right')
-						old_el.removeClass('next left prev right')
-						old_el.removeClass('active')
-						new_el.addClass('active')
-					, 600
-					opts.slide_index(idx)
+						idx = viewModel.getViewBoxIndex(viewModel.task())
+						console.log(viewModel.name + ': updating slider to ' + idx)
+						old_idx = opts.slide_index()
+						new_el = $(element).find('.slide-item-' + idx).first()
+						old_el = $(element).find('.slide-item-' + old_idx).first()
+						if idx > old_idx
+							new_el.addClass('next')
+							new_el[0].offsetWidth if new_el[0]?
+							old_el.addClass('left')
+							new_el.addClass('left')
+						else
+							new_el.addClass('prev')
+							new_el[0].offsetWidth if new_el[0]?
+							old_el.addClass('right')
+							new_el.addClass('right')
+						setTimeout ->
+							new_el.removeClass('next left prev right')
+							old_el.removeClass('next left prev right')
+							old_el.removeClass('active')
+							new_el.addClass('active')
+						, 600
+						opts.slide_index(idx)
+					, 0
 
 	ko.bindingHandlers.bindelem =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
@@ -346,13 +354,13 @@ jQuery.ajax_qs = (opts)->
 				resp = eval("(" + req.responseText + ")")
 				opts.success(resp)
 			else
-				opts.error() if opts.error?
+				opts.error(req.status) if opts.error?
 	req.upload.addEventListener('error', opts.error) if opts.error?
 	if opts.progress?
 		req.upload.addEventListener 'progress', (ev)->
 			opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
 	req.open opts.type, opts.url, true
-	req.setRequestHeader 'X-CSRF-Token', jQuery('meta[name="csrf-token"]').attr('content')
+	req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
 	req.send(data)
 	return req
 
@@ -427,9 +435,11 @@ class @Model
 			success : (resp)=>
 				@handleData(resp.data)
 				callback(resp) if callback?
-			error : =>
-				console.log("Save error encountered")
+			error : (err)=>
+				err = err || 'unknown'
+				console.log("Save error encountered [" + err + "]")
 				@model_state(ko.modelStates.READY)
+				callback({meta : 500, data : ['An error occurred']}) if callback?
 		@model_state(ko.modelStates.SAVING)
 	reset : ->
 		#@model_state(ko.modelStates.LOADING)
@@ -508,11 +518,11 @@ class @FileModel extends @Model
 		@input = {}
 		@input.files = ko.observable([])
 		@input.file_uri = ko.observable('')
-		@input.files.subscribe (val)->
-			if val.length > 0
+		@input.files.subscribe (val)=>
+			if val.length > 0 && FileReader?
 				@input.file_uri('')
 				reader = new FileReader()
-				reader.onload = (ev)=>
+				reader.onloadend = (ev)=>
 					console.log('input loaded')
 					@input.file_uri(ev.target.result)
 				reader.readAsDataURL(val[0])
@@ -527,10 +537,10 @@ class @FileModel extends @Model
 				if @input.present() then @input.file().name else ""
 			, this
 		@input.is_image = ko.computed ->
-				if @input.present() then @input.file().type.match('image.*') else false
+				if (@input.present() && @input.file().type?) then @input.file().type.match('image.*') else false
 			, this
 		@input.clear = => @input.files([])
-	reset : ->
+	reset : =>
 		super
 		@input.files([])
 	toAPI : =>
@@ -588,6 +598,9 @@ class @Collection
 			, this
 		@hasItems = ko.dependentObservable ->
 				@items().length > 0
+			, this
+		@length = ko.computed ->
+				@items().length
 			, this
 		@init()
 	setScope : (scp, args) =>
@@ -698,6 +711,9 @@ class @Collection
 		@page(1)
 		@items([])
 		@views([])
+	absorb : (model) =>
+		@reset()
+		@handleData(model.toJS())
 	toJS : =>
 		objs = []
 		for item in @items()
@@ -816,12 +832,13 @@ class @View
 		@views[keys[idx]]
 	afterRender : =>
 		if @transition.type == 'slide'
+			return
 			setTimeout =>
 				console.log('after render')
 				idx = @getViewBoxIndex(@task())
 				new_el = $(@element).find('.slide-item-' + idx)
 				new_el.addClass('active')
-			500
+			, 500
 	showAsOverlay : (tmp, opts, cls)=>
 		Overlay.add(this, tmp, opts, cls)
 	hideOverlay : =>
@@ -832,42 +849,35 @@ class @ModelAdapter
 		@save_url = null
 		@load_url = null
 		@index_url = null
+		@host = ''
 		for prop,val of opts
 			@[prop] = val
 	load : (opts)->
 		opts.data["_cv"] = Date.now() if opts.data?
-		$.getJSON @load_url, opts.data, (resp)->
+		$.getJSON (@host + @load_url), opts.data, (resp)->
 			opts.success(resp)
 	index : (opts)->
 		opts.data["_cv"] = Date.now() if opts.data?
-		$.getJSON (@index_url || @load_url), opts.data, (resp)->
+		$.getJSON (@host + (@index_url || @load_url)), opts.data, (resp)->
 			opts.success(resp)
 	save_old : (opts)->
 		$.ajax
 			type : 'POST'
-			url : @save_url
+			url : @host + @save_url
 			data : opts.data
 			success : opts.success
 			error : opts.error
 	save : (opts)->
-		$.ajax_qs
-			type : 'POST'
-			url : @save_url
-			data : opts.data
-			progress : opts.progress
-			success : opts.success
-			error : opts.error
+		opts.url = @save_url
+		@send opts
 	send : (opts)->
-		$.ajax_qs
-			type : 'POST'
-			url : opts.url
-			data : opts.data
-			success : opts.success
-			error : opts.error
+		opts.type = 'POST' if !opts.type?
+		opts.url = @host + opts.url
+		$.ajax_qs opts
 	delete : (opts)->
 		$.ajax
 			type : 'DELETE'
-			url : @save_url
+			url : @host + @save_url
 			data : opts.data
 			success : opts.success
 			error : opts.error
@@ -876,33 +886,43 @@ class @ModelAdapter
 
 class @AccountAdapter
 	constructor : (opts)->
-		@login_url = "/account/login"
-		@register_url = "/account/register"
-		@enter_code_url = "/account/enter_code"
-		@reset_url = "/account/reset"
-		@save_url = "/account/save"
-		@load_url = "/account/load"
+		@login_url = "/api/account/login"
+		@logout_url = "/api/account/logout"
+		@register_url = "/api/account/register"
+		@enter_code_url = "/api/account/enter_code"
+		@reset_url = "/api/account/reset"
+		@save_url = "/api/account/save"
+		@load_url = "/api/account/load"
 		@login_key = "email"
 		@password_key = "password"
+		@host = ""
 		for prop,val of opts
 			@[prop] = val
 	login : (username, password, callback)->
 		opts = {}
 		opts[@login_key] = username
 		opts[@password_key] = password
-		$.post @login_url, opts, (resp) =>
-			callback(resp)
+		@send
+			url : @login_url
+			data : opts
+			success : (resp) =>
+				callback(resp)
+	logout : (callback)->
+		@send
+			url : @logout_url
+			success : (resp) =>
+				callback(resp)
 	register : (opts, callback)->
-		$.post @register_url, opts, (resp) =>
+		$.post (@host + @register_url), opts, (resp) =>
 			callback(resp)
 	sendInviteCode : (code, callback)->
-		$.post @enter_code_url, {code : code}, (resp) =>
+		$.post (@host + @enter_code_url), {code : code}, (resp) =>
 			callback(resp)
 	save : (opts) ->
 		opts ||= {}
 		$.ajax_qs
 			type : 'POST'
-			url : @save_url
+			url : @host + @save_url
 			data : opts.data
 			progress : opts.progress
 			success : opts.success
@@ -911,7 +931,7 @@ class @AccountAdapter
 		opts ||= {}
 		$.ajax_qs
 			type : 'POST'
-			url : @load_url
+			url : @host + @load_url
 			data : opts.data
 			progress : opts.progress
 			success : opts.success
@@ -919,20 +939,22 @@ class @AccountAdapter
 	resetPassword : (login, callback)->
 		opts = {}
 		opts[@login_key] = login
-		$.post @reset_url, opts, (resp) =>
+		$.post (@host + @reset_url), opts, (resp) =>
 				callback(resp) if callback?
 	send : (opts)->
+		def_err_fn = ->
+			opts.success({meta : 500, data : ['An error occurred.']})
 		$.ajax_qs
 			type : 'POST'
-			url : opts.url
+			url : @host + opts.url
 			data : opts.data
 			progress : opts.progress
 			success : opts.success
-			error : opts.error
+			error : opts.error || def_err_fn
 	delete : (opts)->
 		$.ajax_qs
 			type : 'DELETE'
-			url : opts.url
+			url : @host + opts.url
 			data : opts.data
 			progress : opts.progress
 			success : opts.success
@@ -952,7 +974,7 @@ class @AppView extends @View
 				</div>
 			"""
 		ko.addTemplate "app-slide", """
-				<div class="view-slider" data-bind="style : {width : transition.opts.width + 'px', height : transition.opts.height + 'px'}, carousel : true">
+				<div class="view-slider" data-bind="style : {width : transition.opts.width + 'px', height : transition.opts.height + 'px'}, carousel : task">
 					<div data-bind='foreach : viewList()'>
 						<div class="slide-item" data-bind="template : { name : getViewName }, attr : {id : templateID, class : 'slide-item slide-item-' + $index()}, css : {}, style : {width : owner.transition.opts.width + 'px', height : owner.transition.opts.height + 'px'}, bindelem : true"></div>
 					</div>
@@ -974,7 +996,7 @@ class @AppView extends @View
 		console.log(data)
 		@current_user.handleData(data) if data != null
 	redirectTo : (path) ->
-		$.history.load(path)
+		History.pushState(null, null, path)
 
 @initApp = ->
 	appViewModel = @appViewModel
@@ -982,14 +1004,20 @@ class @AppView extends @View
 	appViewModel.setUser(@CURRENT_USER)
 
 	# navigation
-	$.history.init (hash) ->
-			if hash == ""
-				appViewModel.route('/')
-			else
-				appViewModel.route(hash)
-		, { unescape : ",/" }
+	History.Adapter.bind window, 'statechange', ->
+		appViewModel.route(History.getRelativeUrl())
 
 	# layout bindings
 	$('body').koBind(appViewModel)
 	appViewModel.afterRender()
+
+	# override links
+	$('a').live 'click', ->
+		if this.href.includes(History.getRootUrl())
+			History.pushState null, null, this.href
+			return false
+		else
+			return true
+
+	appViewModel.route(History.getRelativeUrl())
 

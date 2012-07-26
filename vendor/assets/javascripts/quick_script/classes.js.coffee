@@ -27,6 +27,10 @@ String.prototype.truncate = (val)->
 	ret = ret + "..." if this.length > val
 	return ret
 
+History.getRelativeUrl = ->
+	url = History.getState().url
+	"/#{url.replace(History.getRootUrl(), '')}"
+
 class @SelectOpts
 	constructor : ->
 		@options = []
