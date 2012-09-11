@@ -9,7 +9,7 @@ module QuickScript
 		end
 
 		def include_view_box
-			raw "<div data-bind=\"template: {name : getViewBoxTemplate}, attr : {class : 'view-box ' + transition.type}\"></div>"
+			raw "<div data-bind=\"template: {name : getViewBoxTemplate}, attr : {class : 'view-box view-box-' + transition.type}\"></div>"
 		end
 
 		def include_quick_script_init(app_model)

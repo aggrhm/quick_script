@@ -572,6 +572,9 @@ class @Collection
 		@is_loading = ko.dependentObservable ->
 				@model_state() == ko.modelStates.LOADING
 			, this
+		@is_updating = ko.dependentObservable ->
+				(@model_state() == ko.modelStates.LOADING) || (@model_state() == ko.modelStates.UPDATING)
+			, this
 		@is_appending = ko.dependentObservable ->
 				@model_state() == ko.modelStates.APPENDING
 			, this
@@ -884,6 +887,18 @@ class @ModelAdapter
 	add_method : (fn_name, fn)->
 		@[fn_name] = fn.bind(this)
 
+class @LocalStore
+LocalStore.save = (key, val, exp_days, callback)->
+	Lawnchair ->
+		@save {key : key, val : val}, callback
+LocalStore.get = (key, callback)->
+	Lawnchair ->
+		@get key, (data)->
+			if data?
+				callback(data.val)
+			else
+				callback(null)
+
 class @AccountAdapter
 	constructor : (opts)->
 		@login_url = "/api/account/login"
@@ -997,6 +1012,8 @@ class @AppView extends @View
 		@current_user.handleData(data) if data != null
 	redirectTo : (path) ->
 		History.pushState(null, null, path)
+	runLater : (callback)->
+		setTimeout callback, 10
 
 @initApp = ->
 	appViewModel = @appViewModel
