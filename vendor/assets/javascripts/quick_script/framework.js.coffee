@@ -278,6 +278,26 @@
 			self[field](val)
 		if (typeof(field) == "string")
 			self.fields.pushOnce(field)
+	
+	ko.validate_for = (field, fn, msg, self) ->
+		self.validations = {} unless self.validations?
+		self.validations[field] = [] unless self.validations[field]?
+		self.validations[field].push {test : fn, msg : msg}
+		self[field].is_valid = ko.computed ->
+			valid = true
+			for val_obj in self.validations[field]
+				valid &&= val_obj.test(self[field]())
+			valid
+		, self unless self[field].is_valid?
+
+
+	ko.validate_fields = (fields, fn, self) ->
+		msgs = []
+		for field in fields
+			for val_obj in self.validations[field]
+				if !val_obj.test(self[field]())
+					msgs.push val_obj.msg
+		fn(msgs)
 
 	ko.addSubModel = (field, model, self) ->
 		if self[field]?
