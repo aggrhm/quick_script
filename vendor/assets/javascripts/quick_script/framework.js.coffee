@@ -230,22 +230,10 @@
 	ko.bindingHandlers.tip =
 		init : (element, valueAccessor) ->
 			opts = valueAccessor()
-			content = ko.utils.unwrapObservable(opts['content'])
-			$(element).poshytip
-				className: 'tip-twitter',
-				showTimeout: 1,
-				alignTo: 'target',
-				alignX: 'center',
-				offsetY: 5,
-				allowTipHover: false,
-				fade: false,
-				slide: false,
-				content: content
-		update : (element, valueAccessor) ->
-			opts = valueAccessor()
-			content = ko.utils.unwrapObservable(opts['content'])
-			$(element).poshytip('update', content)
-
+			$(element).tooltip
+				placement: opts.placement || 'bottom'
+				title: ->
+					ko.utils.unwrapObservable(opts.content)
 
 	ko.absorbModel = (data, self) ->
 		for prop, val of data

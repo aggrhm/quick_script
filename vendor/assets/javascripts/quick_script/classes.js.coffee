@@ -31,6 +31,7 @@ History.getRelativeUrl = ->
 	url = History.getState().url
 	"/#{url.replace(History.getRootUrl(), '')}"
 
+## SELECTOPTS
 class @SelectOpts
 	constructor : ->
 		@options = []
@@ -122,6 +123,8 @@ class @Overlay
 	constructor : ->
 		@zindex = 100
 		@notifyTimer = null
+		$(document).click ->
+			Overlay.removePopovers()
 Overlay.instance = new Overlay()
 Overlay.closeDialog = ->
 		@remove('dialog')
@@ -130,17 +133,23 @@ Overlay.add = (vm, tmp, options, cls) ->
 		template = tmp
 		cls = cls || ''
 		options = {} if !options?
-		options['z-index'] = Overlay.instance.zindex + 10
-		$('body').prepend("<div class='backdrop' id='backdrop-#{id}' style='z-index: #{(Overlay.instance.zindex + 9)}'></div><div id='overlay-" + id + "' class='overlay'><img class='overlay-close' src='/assets/remove.png' data-bind='click : hideOverlay'/><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
-		$('#overlay-' + id).css(options)
-		$('#overlay-' + id).addClass(cls)
-		$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
-		$('.overlay .content').css({'max-height' : ($(window).height() - 100)})
-		$('#backdrop-' + id).click =>
-			console.log('backdrop clicked.')
-			Overlay.remove(id)
-		$('#overlay-' + id).koBind(vm)
-		Overlay.instance.zindex = Overlay.instance.zindex + 10
+		#options['z-index'] = Overlay.instance.zindex + 10
+		$('body').append("<div id='overlay-" + id + "' class='modal hide fade'><button class='close' data-bind='click : hideOverlay'>x</button><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
+		#$('#overlay-' + id).css(options)
+		#$('#overlay-' + id).addClass(cls)
+		#$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
+		#$('.overlay .content').css({'max-height' : ($(window).height() - 100)})
+		#$('#backdrop-' + id).click =>
+			#console.log('backdrop clicked.')
+			#Overlay.remove(id)
+		setTimeout ->
+			$('#overlay-' + id).koBind(vm)
+			$('#overlay-' + id).modal('show')
+			$('#overlay-' + id).on 'hidden', ->
+				$('#overlay-' + id).koClean()
+				$('#overlay-' + id).remove()
+		, 100
+		#Overlay.instance.zindex = Overlay.instance.zindex + 10
 
 Overlay.dialog = (msg, opts) ->
 		vm =
@@ -180,10 +189,42 @@ Overlay.confirm = (msg, opts) ->
 		$('#overlay-confirm').slideDown 'fast'
 
 Overlay.remove = (id) ->
-		$('#overlay-' + id).koClean()
-		$('#overlay-' + id).remove()
-		$('#backdrop-' + id).remove()
+		$('#overlay-' + id).modal('hide')
+		$('#popover-' + id).koClean().remove()
 
+Overlay.removePopovers = ->
+		$('.popover').remove()
+
+Overlay.popover = (el, tmp, vm, opts)->
+	id = vm.name
+	opts.placement = opts.placement || 'bottom'
+	$po = $("<div id='popover-#{id}' class='popover fade'><div class='arrow'></div><div class='popover-inner'><h3 class='popover-title'>#{opts.title}</h3><div class='popover-content' data-bind=\"template : '#{tmp}'\"></div></div></div>")
+	$po.remove().css({ top: 0, left: 0, display: 'block' }).prependTo(document.body)
+	$po.koBind(vm)
+	$po.click (ev)->
+		ev.stopPropagation()
+
+	pos = getElementPosition(el)
+	actualWidth = $po[0].offsetWidth
+	actualHeight = $po[0].offsetHeight
+	#console.log(actualWidth + ' ' + actualHeight)
+	#console.log(pos)
+
+	switch (opts.placement)
+		when 'bottom'
+			tp = {top: pos.top + pos.height, left: pos.left + pos.width / 2 - actualWidth / 2}
+		when 'top'
+			tp = {top: pos.top - actualHeight, left: pos.left + pos.width / 2 - actualWidth / 2}
+		when 'left'
+			tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left - actualWidth}
+		when 'right'
+			tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left + pos.width}
+	
+	tp.display = 'block'
+	$po.css(tp).addClass(opts.placement).addClass('in')
+
+
+## TIMELENGTH
 class @TimeLength
 	constructor : (@date1, @date2)->
 		@date2 = new Date() unless @date2?
@@ -257,4 +298,10 @@ link_to_span = (text) ->
 
 fadeInElement = (elem) ->
 	$(elem).hide().fadeIn()
+
+@getElementPosition = (el)->
+	ret = $(el).offset()
+	ret.width = el.offsetWidth
+	ret.height = el.offsetHeight
+	return ret
 
