@@ -3,5 +3,6 @@
  *= require ./quick_script/bootstrap.min
  *= require ./quick_script/basics
  *= require ./quick_script/elements
+ *= require ./quick_script/fullcalendar
  * require ./quick_script/buttons
  */

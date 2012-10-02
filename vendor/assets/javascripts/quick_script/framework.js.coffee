@@ -15,6 +15,16 @@
 			shouldDisplay = ko.utils.unwrapObservable(valueAccessor())
 			if shouldDisplay then $(element).slideDown('slow') else $(element).slideUp()
 
+	ko.bindingHandlers.buttonStatus =
+		update : (element, valueAccessor) ->
+			opts = ko.utils.unwrapObservable(valueAccessor())
+			if opts[0]
+				$(element).html(opts[2])
+				$(element).attr('disabled', 'true')
+			else
+				$(element).html(opts[1])
+				$(element).removeAttr('disabled')
+
 	ko.bindingHandlers.handleEnter =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			$(element).keypress (ev)->
@@ -199,8 +209,10 @@
 
 	ko.bindingHandlers.calendar =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			console.log('calendar init')
 			$(element).fullCalendar('destroy')
-			$(element).fullCalendar(ko.utils.unwrapObservable(valueAccessor()))
+			opts = $.extend({}, ko.utils.unwrapObservable(valueAccessor()))
+			$(element).fullCalendar(opts)
 			viewModel.calendar = $(element).fullCalendar.bind($(element))
 
 	ko.bindingHandlers.center =

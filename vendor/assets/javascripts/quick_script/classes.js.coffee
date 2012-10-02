@@ -16,6 +16,8 @@ Array.prototype.remove = (item) ->
 	this.splice(idx, 1) if idx > -1
 Date.from_utc = (utc) ->
 	new Date(utc * 1000)
+Date.now_utc = ->
+	Math.round( (new Date()).getTime() / 1000.0)
 Date.prototype.to_utc = ->
 	Math.round(this.getTime() / 1000.0)
 String.prototype.endsWith = (suffix) ->
