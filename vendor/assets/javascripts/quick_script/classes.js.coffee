@@ -270,6 +270,8 @@ class @TimeLength
 			str = "second"
 		attr = str + ( if (val > 1) then "s" else "" )
 		"#{val} #{attr}"
+TimeLength.DAY = 86400
+TimeLength.YEAR = 31536000
 
 # Helpful functions
 loadScript = (u, d) ->

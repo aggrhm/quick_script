@@ -22,8 +22,21 @@
 				$(element).html(opts[2])
 				$(element).attr('disabled', 'true')
 			else
-				$(element).html(opts[1])
+				if opts[3]?
+					txt = "<i class='#{opts[3]}'></i> #{opts[1]}"
+				else
+					txt = opts[1]
+				$(element).html(txt)
 				$(element).removeAttr('disabled')
+
+	ko.bindingHandlers.viewOptions =
+		update : (element, valueAccessor) ->
+			$(element).empty()
+			opts = ko.utils.unwrapObservable(valueAccessor())
+			for view in opts[0]
+				$(element).append("<option value='#{opts[2](view)}'>#{opts[1](view)}</option>")
+			if opts[3]?
+				$(element).prepend("<option>#{opts[3]}</option>")
 
 	ko.bindingHandlers.handleEnter =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
@@ -375,12 +388,14 @@ jQuery.ajax_qs = (opts)->
 				opts.success(resp)
 			else
 				opts.error(req.status) if opts.error?
+			opts.loading(false) if opts.loading?
 	req.upload.addEventListener('error', opts.error) if opts.error?
 	if opts.progress?
 		req.upload.addEventListener 'progress', (ev)->
 			opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
 	req.open opts.type, opts.url, true
 	req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
+	opts.loading(true) if opts.loading?
 	req.send(data)
 	return req
 
@@ -894,8 +909,11 @@ class @ModelAdapter
 		opts.url = @save_url
 		@send opts
 	send : (opts)->
+		def_err_fn = ->
+			opts.success({meta : 500, data : ['An error occurred.']})
 		opts.type = 'POST' if !opts.type?
 		opts.url = @host + opts.url
+		opts.error = def_err_fn unless opts.error?
 		$.ajax_qs opts
 	delete : (opts)->
 		$.ajax
