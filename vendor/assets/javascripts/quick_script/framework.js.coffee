@@ -879,6 +879,8 @@ class @View
 			, 500
 	showAsOverlay : (tmp, opts, cls)=>
 		Overlay.add(this, tmp, opts, cls)
+	showAsPopover : (el, tmp, opts)=>
+		Overlay.popover(el, this, tmp, opts)
 	hideOverlay : =>
 		Overlay.remove(@name)
 

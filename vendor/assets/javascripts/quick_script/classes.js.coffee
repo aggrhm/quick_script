@@ -16,10 +16,18 @@ Array.prototype.remove = (item) ->
 	this.splice(idx, 1) if idx > -1
 Date.from_utc = (utc) ->
 	new Date(utc * 1000)
+Date.from_now = ->
+	new Date()
 Date.now_utc = ->
 	Math.round( (new Date()).getTime() / 1000.0)
 Date.prototype.to_utc = ->
 	Math.round(this.getTime() / 1000.0)
+Date.prototype.remove_time = ->
+	this.setHours(0)
+	this.setMinutes(0)
+	this.setSeconds(0)
+	this.setMilliseconds(0)
+	return this
 String.prototype.endsWith = (suffix) ->
 	this.indexOf(suffix, this.length - suffix.length) != -1
 String.prototype.includes = (str) ->
@@ -197,11 +205,11 @@ Overlay.remove = (id) ->
 Overlay.removePopovers = ->
 		$('.popover').remove()
 
-Overlay.popover = (el, tmp, vm, opts)->
+Overlay.popover = (el, vm, tmp, opts)->
 	id = vm.name
 	opts.placement = opts.placement || 'bottom'
 	$po = $("<div id='popover-#{id}' class='popover fade'><div class='arrow'></div><div class='popover-inner'><h3 class='popover-title'>#{opts.title}</h3><div class='popover-content' data-bind=\"template : '#{tmp}'\"></div></div></div>")
-	$po.remove().css({ top: 0, left: 0, display: 'block' }).prependTo(document.body)
+	$po.remove().css({ top: 0, left: 0, display: 'block', width: 'auto' }).prependTo(document.body)
 	$po.koBind(vm)
 	$po.click (ev)->
 		ev.stopPropagation()
@@ -265,9 +273,12 @@ class @TimeLength
 		else if @minutes() > 0
 			val = @minutes()
 			str = "minute"
-		else
+		else if @seconds() > 0
 			val = @seconds()
 			str = "second"
+		else
+			val = 0
+			str = "minutes"
 		attr = str + ( if (val > 1) then "s" else "" )
 		"#{val} #{attr}"
 TimeLength.DAY = 86400
