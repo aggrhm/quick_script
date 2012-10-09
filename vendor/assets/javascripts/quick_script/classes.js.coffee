@@ -36,6 +36,11 @@ String.prototype.truncate = (val)->
 	ret = this.substring(0, val)
 	ret = ret + "..." if this.length > val
 	return ret
+String.prototype.rjust = (length, char)->
+	ret = this
+	while (ret.length < length)
+		ret = char + ret
+	return ret
 
 History.getRelativeUrl = ->
 	url = History.getState().url
