@@ -782,6 +782,7 @@ class @View
 			, this
 		@is_visible = ko.observable(false)
 		@is_loading = ko.observable(false)
+		@is_saving = ko.observable(false)
 		@error = ko.observable('')
 		@has_error = ko.computed (-> @error().length > 0), this
 		@view = null
