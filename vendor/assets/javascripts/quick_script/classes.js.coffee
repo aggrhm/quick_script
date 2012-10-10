@@ -210,6 +210,9 @@ Overlay.remove = (id) ->
 Overlay.removePopovers = ->
 		$('.popover').remove()
 
+Overlay.isVisible = (id) ->
+		$('#overlay-' + id).length > 0
+
 Overlay.popover = (el, vm, tmp, opts)->
 	id = vm.name
 	opts.placement = opts.placement || 'bottom'
@@ -234,6 +237,9 @@ Overlay.popover = (el, vm, tmp, opts)->
 			tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left - actualWidth}
 		when 'right'
 			tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left + pos.width}
+	
+	tp.top = 0 if tp.top < 0
+	tp.left = 0 if tp.left < 0
 	
 	tp.display = 'block'
 	$po.css(tp).addClass(opts.placement).addClass('in')

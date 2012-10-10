@@ -295,7 +295,7 @@
 	ko.validate_for = (field, fn, msg, self) ->
 		self.validations = {} unless self.validations?
 		self.validations[field] = [] unless self.validations[field]?
-		self.validations[field].push {test : fn, msg : msg}
+		self.validations[field].push {test : fn.bind(self), msg : msg}
 		self[field].is_valid = ko.computed ->
 			valid = true
 			for val_obj in self.validations[field]
@@ -884,6 +884,8 @@ class @View
 		Overlay.popover(el, this, tmp, opts)
 	hideOverlay : =>
 		Overlay.remove(@name)
+	overlayVisible : =>
+		Overlay.isVisible(@name)
 
 class @ModelAdapter
 	constructor : (opts)->
