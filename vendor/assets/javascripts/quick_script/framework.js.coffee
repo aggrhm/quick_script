@@ -955,6 +955,7 @@ class @AccountAdapter
 		@register_url = "/api/account/register"
 		@enter_code_url = "/api/account/enter_code"
 		@reset_url = "/api/account/reset"
+		@activate_url = "/api/account/activate"
 		@save_url = "/api/account/save"
 		@load_url = "/api/account/load"
 		@login_key = "email"
@@ -976,9 +977,10 @@ class @AccountAdapter
 		opts.data = data_opts
 		opts.url = @host + @register_url
 		@send opts
-	sendInviteCode : (code, callback)->
-		$.post (@host + @enter_code_url), {code : code}, (resp) =>
-			callback(resp)
+	sendInviteCode : (code, opts)->
+		opts.data = {code : code}
+		opts.url = @host + @enter_code_url
+		@send opts
 	save : (data_opts, opts) ->
 		opts.data = data_opts
 		opts.url = @host + @save_url
@@ -992,11 +994,15 @@ class @AccountAdapter
 			progress : opts.progress
 			success : opts.success
 			error : opts.error
-	resetPassword : (login, callback)->
-		opts = {}
-		opts[@login_key] = login
-		$.post (@host + @reset_url), opts, (resp) =>
-				callback(resp) if callback?
+	resetPassword : (login, opts)->
+		opts.data = {}
+		opts.data[@login_key] = login
+		opts.url = @host + @reset_url
+		@send opts
+	activate: (token, opts)->
+		opts.data = {token : token}
+		opts.url = @host + @activate_url
+		@send opts
 	send : (opts)->
 		ModelAdapter.send(@host, opts)
 	delete : (opts)->
