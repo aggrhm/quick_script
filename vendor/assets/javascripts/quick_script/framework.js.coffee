@@ -15,6 +15,7 @@
 			shouldDisplay = ko.utils.unwrapObservable(valueAccessor())
 			if shouldDisplay then $(element).slideDown('slow') else $(element).slideUp()
 
+	# buttonStatus - [is_loading, ready_str, loading_str, icon_classes]
 	ko.bindingHandlers.buttonStatus =
 		update : (element, valueAccessor) ->
 			opts = ko.utils.unwrapObservable(valueAccessor())
@@ -28,6 +29,21 @@
 					txt = opts[1]
 				$(element).html(txt)
 				$(element).removeAttr('disabled')
+
+	# labelStatus - [list, none_str, loading_str]
+	ko.bindingHandlers.listStatus =
+		init : (element, valueAccessor) ->
+			opts = ko.utils.unwrapObservable(valueAccessor())
+			opts[0].is_loading.subscribe ->
+				if opts[0].is_loading()
+					$(element).html(opts[2])
+					$(element).show()
+				else
+					if opts[0].hasItems()
+						$(element).hide()
+					else
+						$(element).show()
+						$(element).html(opts[1])
 
 	ko.bindingHandlers.viewOptions =
 		update : (element, valueAccessor) ->
@@ -204,21 +220,19 @@
 
 	ko.bindingHandlers.tabs =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
-			$(element).children('ul').first().find('li').each (idx, el)->
+			$(element).children('li').each (idx, el)->
 				tab_id = $(el)[0].id
 				$(el).click ->
 					valueAccessor()(tab_id)
 		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			sel_tab = ko.utils.unwrapObservable(valueAccessor())
-			$(element).children('ul').first().children('li').removeClass('selected')
-			$(element).children('ul').first().children("li##{sel_tab}").addClass('selected')
-			$(element).children('div').addClass('hidden')
-			$(element).children("div##{sel_tab}").removeClass('hidden')
+			$(element).children('li').removeClass('active')
+			$(element).children("li##{sel_tab}").addClass('active')
 	ko.bindingHandlers.tab_views =
 		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			sel_tab = ko.utils.unwrapObservable(valueAccessor())
-			$(element).children('div').addClass('hidden')
-			$(element).children("div##{sel_tab}").removeClass('hidden')
+			$(element).children('div').addClass('hidden').removeClass('active')
+			$(element).children("div##{sel_tab}").addClass('active').removeClass('hidden')
 
 	ko.bindingHandlers.calendar =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
@@ -671,6 +685,7 @@ class @Collection
 		else if op == Collection.INSERT
 			@model_state(ko.modelStates.INSERTING)
 	load : (scope, callback)->
+		@reset()
 		@scope(scope) if scope?
 		@_load(@scope(), Collection.REPLACE, callback)
 	update : (callback)->
@@ -914,17 +929,82 @@ class @ModelAdapter
 		opts.url = @save_url
 		@send opts
 	send : (opts)->
-		def_err_fn = ->
-			opts.success({meta : 500, data : ['An error occurred.']})
-		opts.type = 'POST' if !opts.type?
-		opts.url = @host + opts.url
-		opts.error = def_err_fn unless opts.error?
-		$.ajax_qs opts
+		ModelAdapter.send(@host, opts)
 	delete : (opts)->
 		$.ajax
 			type : 'DELETE'
 			url : @host + @save_url
 			data : opts.data
+			success : opts.success
+			error : opts.error
+	add_method : (fn_name, fn)->
+		@[fn_name] = fn.bind(this)
+ModelAdapter.send = (host, opts)->
+	def_err_fn = ->
+		opts.success({meta : 500, data : ['An error occurred.']})
+	opts.type = 'POST' if !opts.type?
+	opts.url = host + opts.url
+	opts.error = def_err_fn unless opts.error?
+	opts.success = opts.callback if opts.callback?
+	$.ajax_qs opts
+
+class @AccountAdapter
+	constructor : (opts)->
+		@login_url = "/api/account/login"
+		@logout_url = "/api/account/logout"
+		@register_url = "/api/account/register"
+		@enter_code_url = "/api/account/enter_code"
+		@reset_url = "/api/account/reset"
+		@save_url = "/api/account/save"
+		@load_url = "/api/account/load"
+		@login_key = "email"
+		@password_key = "password"
+		@host = ""
+		for prop,val of opts
+			@[prop] = val
+	login : (username, password, opts)->
+		opts.data = {} unless opts.data?
+		opts.url = @host + @login_url
+		opts.data[@login_key] = username
+		opts.data[@password_key] = password
+		@send opts
+	logout : (opts)->
+		opts.data = {}
+		opts.url = @host + @logout_url
+		@send opts
+	register : (data_opts, opts)->
+		opts.data = data_opts
+		opts.url = @host + @register_url
+		@send opts
+	sendInviteCode : (code, callback)->
+		$.post (@host + @enter_code_url), {code : code}, (resp) =>
+			callback(resp)
+	save : (data_opts, opts) ->
+		opts.data = data_opts
+		opts.url = @host + @save_url
+		@send opts
+	load : (opts) ->
+		opts ||= {}
+		$.ajax_qs
+			type : 'POST'
+			url : @host + @load_url
+			data : opts.data
+			progress : opts.progress
+			success : opts.success
+			error : opts.error
+	resetPassword : (login, callback)->
+		opts = {}
+		opts[@login_key] = login
+		$.post (@host + @reset_url), opts, (resp) =>
+				callback(resp) if callback?
+	send : (opts)->
+		ModelAdapter.send(@host, opts)
+	delete : (opts)->
+		$.ajax_qs
+			type : 'DELETE'
+			url : @host + opts.url
+			data : opts.data
+			progress : opts.progress
 			success : opts.success
 			error : opts.error
 	add_method : (fn_name, fn)->
@@ -942,83 +1022,6 @@ LocalStore.get = (key, callback)->
 			else
 				callback(null)
 
-class @AccountAdapter
-	constructor : (opts)->
-		@login_url = "/api/account/login"
-		@logout_url = "/api/account/logout"
-		@register_url = "/api/account/register"
-		@enter_code_url = "/api/account/enter_code"
-		@reset_url = "/api/account/reset"
-		@save_url = "/api/account/save"
-		@load_url = "/api/account/load"
-		@login_key = "email"
-		@password_key = "password"
-		@host = ""
-		for prop,val of opts
-			@[prop] = val
-	login : (username, password, callback)->
-		opts = {}
-		opts[@login_key] = username
-		opts[@password_key] = password
-		@send
-			url : @login_url
-			data : opts
-			success : (resp) =>
-				callback(resp)
-	logout : (callback)->
-		@send
-			url : @logout_url
-			success : (resp) =>
-				callback(resp)
-	register : (opts, callback)->
-		$.post (@host + @register_url), opts, (resp) =>
-			callback(resp)
-	sendInviteCode : (code, callback)->
-		$.post (@host + @enter_code_url), {code : code}, (resp) =>
-			callback(resp)
-	save : (opts) ->
-		opts ||= {}
-		$.ajax_qs
-			type : 'POST'
-			url : @host + @save_url
-			data : opts.data
-			progress : opts.progress
-			success : opts.success
-			error : opts.error
-	load : (opts) ->
-		opts ||= {}
-		$.ajax_qs
-			type : 'POST'
-			url : @host + @load_url
-			data : opts.data
-			progress : opts.progress
-			success : opts.success
-			error : opts.error
-	resetPassword : (login, callback)->
-		opts = {}
-		opts[@login_key] = login
-		$.post (@host + @reset_url), opts, (resp) =>
-				callback(resp) if callback?
-	send : (opts)->
-		def_err_fn = ->
-			opts.success({meta : 500, data : ['An error occurred.']})
-		$.ajax_qs
-			type : 'POST'
-			url : @host + opts.url
-			data : opts.data
-			progress : opts.progress
-			success : opts.success
-			error : opts.error || def_err_fn
-	delete : (opts)->
-		$.ajax_qs
-			type : 'DELETE'
-			url : @host + opts.url
-			data : opts.data
-			progress : opts.progress
-			success : opts.success
-			error : opts.error
-	add_method : (fn_name, fn)->
-		@[fn_name] = fn.bind(this)
 
 class @AppView extends @View
 	constructor : (user_model)->

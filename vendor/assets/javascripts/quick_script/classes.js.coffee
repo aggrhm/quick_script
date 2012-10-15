@@ -143,22 +143,25 @@ class @Overlay
 Overlay.instance = new Overlay()
 Overlay.closeDialog = ->
 		@remove('dialog')
-Overlay.add = (vm, tmp, options, cls) ->
+Overlay.add = (vm, tmp, opts) ->
+		opts ||= {}
+		css_opts = opts.style || {}
+		cls = opts.class || ''
 		id = vm.name
 		template = tmp
-		cls = cls || ''
-		options = {} if !options?
 		#options['z-index'] = Overlay.instance.zindex + 10
 		$('body').append("<div id='overlay-" + id + "' class='modal hide fade'><button class='close' data-bind='click : hideOverlay'>x</button><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
-		#$('#overlay-' + id).css(options)
-		#$('#overlay-' + id).addClass(cls)
-		#$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
-		#$('.overlay .content').css({'max-height' : ($(window).height() - 100)})
+		$('#overlay-' + id).css(css_opts)
+		$('#overlay-' + id).addClass(cls)
+		$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
 		#$('#backdrop-' + id).click =>
 			#console.log('backdrop clicked.')
 			#Overlay.remove(id)
 		setTimeout ->
 			$('#overlay-' + id).koBind(vm)
+			if opts.stretch == true
+				$("#overlay-#{id} .modal-body").css({'max-height' : ($(window).height() - 200)})
+				$('#overlay-' + id).css({'margin-top' : ($(window).height() - 100)/ -2})
 			$('#overlay-' + id).modal('show')
 			$('#overlay-' + id).on 'hidden', ->
 				$('#overlay-' + id).koClean()
@@ -182,7 +185,7 @@ Overlay.notify = (msg, cls, tm) ->
 		$('body').prepend("<div id='notify' class='notify' style='display: none;'>" + msg + "</div>")
 		if (cls)
 			$('#notify').addClass(cls)
-		$('#notify').slideDown 'slow', ->
+		$('#notify').fadeIn 'slow', ->
 			Overlay.instance.notifyTimeout = setTimeout ->
 					$('#notify').fadeOut('slow')
 				, tm
@@ -199,13 +202,15 @@ Overlay.confirm = (msg, opts) ->
 			no : ->
 				opts.no() if opts.no?
 				Overlay.remove('confirm')
-		$('body').prepend("<div class='backdrop' id='backdrop-confirm' style='z-index:500'></div><div id='overlay-confirm' class='confirm' style='display: none;'><div class='msg'>" + msg + "</div><div class='opts'><button class='button green' data-bind='click : yes'>yes</button><button class='button red' data-bind='click : no'>no</button></div></div>")
+		$('body').prepend("<div class='backdrop' id='backdrop-confirm' style='z-index:500'></div><div id='overlay-confirm' class='confirm' style='display: none;'><div class='msg'>" + msg + "</div><div class='opts'><button class='btn btn-success' data-bind='click : yes'>yes</button> <button class='btn btn-danger' data-bind='click : no'>no</button></div></div>")
 		$('#overlay-confirm').koBind(vm)
 		$('#overlay-confirm').slideDown 'fast'
 
 Overlay.remove = (id) ->
 		$('#overlay-' + id).modal('hide')
 		$('#popover-' + id).koClean().remove()
+		$('#backdrop-' + id).remove()
+		$('#overlay-' + id).remove() if (id == 'confirm')
 
 Overlay.removePopovers = ->
 		$('.popover').remove()
