@@ -271,6 +271,7 @@
 			opts = valueAccessor()
 			$(element).tooltip
 				placement: opts.placement || 'bottom'
+				delay: opts.delay || 0
 				title: ->
 					ko.utils.unwrapObservable(opts.content)
 
