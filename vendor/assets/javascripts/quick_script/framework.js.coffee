@@ -34,6 +34,17 @@
 	ko.bindingHandlers.listStatus =
 		init : (element, valueAccessor) ->
 			opts = ko.utils.unwrapObservable(valueAccessor())
+			if opts[0].is_loading()
+				$(element).html(opts[2])
+				$(element).show()
+			else
+				if opts[0].hasItems()
+					$(element).hide()
+				else
+					$(element).show()
+					$(element).html(opts[1])
+		update : (element, valueAccessor) ->
+			opts = ko.utils.unwrapObservable(valueAccessor())
 			opts[0].is_loading.subscribe ->
 				if opts[0].is_loading()
 					$(element).html(opts[2])
@@ -69,16 +80,15 @@
 			element.addEventListener('touchstart', valueAccessor().bind(viewModel))
 
 	ko.bindingHandlers.validate =
-		init : (element, valueAccessor) ->
+		update : (element, valueAccessor) ->
 			opts = valueAccessor()
-			$(element).blur ->
-				if opts.test()
-					$(element).removeClass(opts.err_css)
-					$(element).addClass(opts.ok_css)
-				else
-					$(element).removeClass(opts.ok_css)
-					$(element).addClass(opts.err_css)
-					opts.on_err() if opts.on_err?
+			if opts.test()
+				$(element).removeClass(opts.err_css)
+				$(element).addClass(opts.ok_css)
+			else
+				$(element).removeClass(opts.ok_css)
+				$(element).addClass(opts.err_css)
+				opts.on_err() if opts.on_err?
 
 	ko.bindingHandlers.cropImage =
 		update : (element, valueAccessor) ->
@@ -244,9 +254,10 @@
 
 	ko.bindingHandlers.center =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
-			setTimeout ->
-					$(element).center()
-				, 1
+			viewModel.task.subscribe ->
+				setTimeout ->
+						$(element).center()
+					, 1
 
 	ko.bindingHandlers.progressbar =
 		update: (element, valueAccessor) ->
@@ -489,7 +500,7 @@ class @Model
 				err = err || 'unknown'
 				console.log("Save error encountered [" + err + "]")
 				@model_state(ko.modelStates.READY)
-				callback({meta : 500, data : ['An error occurred']}) if callback?
+				callback({meta : 500, data : {errors : ['An error occurred']}}) if callback?
 		@model_state(ko.modelStates.SAVING)
 	reset : ->
 		#@model_state(ko.modelStates.LOADING)
@@ -532,7 +543,11 @@ class @Model
 		for prop in flds
 			if typeof(@[prop].toAPI) == 'function'
 				val = @[prop].toAPI()
-				obj[prop] = val if val != null
+				if val != null
+					if val instanceof File
+						obj[prop] = val
+					else
+						obj[prop] = JSON.stringify val
 			else if typeof(@[prop].toJS) == 'function'
 				obj[prop] = @[prop].toJS()
 			else
@@ -942,7 +957,7 @@ class @ModelAdapter
 		@[fn_name] = fn.bind(this)
 ModelAdapter.send = (host, opts)->
 	def_err_fn = ->
-		opts.success({meta : 500, data : ['An error occurred.']})
+		opts.success({meta : 500, data : {errors : ['An error occurred.']}})
 	opts.type = 'POST' if !opts.type?
 	opts.url = host + opts.url
 	opts.error = def_err_fn unless opts.error?

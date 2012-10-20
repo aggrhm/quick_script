@@ -28,6 +28,10 @@ module QuickScript
 			opts.to_json
 		end
 
+		def json_error(errors, meta = 404, opts = {})
+			json_resp({:errors => errors}, meta, opts)
+		end
+
 		def handle_params
 			@scope = {}
 			@scope[:name] = params[:scope].first.to_sym if params[:scope]
