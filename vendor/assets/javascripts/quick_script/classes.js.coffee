@@ -222,32 +222,36 @@ Overlay.popover = (el, vm, tmp, opts)->
 	id = vm.name
 	opts.placement = opts.placement || 'bottom'
 	$po = $("<div id='popover-#{id}' class='popover fade'><div class='arrow'></div><div class='popover-inner'><h3 class='popover-title'>#{opts.title}</h3><div class='popover-content' data-bind=\"template : '#{tmp}'\"></div></div></div>")
-	$po.remove().css({ top: 0, left: 0, display: 'block', width: 'auto' }).prependTo(document.body)
-	$po.koBind(vm)
-	$po.click (ev)->
-		ev.stopPropagation()
 
-	pos = getElementPosition(el)
-	actualWidth = $po[0].offsetWidth
-	actualHeight = $po[0].offsetHeight
-	#console.log(actualWidth + ' ' + actualHeight)
-	#console.log(pos)
+	setTimeout ->
+		$po.remove().css({ top: 0, left: 0, display: 'block', width: 'auto' }).prependTo(document.body)
+		$po.koBind(vm)
+		$po.click (ev)->
+			ev.stopPropagation()
 
-	switch (opts.placement)
-		when 'bottom'
-			tp = {top: pos.top + pos.height, left: pos.left + pos.width / 2 - actualWidth / 2}
-		when 'top'
-			tp = {top: pos.top - actualHeight, left: pos.left + pos.width / 2 - actualWidth / 2}
-		when 'left'
-			tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left - actualWidth}
-		when 'right'
-			tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left + pos.width}
-	
-	tp.top = 0 if tp.top < 0
-	tp.left = 0 if tp.left < 0
-	
-	tp.display = 'block'
-	$po.css(tp).addClass(opts.placement).addClass('in')
+		pos = getElementPosition(el)
+		actualWidth = $po[0].offsetWidth
+		actualHeight = $po[0].offsetHeight
+		#console.log(actualWidth + ' ' + actualHeight)
+		#console.log(pos)
+
+		switch (opts.placement)
+			when 'bottom'
+				tp = {top: pos.top + pos.height, left: pos.left + pos.width / 2 - actualWidth / 2}
+			when 'top'
+				tp = {top: pos.top - actualHeight, left: pos.left + pos.width / 2 - actualWidth / 2}
+			when 'left'
+				tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left - actualWidth}
+			when 'right'
+				tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left + pos.width}
+		
+		tp.top = 0 if tp.top < 0
+		tp.left = 0 if tp.left < 0
+		
+		tp.display = 'block'
+		$po.css(opts.style) if opts.style?
+		$po.css(tp).addClass(opts.placement).addClass('in')
+	, 100
 
 
 ## TIMELENGTH

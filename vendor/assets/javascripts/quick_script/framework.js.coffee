@@ -254,10 +254,12 @@
 
 	ko.bindingHandlers.center =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
-			viewModel.task.subscribe ->
+			fn = ->
 				setTimeout ->
 						$(element).center()
 					, 1
+			viewModel.task.subscribe(fn)
+			viewModel.is_visible.subscribe(fn)
 
 	ko.bindingHandlers.progressbar =
 		update: (element, valueAccessor) ->
@@ -285,6 +287,13 @@
 				delay: opts.delay || 0
 				title: ->
 					ko.utils.unwrapObservable(opts.content)
+
+	# popover : {template : <tmp>, placement : <pos>}
+	ko.bindingHandlers.popover =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			opts = valueAccessor()
+			$(element).click ->
+				Overlay.popover element, viewModel, opts.template, opts
 
 	ko.absorbModel = (data, self) ->
 		for prop, val of data
