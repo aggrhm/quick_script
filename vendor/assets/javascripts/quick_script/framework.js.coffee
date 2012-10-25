@@ -351,7 +351,7 @@
 		if self[field]?
 			self[field].reset()
 		else
-			self[field] = new model({}, self)
+			self[field] = new model({}, self, {is_submodel : true})
 		self.fields.pushOnce(field) if typeof(field) == "string"
 
 	ko.intercepter = (observable, write_fn, self) ->
@@ -437,7 +437,7 @@ jQuery.ajax_qs = (opts)->
 class @Model
 	init : ->
 	extend : ->
-	constructor: (data, collection) ->
+	constructor: (data, collection, opts) ->
 		@fields = []
 		ko.addFields(['id'], '', this)
 		@events = {}
@@ -447,6 +447,8 @@ class @Model
 		@errors = ko.observable([])
 		@model_state = ko.observable(0)
 		@saveProgress = ko.observable(0)
+		if opts?
+			@is_submodel = opts.is_submodel
 		@extend()
 		@init()
 		@is_ready = ko.dependentObservable ->
@@ -990,31 +992,31 @@ class @AccountAdapter
 			@[prop] = val
 	login : (username, password, opts)->
 		opts.data = {} unless opts.data?
-		opts.url = @host + @login_url
+		opts.url = @login_url
 		opts.data[@login_key] = username
 		opts.data[@password_key] = password
 		@send opts
 	logout : (opts)->
 		opts.data = {}
-		opts.url = @host + @logout_url
+		opts.url = @logout_url
 		@send opts
 	register : (data_opts, opts)->
 		opts.data = data_opts
-		opts.url = @host + @register_url
+		opts.url = @register_url
 		@send opts
 	sendInviteCode : (code, opts)->
 		opts.data = {code : code}
-		opts.url = @host + @enter_code_url
+		opts.url = @enter_code_url
 		@send opts
 	save : (data_opts, opts) ->
 		opts.data = data_opts
-		opts.url = @host + @save_url
+		opts.url = @save_url
 		@send opts
 	load : (opts) ->
 		opts ||= {}
 		$.ajax_qs
 			type : 'POST'
-			url : @host + @load_url
+			url : @load_url
 			data : opts.data
 			progress : opts.progress
 			success : opts.success
@@ -1022,11 +1024,11 @@ class @AccountAdapter
 	resetPassword : (login, opts)->
 		opts.data = {}
 		opts.data[@login_key] = login
-		opts.url = @host + @reset_url
+		opts.url = @reset_url
 		@send opts
 	activate: (token, opts)->
 		opts.data = {token : token}
-		opts.url = @host + @activate_url
+		opts.url = @activate_url
 		@send opts
 	send : (opts)->
 		ModelAdapter.send(@host, opts)

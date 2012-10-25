@@ -1,7 +1,7 @@
 module QuickScript
 	module Helpers
-		def jsify model
-			raw (model ? model.to_api.to_json : 'null')
+		def jsify(model, opt=:full)
+			raw (model ? model.to_api(opt).to_json : 'null')
 		end
 
 		def jqtpl(name, &block)
@@ -20,7 +20,7 @@ module QuickScript
 
 				$(function() {
 					initKO();
-					CURRENT_USER = (#{jsify current_user});
+					CURRENT_USER = (#{jsify current_user, :me});
 					appViewModel = new #{app_model}();
 					initApp();
 					console.log('Initialized...');
