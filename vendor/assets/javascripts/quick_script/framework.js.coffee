@@ -867,6 +867,8 @@ class @View
 					, 600
 					opts.slide_index(idx)
 	load : ->
+	reload : ->
+		@load()
 	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
 		@views[name].templateID = tpl
@@ -894,7 +896,7 @@ class @View
 			view.load.apply(view, args[1..])
 			window.onbeforeunload = @view.events.before_unload
 		else
-			@view.load.apply(@view, args[1..])
+			@view.reload.apply(@view, args[1..])
 	isTask : (task) ->
 		@task() == task
 	getViewName : (view) ->
