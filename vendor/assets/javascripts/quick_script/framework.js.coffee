@@ -294,6 +294,13 @@
 			opts = valueAccessor()
 			$(element).click ->
 				Overlay.popover element, viewModel, opts.template, opts
+	
+	ko.bindingHandlers.datepicker =
+		init : (element, valueAccessor) ->
+			obs = valueAccessor()
+			$(element).datepicker
+				onClose : (dateText, inst)->
+					obs(dateText)
 
 	ko.absorbModel = (data, self) ->
 		for prop, val of data
