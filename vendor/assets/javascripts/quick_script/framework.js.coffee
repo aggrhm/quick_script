@@ -421,8 +421,20 @@ jQuery.fn.extend
 jQuery.ajax_qs = (opts)->
 	data = new FormData()
 	req = new XMLHttpRequest()
-	for key, val of opts.data
-		data.append key, val
+	url = opts.url
+	if opts.type == "GET"
+		url = url + "?"
+		first = true
+		for key, val of opts.data
+			if val instanceof Array
+				for aval in val
+					url = url + "#{key}#{escape('[]')}=#{escape(aval)}&"
+			else
+				url = url + "#{key}=#{escape(val)}&"
+		url = url.substring(0, url.length - 1)
+	else
+		for key, val of opts.data
+			data.append key, val
 	req.onreadystatechange = (ev)->
 		if req.readyState == 4
 			if req.status == 200
@@ -435,7 +447,7 @@ jQuery.ajax_qs = (opts)->
 	if opts.progress?
 		req.upload.addEventListener 'progress', (ev)->
 			opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
-	req.open opts.type, opts.url, true
+	req.open opts.type, url, true
 	req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
 	opts.loading(true) if opts.loading?
 	req.send(data)
@@ -947,13 +959,15 @@ class @ModelAdapter
 		for prop,val of opts
 			@[prop] = val
 	load : (opts)->
+		opts.type = 'GET'
+		opts.url = @load_url
 		opts.data["_cv"] = Date.now() if opts.data?
-		$.getJSON (@host + @load_url), opts.data, (resp)->
-			opts.success(resp)
+		@send opts
 	index : (opts)->
+		opts.type = 'GET'
+		opts.url = @index_url || @load_url
 		opts.data["_cv"] = Date.now() if opts.data?
-		$.getJSON (@host + (@index_url || @load_url)), opts.data, (resp)->
-			opts.success(resp)
+		@send opts
 	save_old : (opts)->
 		$.ajax
 			type : 'POST'
