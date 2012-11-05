@@ -555,6 +555,7 @@ class @Model
 			error : =>
 				console.log("Delete error encountered")
 				@model_state(ko.modelStates.READY)
+				callback({meta : 500, data : {errors : ['An error occurred']}}) if callback?
 		@model_state(ko.modelStates.SAVING)
 	removeFromCollection : =>
 		@collection.removeItemById(@id()) if @collection?
@@ -947,6 +948,8 @@ class @View
 		Overlay.popover(el, this, tmp, opts)
 	hideOverlay : =>
 		Overlay.remove(@name)
+	hidePopover : =>
+		Overlay.removePopover(@name)
 	overlayVisible : =>
 		Overlay.isVisible(@name)
 
@@ -981,12 +984,9 @@ class @ModelAdapter
 	send : (opts)->
 		ModelAdapter.send(@host, opts)
 	delete : (opts)->
-		$.ajax
-			type : 'DELETE'
-			url : @host + @save_url
-			data : opts.data
-			success : opts.success
-			error : opts.error
+		opts.type = 'DELETE'
+		opts.url = @save_url
+		@send opts
 	add_method : (fn_name, fn)->
 		@[fn_name] = fn.bind(this)
 ModelAdapter.send = (host, opts)->
@@ -1056,13 +1056,9 @@ class @AccountAdapter
 	send : (opts)->
 		ModelAdapter.send(@host, opts)
 	delete : (opts)->
-		$.ajax_qs
-			type : 'DELETE'
-			url : @host + opts.url
-			data : opts.data
-			progress : opts.progress
-			success : opts.success
-			error : opts.error
+		opts.type = 'DELETE'
+		opts.url = @save_url
+		@send opts
 	add_method : (fn_name, fn)->
 		@[fn_name] = fn.bind(this)
 

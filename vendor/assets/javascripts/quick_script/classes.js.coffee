@@ -162,10 +162,11 @@ Overlay.add = (vm, tmp, opts) ->
 			if opts.stretch == true
 				$("#overlay-#{id} .modal-body").css({'max-height' : ($(window).height() - 200)})
 				$('#overlay-' + id).css({'margin-top' : ($(window).height() - 100)/ -2})
-			$('#overlay-' + id).modal('show')
 			$('#overlay-' + id).on 'hidden', ->
 				$('#overlay-' + id).koClean()
 				$('#overlay-' + id).remove()
+			$('#overlay-' + id).on 'shown', opts.shown if opts.shown?
+			$('#overlay-' + id).modal('show')
 		, 100
 		#Overlay.instance.zindex = Overlay.instance.zindex + 10
 
@@ -207,10 +208,16 @@ Overlay.confirm = (msg, opts) ->
 		$('#overlay-confirm').slideDown 'fast'
 
 Overlay.remove = (id) ->
-		$('#overlay-' + id).modal('hide')
-		$('#popover-' + id).koClean().remove()
-		$('#backdrop-' + id).remove()
-		$('#overlay-' + id).remove() if (id == 'confirm')
+	Overlay.removeModal(id)
+	Overlay.removePopover(id)
+
+Overlay.removeModal = (id) ->
+	$('#overlay-' + id).modal('hide')
+	$('#backdrop-' + id).remove()
+	$('#overlay-' + id).remove() if (id == 'confirm')
+
+Overlay.removePopover = (id) ->
+	$('#popover-' + id).koClean().remove()
 
 Overlay.removePopovers = ->
 		$('.popover').remove()
@@ -221,7 +228,7 @@ Overlay.isVisible = (id) ->
 Overlay.popover = (el, vm, tmp, opts)->
 	id = vm.name
 	opts.placement = opts.placement || 'bottom'
-	$po = $("<div id='popover-#{id}' class='popover fade'><div class='arrow'></div><div class='popover-inner'><h3 class='popover-title'>#{opts.title}</h3><div class='popover-content' data-bind=\"template : '#{tmp}'\"></div></div></div>")
+	$po = $("<div id='popover-#{id}' class='popover fade'><div class='arrow'></div><div class='popover-inner'><button class='close' data-bind='click : hidePopover'>x</button><h3 class='popover-title'>#{opts.title}</h3><div class='popover-content' data-bind=\"template : '#{tmp}'\"></div></div></div>")
 
 	setTimeout ->
 		$po.remove().css({ top: 0, left: 0, display: 'block', width: 'auto' }).prependTo(document.body)
