@@ -887,7 +887,7 @@ class @View
 					, 600
 					opts.slide_index(idx)
 	load : ->
-	reload : ->
+	reload : =>
 		@load()
 	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
@@ -1081,6 +1081,7 @@ class @AppView extends @View
 		@path = ko.observable(null)
 		@previous_path = ko.observable(null)
 		@path_parts = []
+		@title = ko.observable('')
 		ko.addTemplate "app-view", """
 				<div data-bind='foreach : viewList()'>
 					<div data-bind="fadeVisible : is_visible(), template : { name : getViewName, afterRender : afterRender}, attr : { id : templateID}, bindelem : true"></div>
@@ -1094,12 +1095,13 @@ class @AppView extends @View
 				</div>
 			"""
 		@current_user = new @account_model()
-		@is_logged_in = ko.dependentObservable ->
+		@is_logged_in = ko.computed ->
 				!@current_user.is_new()
 			, this
 		super('app', null)
 	route : (path) ->
 		console.log("Loading path '#{path}'")
+		@setTitle(@name, true)
 		@previous_path(@path())
 		@path(path)
 		@path_parts = @path().split('/')
@@ -1112,6 +1114,13 @@ class @AppView extends @View
 		History.pushState(null, null, path)
 	runLater : (callback)->
 		setTimeout callback, 10
+	setTitle : (title, setFull)->
+		@title(title)
+		setFull = setFull || false
+		if setFull
+			$('title').text(title)
+		else
+			$('title').text("#{@name} - #{title}")
 
 @initApp = ->
 	appViewModel = @appViewModel
