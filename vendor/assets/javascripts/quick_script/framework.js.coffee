@@ -731,10 +731,11 @@ class @Collection
 			@model_state(ko.modelStates.APPENDING)
 		else if op == Collection.INSERT
 			@model_state(ko.modelStates.INSERTING)
-	load : (scope, callback)->
-		@reset()
+	load : (scope, opts)->
+		opts = {callback: opts} if (!opts?) || (opts instanceof Function)
+		@reset() unless opts.reset? && !opts.reset
 		@scope(scope) if scope?
-		@_load(@scope(), Collection.REPLACE, callback)
+		@_load(@scope(), Collection.REPLACE, opts.callback)
 	update : (callback)->
 		@_load(@scope(), Collection.UPDATE, callback)
 	insert : (scope, callback)->
