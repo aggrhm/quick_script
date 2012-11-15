@@ -15,6 +15,14 @@
 			shouldDisplay = ko.utils.unwrapObservable(valueAccessor())
 			if shouldDisplay then $(element).slideDown('slow') else $(element).slideUp()
 
+	ko.bindingHandlers.dim =
+		init : (element, valueAccessor) ->
+			shouldDim = ko.utils.unwrapObservable(valueAccessor())
+			if shouldDim then $(element).css({opacity : 0.3}) else $(element).css({opacity: 1.0})
+		update : (element, valueAccessor) ->
+			shouldDim = ko.utils.unwrapObservable(valueAccessor())
+			if shouldDim then $(element).animate({opacity : 0.3}) else $(element).animate({opacity: 1.0})
+
 	# buttonStatus - [is_loading, ready_str, loading_str, icon_classes]
 	ko.bindingHandlers.buttonStatus =
 		update : (element, valueAccessor) ->
@@ -34,27 +42,22 @@
 	ko.bindingHandlers.listStatus =
 		init : (element, valueAccessor) ->
 			opts = ko.utils.unwrapObservable(valueAccessor())
-			if opts[0].is_loading()
-				$(element).html(opts[2])
-				$(element).show()
-			else
-				if opts[0].hasItems()
-					$(element).hide()
+			opts = {list : opts[0], empty_str : opts[1], loading_str : opts[2]} if opts instanceof Array
+			fn = ->
+				if opts.list.is_loading()
+					if opts.loading_img?
+						$(element).html("<img src='#{opts.loading_img}'/>")
+					else
+						$(element).html(opts.loading_str)
+					$(element).show('fast')
 				else
-					$(element).show()
-					$(element).html(opts[1])
-		update : (element, valueAccessor) ->
-			opts = ko.utils.unwrapObservable(valueAccessor())
-			opts[0].is_loading.subscribe ->
-				if opts[0].is_loading()
-					$(element).html(opts[2])
-					$(element).show()
-				else
-					if opts[0].hasItems()
-						$(element).hide()
+					if opts.list.hasItems()
+						$(element).hide('fast')
 					else
 						$(element).show()
-						$(element).html(opts[1])
+						$(element).html(opts.empty_str)
+			#fn()
+			opts.list.is_loading.subscribe(fn)
 
 	ko.bindingHandlers.viewOptions =
 		update : (element, valueAccessor) ->
@@ -410,12 +413,14 @@ jQuery.fn.extend
     this.css("top", (($(window).height() - this.outerHeight()) / 2) + $(window).scrollTop() + "px")
     this.css("left", (($(window).width() - this.outerWidth()) / 2) + $(window).scrollLeft() + "px")
     return this
-	koBind : (viewModel) ->
+	koBind : (viewModel, tmpl) ->
 		this.each ->
-			ko.cleanNode(this)
+			$(this).koClean()
+			$(this).attr('data-bind', "template : '#{tmpl}'") if tmpl?
 			ko.applyBindings(viewModel, this)
 	koClean : ->
 		this.each ->
+			$(this).removeAttr('data-bind')
 			ko.cleanNode(this)
 
 jQuery.ajax_qs = (opts)->

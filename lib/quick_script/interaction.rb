@@ -20,7 +20,7 @@ module QuickScript
 			end
 		end
 
-		def json_resp(data, meta, opts = {})
+		def json_resp(data, meta=true, opts = {})
 			meta = 200 if meta == true 
 			meta = 404 if meta == false 
 			opts[:data] = data
