@@ -83,15 +83,25 @@
 			element.addEventListener('touchstart', valueAccessor().bind(viewModel))
 
 	ko.bindingHandlers.validate =
-		update : (element, valueAccessor) ->
+		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			opts = valueAccessor()
-			if opts.test()
-				$(element).removeClass(opts.err_css)
-				$(element).addClass(opts.ok_css)
+			test_fn = bindingsAccessor().value.is_valid
+			err_css = 'field_invalid'
+			ok_css = 'field_valid'
+			if test_fn()
+				$(element).removeClass(err_css)
+				$(element).addClass(ok_css)
 			else
-				$(element).removeClass(opts.ok_css)
-				$(element).addClass(opts.err_css)
-				opts.on_err() if opts.on_err?
+				$(element).removeClass(ok_css)
+				$(element).addClass(err_css)
+				#opts.on_err() if opts.on_err?
+
+	ko.bindingHandlers.allowChars =
+		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			reg = new RegExp(valueAccessor(), 'g')
+			$(element).keyup (ev)->
+				if this.value.match(reg)
+					this.value = this.value.replace(reg, '')
 
 	ko.bindingHandlers.cropImage =
 		update : (element, valueAccessor) ->
@@ -752,7 +762,7 @@ class @Collection
 		views = []
 		op ||= Collection.REPLACE
 		cls = @view_model()
-		if op == Collection.REPLACE
+		if (op == Collection.REPLACE) || (op == Collection.UPDATE)
 			@items([]); @views([])
 		for item, idx in resp
 			model = new @model(item, this)
