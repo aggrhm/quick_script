@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>QuickScript.js</title>
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="css/style.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <div id="sidebar">
+      <a class='title'>QuickScript.js</a>
+      <a class='title'>Introduction</a>
+      <a class='title' href="#Installation">Installation</a>
+      <a class='title' href="#Model">Model</a>
+      <ul class='section'>
+        <li><a href="#Model-extending">extending</a></li>
+        <li><a href="#Model-constructor">constructor</a></li>
+        <li><a href="#Model-addFields">addFields</a></li>
+        <li><a href="#Model-addSubModel">addSubModel</a></li>
+      </ul>
+    </div>
+    <div id="container">
+      <div class="hero-unit">
+        <h1>QuickScript.js</h1>
+        <p>A client-side javascript framework based on Knockout.js</p>
+      </div>
+      <h2>Introduction</h2>
+      <p>QuickScript is a client-side javascript framework which extends Knockout.js to provide model parsing and view routing (among other things...). It was written mainly because I wanted to use knockout, but wanted to make conventions on top of it to keep my code DRY. Keep in mind that these are simply conventions that I have made from project to project, however I'm a big believer that libraries are always more valuable frameworks so that you don't limit yourself in the long run. Essentially, this framework itself is just a combination of several libraries with some conventions on top. Thus, decide if this is the best fit for your project, or if you're better off just using Knockout.js.</p>
+      <p>
+      QuickScript is written in CoffeeScript, so get familiar with it <a href='http://coffeescript.org'>here</a>.<br/>
+      It is always heavily based on Knockout.js, so get familiar with it <a href='href://knockoutjs.com'>here</a>.
+      </p>
+
+      <h2 id="Installation">Installation</h2>
+      <p>More info coming soon. The main thing you need to know for now is that its fully compatible with rails at the moment. All you need to do is add to your Gemfile:
+<pre>
+gem 'quick_script', :git => 'git@github.com:agquick/quick_script.git'
+</pre>
+      </p>
+
+      <h2 id="Model">Model</h2>
+      <p>
+      Models hold the data objects to be managed by your application. To create a model, simply extend the Model class using coffeescript. For more information, see the <b>extending</b> method.
+      </p>
+
+      <p id="Model-extending">
+      <b class='header'>extending</b><code>class @TodoItem extends Model</code><br/>
+      To create your own <b>Model</b> class, you must extend the model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
+<pre>
+class @TodoItem extends Model
+  init : ->
+    @addFields ['description'], ''
+    @addFields ['done'], false
+    @done_str = ko.computed ->
+      if @done() == true then 'done' else 'not yet...'
+    , this
+  setDone : =>
+    @done(true)
+</pre>
+      </p>
+      <p id="Model-constructor">
+      <b class='header'>constructor</b><code>new TodoItem([attributes, [collection]])</code><br/>
+      When instantiating a model, you can pass a JS object to it containing attributes to initialize the object with. You can also pass a collection that the object is bound to. This is set by default for collection-build model objects.
+<pre>
+@todo = new TodoItem(server_data)
+</pre>
+      </p>
+    </div>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>
