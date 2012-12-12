@@ -59,6 +59,7 @@
 			#fn()
 			opts.list.is_loading.subscribe(fn)
 
+	# viewOptions - [views, view_string_fn, view_val_fn, default_str (optional)]
 	ko.bindingHandlers.viewOptions =
 		update : (element, valueAccessor) ->
 			$(element).empty()
