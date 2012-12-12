@@ -9,8 +9,19 @@
   <body>
     <div id="sidebar">
       <a class='title'>QuickScript.js</a>
-      <a class='title'>Introduction</a>
+      <a class='title' href="#Introduction">Introduction</a>
       <a class='title' href="#Installation">Installation</a>
+      <a class='title' href="#AppView">AppView</a>
+      <ul class='section'>
+        <li><a href="#AppView-extending">extending</a></li>
+        <li><a href="#AppView-handlePath">handlePath</a></li>
+      </ul>
+      <a class='title' href="#View">View</a>
+      <ul class='section'>
+        <li><a href="#View-extending">extending</a></li>
+        <li><a href="#View-addView">addView</a></li>
+        <li><a href="#View-selectView">selectView</a></li>
+      </ul>
       <a class='title' href="#Model">Model</a>
       <ul class='section'>
         <li><a href="#Model-extending">extending</a></li>
@@ -18,19 +29,34 @@
         <li><a href="#Model-addFields">addFields</a></li>
         <li><a href="#Model-addSubModel">addSubModel</a></li>
       </ul>
+      <a class='title' href="#ModelAdapter">ModelAdapter</a>
+      <ul class='section'>
+        <li><a href="#ModelAdapter-defining">defining</a></li>
+      </ul>
+      <a class='title' href="#Collection">Collection</a>
+      <ul class='section'>
+        <li><a href="#Collection-defining">defining</a></li>
+        <li><a href="#Collection-constructor">constructor</a></li>
+        <li><a href="#Collection-load">load</a></li>
+        <li><a href="#Collection-update">update</a></li>
+      </ul>
     </div>
     <div id="container">
       <div class="hero-unit">
         <h1>QuickScript.js</h1>
         <p>A client-side javascript framework based on Knockout.js</p>
+        <p><a class='btn btn-primary btn-large' href='http://github.com/agquick/quick_script'>View on Github</a></p>
       </div>
-      <h2>Introduction</h2>
+
+      <!-- INTRODUCTION -->
+      <h2 id="Introduction">Introduction</h2>
       <p>QuickScript is a client-side javascript framework which extends Knockout.js to provide model parsing and view routing (among other things...). It was written mainly because I wanted to use knockout, but wanted to make conventions on top of it to keep my code DRY. Keep in mind that these are simply conventions that I have made from project to project, however I'm a big believer that libraries are always more valuable frameworks so that you don't limit yourself in the long run. Essentially, this framework itself is just a combination of several libraries with some conventions on top. Thus, decide if this is the best fit for your project, or if you're better off just using Knockout.js.</p>
       <p>
       QuickScript is written in CoffeeScript, so get familiar with it <a href='http://coffeescript.org'>here</a>.<br/>
       It is always heavily based on Knockout.js, so get familiar with it <a href='href://knockoutjs.com'>here</a>.
       </p>
 
+      <!-- INSTALLATION -->
       <h2 id="Installation">Installation</h2>
       <p>More info coming soon. The main thing you need to know for now is that its fully compatible with rails at the moment. All you need to do is add to your Gemfile:
 <pre>
@@ -38,6 +64,51 @@ gem 'quick_script', :git => 'git@github.com:agquick/quick_script.git'
 </pre>
       </p>
 
+      <!-- APPVIEW -->
+      <h2 id="AppView">AppView</h2>
+      <p>
+      The AppView class is the heart of your web application views. You must extend it using the standard coffeescript call. Here you define the name of your application, initialize your application views, and handle routing. AppView extends the <b>View</b> class, so you have all of the functionality available in a normal view. For more information, see the <b>extending</b> method.
+      </p>
+      <p id="AppView-extending">
+      <b class='header'>extending</b><code>class @TodoApp extends AppView</code><br/>
+      To begin developing your application, you need to extend the <b>AppView</b> class. This allows you to setup your application flow and settings.
+<pre>
+class @TodoApp extends AppView
+  init : ->
+    @name = "TodoApp"
+    @addView 'list', TodoListView, 'view-todolist'
+    @addView 'help', HelpView, 'view-help'
+  account_model : User
+  handlePath : =>
+    switch @app.path_parts[1]
+      when 'help'
+        @selectView 'help'
+      when 'home'
+        @selectView 'home'
+      else
+        @app.redirectTo '/home'
+</pre>
+      </p>
+
+      <!-- VIEW -->
+      <h2 id="View">View</h2>
+      <p>
+      Views are used to display data for your application. Views can also be embedded in other views (including your AppView subclass).
+      </p>
+
+      <p id="View-extending">
+      <b class='header'>extending</b><code>class @TodoListView extends View</code><br/>
+      To create a new <b>View</b> subclass, extend the View class using standard coffescript. You should define a <b>init</b> and <b>load</b> method. The <b>init</b> method is used to define any bindable variables for the view. <b>It is important that anything bound to view templates (in a data-bind tag) be defined here, and preferably defined as an observable</b>. Otherwise weird things tend to happen. The <b>load</b> method is used to setup the variables defined in <b>init</b> whenever the view is loaded. This includes loading data from servers, etc.
+<pre>
+class @TodoListView extends @View
+  init : ->
+    @todos = new TodoItem.Collection()
+  load : =>
+    @todos.load ['my_todos']
+</pre>
+      </p>
+
+      <!-- MODEL -->
       <h2 id="Model">Model</h2>
       <p>
       Models hold the data objects to be managed by your application. To create a model, simply extend the Model class using coffeescript. For more information, see the <b>extending</b> method.
@@ -45,7 +116,7 @@ gem 'quick_script', :git => 'git@github.com:agquick/quick_script.git'
 
       <p id="Model-extending">
       <b class='header'>extending</b><code>class @TodoItem extends Model</code><br/>
-      To create your own <b>Model</b> class, you must extend the model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
+      To create your own <b>Model</b> subclass, you must extend the model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
 <pre>
 class @TodoItem extends Model
   init : ->
@@ -65,6 +136,39 @@ class @TodoItem extends Model
 @todo = new TodoItem(server_data)
 </pre>
       </p>
+
+      <!-- MODELADAPTER -->
+      <h2 id="ModelAdapter">ModelAdapter</h2>
+      <p>
+      The <b>ModelAdapter</b> class allows you to define how a <b>Model</b> retrieves its data. You can define the model adapter as follows:
+      </p>
+
+      <p id="ModelAdapter-defining">
+      <b class='header'>defining</b><code>Model.includeAdapter([model_adapter])</code><br/>
+<pre>
+class @TodoItem extends Model
+  Model.includeAdapter(new ModelAdapter({load_url : '/api/todo_items', save_url : '/api/todo_item'}))
+  init : ->
+    ...
+</pre>
+      </p>
+
+      <!-- COLLECTION -->
+      <h2 id="Collection">Collection</h2>
+      <p>
+      The <b>Collection</b> class allows you to maintain lists of <b>Model</b> instances. Because most of the functionality is the same despite the Model subclass, you can easily define a collection class for your Model, as seen below.
+      </p>
+      <p id="Collection-defining">
+      <b class='header'>defining</b><code>Model.includeCollection(this)</code><br/>
+      To define a Collection for a Model, simply add the code as seen below. This will create a <b>TodoItem.Collection</b> class.
+<pre>
+class @TodoItem extends Model
+  Model.includeCollection(this)
+  init : ->
+    ...
+</pre>
+      </p>
+
     </div>
     <script src="http://code.jquery.com/jquery-latest.js"></script>
     <script src="js/bootstrap.min.js"></script>
