@@ -508,6 +508,10 @@ class @Model
 				@errors().length > 0
 			, this
 		@handleData(data || {})
+	addFields : (fields, def_val) ->
+		ko.addFields fields, def_val, this
+	addSubModel : (field_name, class_name) ->
+		ko.addSubModel field_name, class_name, this
 	handleData : (resp) ->
 		ko.absorbModel(resp, this)
 		@db_state(@toJS())
