@@ -34,6 +34,13 @@ module QuickScript
 
 		def handle_params
 			@scope = {}
+			class << @scope
+				def name; return self[:name]; end
+				def args; return self[:args]; end
+				def limit; return self[:limit]; end
+				def page; return self[:page]; end
+				def offset; return self[:offset]; end
+			end
 			@scope[:name] = params[:scope].first.to_sym if params[:scope]
 			@scope[:args] = params[:scope][1..-1] if params[:scope]
 			@scope[:limit] = params[:limit].to_i if params[:limit]

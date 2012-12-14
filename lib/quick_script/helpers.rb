@@ -1,7 +1,7 @@
 module QuickScript
 	module Helpers
-		def jsify(model, opt=:full)
-			raw (model ? model.to_api(opt).to_json : 'null')
+		def jsify(model)
+			raw (model ? model.to_json : 'null')
 		end
 
 		def jqtpl(name, &block)
@@ -9,21 +9,14 @@ module QuickScript
 		end
 
 		def include_view_box
-			raw "<div data-bind=\"template: {name : getViewBoxTemplate}, attr : {class : 'view-box view-box-' + transition.type}\"></div>"
+			#raw "<div data-bind=\"template: {name : getViewBoxTemplate}, attr : {class : 'view-box view-box-' + transition.type}\"></div>"
+			raw "<div data-bind=\"template : 'viewbox'\"></div>"
 		end
 
-		def include_quick_script_init(app_model)
+		def include_quick_script_init(app_model='AppView')
 			javascript_tag do
-				"CURRENT_USER = null;
-				appViewModel = null;
-				overlay = null;
-
-				$(function() {
-					initKO();
-					CURRENT_USER = (#{jsify current_user, :me});
-					appViewModel = new #{app_model}();
-					initApp();
-					console.log('Initialized...');
+				"$(function() {
+					window.App = QuickScript.initialize({view: '#{app_model}', user: #{jsify current_user.to_api(:me)}});
 				});".html_safe
 			end
 		end
