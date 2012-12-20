@@ -16,7 +16,7 @@ module QuickScript
 		def include_quick_script_init(app_model='AppView')
 			javascript_tag do
 				"$(function() {
-					window.App = QuickScript.initialize({view: '#{app_model}', user: #{jsify current_user.to_api(:me)}});
+					window.App = QuickScript.initialize({view: '#{app_model}', user: #{current_user ? jsify(current_user.to_api(:me)) : 'null'}});
 				});".html_safe
 			end
 		end

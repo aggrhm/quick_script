@@ -41,6 +41,8 @@ class @Model
 		@handleData(data || {})
 	addFields : (fields, def_val) ->
 		ko.addFields fields, def_val, this
+	addComputed : (field, fn) ->
+		this[field] = ko.computed fn, this
 	addSubModel : (field_name, class_name) ->
 		ko.addSubModel field_name, class_name, this
 	handleData : (resp) ->

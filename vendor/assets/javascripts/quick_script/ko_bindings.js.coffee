@@ -79,6 +79,21 @@ QuickScript.initKO = ->
 					action.call(viewModel)
 					return false
 
+	ko.bindingHandlers.handleTab =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			$(element).keydown (ev)->
+				if (ev.keyCode == 9 && !ev.shiftKey)
+					action = valueAccessor()
+					val = bindingsAccessor().value
+					val($(element).val())
+					action.call(viewModel)
+					return false
+
+	ko.bindingHandlers.selected =
+		update : (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) ->
+			selected = ko.utils.unwrapObservable(valueAccessor())
+			element.select() if selected
+
 	ko.bindingHandlers.touchstart =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			element.addEventListener('touchstart', valueAccessor().bind(viewModel))

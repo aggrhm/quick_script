@@ -18,6 +18,13 @@ Date.from_utc = (utc) ->
 	new Date(utc * 1000)
 Date.from_now = ->
 	new Date()
+Date.from_str = (str)->
+	d = new Date()
+	d.setYear( +(str.substring(0, 4)) )
+	d.setMonth( +(str.substring(4, 6)) - 1)
+	d.setDate( +(str.substring(6, 8)) )
+	d.remove_time()
+	return d
 Date.now_utc = ->
 	Math.round( (new Date()).getTime() / 1000.0)
 Date.prototype.to_utc = ->
