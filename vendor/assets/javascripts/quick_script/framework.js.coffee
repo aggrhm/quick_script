@@ -442,7 +442,7 @@ class @View
 					opts.slide_index(idx)
 	load : ->
 	reload : =>
-		@load()
+		@load.apply(this, arguments)
 	addView : (name, view_class, tpl) ->
 		@views[name] = new view_class(name, this)
 		@views[name].templateID = tpl
@@ -659,6 +659,7 @@ class @Application extends @View
 		@previous_path(@path())
 		@path(path)
 		@path_parts = @path().split('/')
+		@path_parts.push('') unless @path_parts[@path_parts.length-1] == ''
 		@handlePath(path)
 	handlePath : (path) ->
 	setUser : (data)->
@@ -668,6 +669,8 @@ class @Application extends @View
 		History.pushState(null, null, path)
 	runLater : (callback)->
 		setTimeout callback, 10
+	host : =>
+		window.location.host
 	setTitle : (title, setFull)->
 		@title(title)
 		setFull = setFull || false
