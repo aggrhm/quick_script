@@ -543,6 +543,11 @@ class @ModelAdapter
 		@send opts
 	add_method : (fn_name, fn)->
 		@[fn_name] = fn.bind(this)
+	route_method : (fn_name, url)->
+		@add_method fn_name, (opts)->
+			opts.url = url
+			@send opts
+			
 ModelAdapter.send = (host, opts)->
 	def_err_fn = ->
 		opts.success({meta : 500, data : {errors : ['An error occurred.']}})
@@ -615,6 +620,10 @@ class @AccountAdapter
 		@send opts
 	add_method : (fn_name, fn)->
 		@[fn_name] = fn.bind(this)
+	route_method : (fn_name, url)->
+		@add_method fn_name, (opts)->
+			opts.url = url
+			@send opts
 
 class @LocalStore
 LocalStore.save = (key, val, exp_days, callback)->
