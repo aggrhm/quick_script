@@ -131,6 +131,17 @@ QuickScript.initKO = ->
 					width: opts[1],
 					height: opts[2],
 					display: 'inline-block'
+	
+	ko.bindingHandlers.loadingOverlay =
+		init : (element, valueAccessor) ->
+			$(element).css({'position' : 'relative'})
+		update : (element, valueAccessor) ->
+			is_loading = ko.utils.unwrapObservable(valueAccessor())
+			#loading_text = ko.utils.unwrapObservable(valueAccessor()[1])
+			if is_loading
+				$(element).prepend("<div class='loading-overlay'><img src='/assets/ajax-loader.gif'/></div>")
+			else
+				$(element).children('.loading-overlay').fadeOut()
 
 	ko.bindingHandlers.checkedInt =
 		init: (element, valueAccessor, allBindingsAccessor) ->
@@ -449,39 +460,77 @@ jQuery.fn.extend
 			$(this).removeAttr('data-bind')
 			ko.cleanNode(this)
 
-jQuery.ajax_qs = (opts)->
-	data = new FormData()
-	req = new XMLHttpRequest()
-	url = opts.url
-	if opts.type == "GET"
-		url = url + "?"
-		first = true
+if SupportManager.hasFormData()
+	jQuery.ajax_qs = (opts)->
+		data = new FormData()
+		req = new XMLHttpRequest()
+		url = opts.url
+		if opts.type == "GET"
+			url = url + "?"
+			first = true
+			for key, val of opts.data
+				if val instanceof Array
+					for aval in val
+						url = url + "#{key}#{escape('[]')}=#{escape(aval)}&"
+				else
+					url = url + "#{key}=#{escape(val)}&"
+			url = url.substring(0, url.length - 1)
+		else
+			for key, val of opts.data
+				data.append key, val
+		req.onreadystatechange = (ev)->
+			if req.readyState == 4
+				if req.status == 200
+					resp = eval("(" + req.responseText + ")")
+					opts.success(resp)
+				else
+					opts.error(req.status) if opts.error?
+				opts.loading(false) if opts.loading?
+		req.upload.addEventListener('error', opts.error) if opts.error?
+		if opts.progress?
+			req.upload.addEventListener 'progress', (ev)->
+				opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
+		req.open opts.type, url, true
+		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
+		opts.loading(true) if opts.loading?
+		req.send(data)
+		return req
+else
+	# IE compliant
+	jQuery.ajax_qs = (opts)->
+		#data = new FormData()
+		req = new XMLHttpRequest()
+		url = opts.url
+		# build data
+		data_s = ''
 		for key, val of opts.data
 			if val instanceof Array
 				for aval in val
-					url = url + "#{key}#{escape('[]')}=#{escape(aval)}&"
+					data_s = data_s + "#{key}#{escape('[]')}=#{escape(aval)}&"
 			else
-				url = url + "#{key}=#{escape(val)}&"
-		url = url.substring(0, url.length - 1)
-	else
-		for key, val of opts.data
-			data.append key, val
-	req.onreadystatechange = (ev)->
-		if req.readyState == 4
-			if req.status == 200
-				resp = eval("(" + req.responseText + ")")
-				opts.success(resp)
-			else
-				opts.error(req.status) if opts.error?
-			opts.loading(false) if opts.loading?
-	req.upload.addEventListener('error', opts.error) if opts.error?
-	if opts.progress?
-		req.upload.addEventListener 'progress', (ev)->
-			opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
-	req.open opts.type, url, true
-	req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
-	opts.loading(true) if opts.loading?
-	req.send(data)
-	return req
+				data_s = data_s + "#{key}=#{escape(val)}&"
+		data_s = data_s.substring(0, data_s.length - 1)
+		if opts.type == "GET"
+			url = url + "?" + data_s
+		req.onreadystatechange = (ev)->
+			if req.readyState == 4
+				if req.status == 200
+					resp = eval("(" + req.responseText + ")")
+					opts.success(resp)
+				else
+					opts.error(req.status) if opts.error?
+				opts.loading(false) if opts.loading?
+		###
+		req.upload.addEventListener('error', opts.error) if opts.error?
+		if opts.progress?
+			req.upload.addEventListener 'progress', (ev)->
+				opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
+		###
+		req.open opts.type, url, true
+		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
+		req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
+		opts.loading(true) if opts.loading?
+		req.send(data_s)
+		return req
 
 

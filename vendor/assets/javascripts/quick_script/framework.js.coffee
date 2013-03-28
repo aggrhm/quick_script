@@ -543,9 +543,11 @@ class @ModelAdapter
 		@send opts
 	add_method : (fn_name, fn)->
 		@[fn_name] = fn.bind(this)
-	route_method : (fn_name, url)->
+	route_method : (fn_name, url, http_m)->
+		http_m ||= 'POST'
 		@add_method fn_name, (opts)->
 			opts.url = url
+			opts.type = http_m
 			@send opts
 			
 ModelAdapter.send = (host, opts)->
@@ -620,9 +622,11 @@ class @AccountAdapter
 		@send opts
 	add_method : (fn_name, fn)->
 		@[fn_name] = fn.bind(this)
-	route_method : (fn_name, url)->
+	route_method : (fn_name, url, http_m)->
+		http_m ||= 'POST'
 		@add_method fn_name, (opts)->
 			opts.url = url
+			opts.type = http_m
 			@send opts
 
 class @LocalStore
@@ -645,6 +649,7 @@ class @Application extends @View
 		@previous_path = ko.observable(null)
 		@path_parts = []
 		@title = ko.observable('')
+		@redirectOnLogin = ko.observable(null)
 		ko.addTemplate "viewbox", """
 				<div data-bind='foreach : viewList()'>
 					<div data-bind="fadeVisible : is_visible(), template : { name : getViewName, afterRender : afterRender, if : is_visible() }, attr : { id : templateID}, bindelem : true"></div>
@@ -676,6 +681,16 @@ class @Application extends @View
 		@current_user.handleData(data) if data != null
 	redirectTo : (path) ->
 		History.pushState(null, null, path)
+	loginTo : (path, user_data, opts)->
+		@current_user.handleData(user_data)
+		if @redirectOnLogin() != null
+			@redirectTo(@redirectOnLogin())
+			@redirectOnLogin(null)
+		else
+			@redirectTo(path)
+	logoutTo : (path, opts)->
+		@current_user.reset()
+		@redirectTo(path)
 	runLater : (callback)->
 		setTimeout callback, 10
 	host : =>

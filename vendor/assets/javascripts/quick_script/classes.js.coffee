@@ -318,6 +318,17 @@ class @TimeLength
 TimeLength.DAY = 86400
 TimeLength.YEAR = 31536000
 
+# SUPPORTMANAGER
+class @SupportManager
+SupportManager.hasFormData = ->
+	(window.FormData?)
+SupportManager.canUpload = ->
+	SupportManager.hasFormData()
+
+unless window.console?
+	window.console =
+		log : ->
+
 # Helpful functions
 loadScript = (u, d) ->
 	d = typeof(d) != 'undefined' ? d : ""
