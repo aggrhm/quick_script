@@ -1,4 +1,11 @@
 @QuickScript = {}
+QuickScript.utils = {}
+QuickScript.utils.buildOptions = (hash)->
+	ret = []
+	for key, val of hash
+		ret.push {value: key, text: val}
+	return ret
+
 
 class @Model
 	init : ->
