@@ -33,6 +33,7 @@ module QuickScript
 		end
 
 		def handle_params
+      # handle scope
 			@scope = {}
 			class << @scope
 				def name; return self[:name]; end
@@ -46,6 +47,9 @@ module QuickScript
 			@scope[:limit] = params[:limit].to_i if params[:limit]
 			@scope[:page] = params[:page].to_i if params[:page]
 			@scope[:offset] = (@scope[:page] - 1) * @scope[:limit] if params[:page] && params[:limit]
+
+      # handle api_ver
+      @api_version = params[:api_ver] ? params[:api_ver].to_i : nil
 		end
 
 		def get_scoped_items(model, scope, limit, offset)
