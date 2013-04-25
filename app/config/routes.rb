@@ -1,4 +1,8 @@
 TodoList::Application.routes.draw do
+
+  root :to => 'application#layout_only'
+  match "*path" => "application#layout_only", :constraints => QuickScript::DEFAULT_ROUTING_RULE
+  
   # The priority is based upon order of creation:
   # first created -> highest priority.
 

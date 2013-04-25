@@ -4,6 +4,9 @@ require 'quick_script/interaction'
 require 'quick_script/engine'
 
 module QuickScript
+
+  DEFAULT_ROUTING_RULE = lambda{|req| !req.env['REQUEST_URI'].include?('/api/') && !req.env['REQUEST_URI'].include?('/assets/')}
+
   # Your code goes here...
   def self.initialize
     return if @intialized

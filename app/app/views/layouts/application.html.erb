@@ -4,11 +4,13 @@
   <title>TodoList</title>
   <%= stylesheet_link_tag    "application", :media => "all" %>
   <%= javascript_include_tag "application" %>
+  <%= render :partial => 'shared/views' %>
   <%= csrf_meta_tags %>
 </head>
 <body>
 
-<%= yield %>
+  <%= include_view_box %>
+  <%= include_quick_script_init 'AppView' %>
 
 </body>
 </html>

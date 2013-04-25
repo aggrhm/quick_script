@@ -73,5 +73,9 @@ module QuickScript
 			block.call(responder)
 			responder.respond @scope
 		end
+
+    def layout_only
+      render :text => '', :layout => 'application'
+    end
 	end
 end
