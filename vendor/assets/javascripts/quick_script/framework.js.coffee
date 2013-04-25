@@ -669,6 +669,7 @@ class @Application extends @View
 					</div>
 				</div>
 			"""
+		@account_model ||= Model
 		@current_user = new @account_model()
 		@is_logged_in = ko.computed ->
 				!@current_user.is_new()

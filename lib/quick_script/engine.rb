@@ -1,3 +1,5 @@
+require 'compass-rails'
+
 module QuickScript
   class Engine < ::Rails::Engine
     #config.tinymce = ActiveSupport::OrderedOptions.new
