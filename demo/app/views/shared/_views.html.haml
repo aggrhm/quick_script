@@ -1,3 +1,17 @@
 =jqtpl "view-home" do
-  This should be working...
+  #todo-container
+    %h1 My Todo List
+    %form.form-horizontal.new-item
+      .input-append
+        %input.span4(type="text" placeholder="What do you have to do?")
+        %button.btn.btn-primary Add
+    .item-list
+      .todo-item
+        %label.checkbox
+          %input(type="checkbox")
+          %span.desc Go to the store
+        .details
+          %span.time 5 days ago
+          %a.actions remove
+
   

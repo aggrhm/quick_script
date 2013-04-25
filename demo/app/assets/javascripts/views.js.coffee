@@ -10,4 +10,4 @@ class @AppView extends @Application
 			when '', 'home'
 				@selectView 'home'
 			else
-				@app.redirectTo ''
+				@app.redirectTo '/'
