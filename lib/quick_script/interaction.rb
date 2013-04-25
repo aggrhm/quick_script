@@ -1,5 +1,12 @@
 module QuickScript
 	module Interaction
+
+    ## HELPER ACTIONS
+    
+    def layout_only
+      render :text => '', :layout => 'application'
+    end
+
 		protected
 
 		class << self
@@ -74,8 +81,5 @@ module QuickScript
 			responder.respond @scope
 		end
 
-    def layout_only
-      render :text => '', :layout => 'application'
-    end
 	end
 end
