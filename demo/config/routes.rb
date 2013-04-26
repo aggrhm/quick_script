@@ -1,5 +1,12 @@
 TodoList::Application.routes.draw do
 
+  scope "/api" do
+    match "todo_items" => "todo_items#index", :via => :get
+    match "todo_item" => "todo_items#save", :via => :post
+    match "todo_item" => "todo_items#delete", :via => :delete
+  end
+
+
   root :to => 'application#layout_only'
   match "*path" => "application#layout_only", :constraints => QuickScript::DEFAULT_ROUTING_RULE
   

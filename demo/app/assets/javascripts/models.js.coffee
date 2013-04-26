@@ -7,7 +7,7 @@ class @TodoItem extends @Model
 	Model.includeCollection(this)
 
 	init : =>
-		@addFields ['description'], ''
+		@addFields ['description', 'notes'], ''
 		@addFields ['done'], false
 		@addFields ['created_at', 'updated_at'], 0
 		@created_at_date = ko.computed ->
