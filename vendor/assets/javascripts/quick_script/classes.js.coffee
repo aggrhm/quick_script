@@ -312,7 +312,7 @@ class @TimeLength
 			str = "second"
 		else
 			val = 0
-			str = "minutes"
+			str = "seconds"
 		attr = str + ( if (val > 1) then "s" else "" )
 		"#{val} #{attr}"
 TimeLength.DAY = 86400
