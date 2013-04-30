@@ -1,0 +1,30 @@
+<!-- MODEL -->
+=header "Model"
+%p
+	Models hold the data objects to be managed by your application. To create a model, simply extend the Model class using coffeescript. For more information, see the <b>defining</b> method.
+
+#Model-defining
+	<b class='header'>defining</b><code>class @TodoItem extends Model</code><br/>
+	To create your own <b>Model</b> subclass, you must extend the model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
+
+	%pre
+		=preserve do
+			:escaped
+				class @TodoItem extends Model
+					init : ->
+						@addFields ['description'], ''
+						@addFields ['done'], false
+						@done_str = ko.computed ->
+							if @done() == true then 'done' else 'not yet...'
+						, this
+					setDone : =>
+						@done(true)
+
+#Model-constructor
+	<b class='header'>constructor</b><code>new TodoItem([attributes, [collection]])</code><br/>
+	When instantiating a model, you can pass a JS object to it containing attributes to initialize the object with. You can also pass a collection that the object is bound to. This is set by default for collection-build model objects.
+	%pre
+		=preserve do
+			:escaped
+				@todo = new TodoItem(server_data)
+

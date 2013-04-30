@@ -1,0 +1,28 @@
+<!-- APPVIEW -->
+%h2#Application Application
+%p
+	The <b>Application</b> class is the heart of your web application views. You must extend it using the standard coffeescript call, and name it whatever you passed to 'include_quick_script_init'. Here you define the name of your application, initialize your application views, and handle routing. <b>Application</b> extends the <b>View</b> class, so you have all of the functionality available in a normal view. For more information, see the <b>defining</b> method.
+
+%p#Application-defining
+	<b class='header'>defining</b><code>class @AppView extends @Application</code><br/>
+	To begin developing your application, you need to extend the <b>Application</b> class. This allows you to setup your application flow and settings.
+
+	%pre
+		=preserve do
+			:escaped
+				class @AppView extends @Application
+					init : ->
+						@name = "TodoApp"
+						@addView 'list', TodoListView, 'view-todolist'
+						@addView 'help', HelpView, 'view-help'
+					account_model : User
+					handlePath : =>
+						switch @app.path_parts[1]
+							when 'help'
+								@selectView 'help'
+							when 'home'
+								@selectView 'home'
+							else
+								@app.redirectTo '/home'
+
+

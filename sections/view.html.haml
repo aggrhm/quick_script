@@ -1,0 +1,21 @@
+<!-- VIEW -->
+=header "View"
+%p
+	Views are used to display data for your application. Views can also be embedded in other views (including your AppView subclass).
+
+#View-defining
+	<b class='header'>defining</b><code>class @TodoListView extends View</code><br/>
+	To create a new <b>View</b> subclass, extend the View class using standard coffescript. You should define a <b>init</b> and <b>load</b> method. The <b>init</b> method is used to define any bindable variables for the view.
+
+%p
+	<b>It is important that anything bound to view templates (in a data-bind tag) be defined here, and preferably defined as an observable</b>. Otherwise weird things tend to happen. The <b>load</b> method is used to setup the variables defined in <b>init</b> whenever the view is loaded. This includes loading data from servers, etc.
+
+%pre
+	=preserve do
+		:escaped
+			class @TodoListView extends @View
+				init : ->
+					@todos = new TodoItem.Collection()
+				load : =>
+					@todos.load ['my_todos']
+

@@ -1,0 +1,59 @@
+<!-- INSTALLATION -->
+%h2#Installation Installation
+%p
+	QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. For Rails, first you need to add the gem to your Gemfile:
+
+	%pre
+		=preserve do
+			:escaped
+				gem 'quick_script', :git => 'git@github.com:agquick/quick_script.git'
+
+	Next, you need to add the helpers to your <b>ApplicationController</b>.
+
+	%pre
+		=preserve do
+			:escaped
+				class ApplicationController
+				include QuickScript::Interaction
+				...
+				end
+				</pre>
+
+	Next, setup your file hierarchy. This is how I typically set up mine, but up to you. The javascript files should be added to your asset pipeline file.
+
+	%pre
+		=preserve do
+			:escaped
+				app/
+				  views/
+				    shared/
+				      views.html.haml   # for your view templates (I use haml)
+				  assets/
+				    javascripts/
+				      view_models.js.coffee   # for your application js views
+				      models.js.coffee    # for your application models
+				      application.js      # add the two files above to this file
+
+	Now setup your application layout.
+
+	%pre
+		=preserve do
+			:escaped
+				<!DOCTYPE html>
+				<html>
+				  <head>
+				    <title>TodoListApp</title>
+				    <%= stylesheet_link_tag    "application", :media => "all" %>
+				    <%= javascript_include_tag "application" %>
+				    <%= render :partial => 'shared/views' %>
+				    <%= csrf_meta_tags %>
+				  </head>
+				  <body>
+				    <%= include_view_box %>
+				    <%= include_quick_script_init 'AppView' %>
+				  </body>
+				</html>
+
+	Now you are ready to start building your application.
+
+
