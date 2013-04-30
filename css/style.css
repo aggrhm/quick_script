@@ -1,9 +1,10 @@
 body {
-	font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, FreeSerif, serif;
+	/*font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, FreeSerif, serif;*/
+	font-family: Helvetica Neue, Helvetica, Arial;
 	font-size: 15px;
 	line-height: 22px;
 	color: #252519;
-	background: #F4F4F4 url(/img/background.png);
+	background: #F4F4F4 url(../img/background.png);
 }
 
 #sidebar {
@@ -51,12 +52,14 @@ b.header {
 code {
 	margin-left: 20px;
 	color: #444;
+	border: none;
 }
 code, pre, tt {
 	font-family: Monaco, Consolas, "Lucida Console", monospace;
 	font-size: 12px;
 	line-height: 18px;
 	font-style: normal;
+	background-color: transparent;
 }
 	
 pre {
@@ -65,5 +68,6 @@ pre {
 	border: 4px solid #BBB;
 	border-top: 0;
 	border-bottom: 0;
-	margin: 0px 0 25px;
+	margin: 10px 0 25px;
+	tab-size: 4;
 }

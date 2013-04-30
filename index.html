@@ -1,221 +1,112 @@
-<!DOCTYPE html>
 <html>
   <head>
     <title>QuickScript.js</title>
-    <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-    <link href="css/style.css" rel="stylesheet" media="screen">
+    <link href='css/bootstrap.min.css' media='screen' rel='stylesheet'>
+    <link href='css/style.css' media='screen' rel='stylesheet'>
   </head>
   <body>
-    <div id="sidebar">
+    <div id='sidebar'>
       <a class='title'>QuickScript.js</a>
-      <a class='title' href="#Introduction">Introduction</a>
-      <a class='title' href="#Installation">Installation</a>
-      <a class='title' href="#Application">Application</a>
+      <a class='title' href='#Introduction'>Introduction</a>
+      <a class='title' href='#Installation'>Installation</a>
+      <a class='title' href='#Model'>Model</a>
       <ul class='section'>
-        <li><a href="#Application-defining">defining</a></li>
-        <li><a href="#Application-handlePath">handlePath</a></li>
+        <li><a href='#View-defining'>defining</a></li>
+        <li><a href='#View-constructor'>constructor</a></li>
+        <li><a href='#View-addFields'>addFields</a></li>
+        <li><a href='#View-addSubModel'>addSubModel</a></li>
       </ul>
-      <a class='title' href="#View">View</a>
+      <a class='title' href='#ModelAdapter'>ModelAdapter</a>
       <ul class='section'>
-        <li><a href="#View-defining">defining</a></li>
-        <li><a href="#View-addView">addView</a></li>
-        <li><a href="#View-selectView">selectView</a></li>
+        <li><a href='#View-defining'>defining</a></li>
       </ul>
-      <a class='title' href="#Model">Model</a>
+      <a class='title' href='#Collection'>Collection</a>
       <ul class='section'>
-        <li><a href="#Model-defining">defining</a></li>
-        <li><a href="#Model-constructor">constructor</a></li>
-        <li><a href="#Model-addFields">addFields</a></li>
-        <li><a href="#Model-addSubModel">addSubModel</a></li>
+        <li><a href='#View-defining'>defining</a></li>
+        <li><a href='#View-constructor'>constructor</a></li>
+        <li><a href='#View-load'>load</a></li>
+        <li><a href='#View-update'>update</a></li>
       </ul>
-      <a class='title' href="#ModelAdapter">ModelAdapter</a>
+      <a class='title' href='#View'>View</a>
       <ul class='section'>
-        <li><a href="#ModelAdapter-defining">defining</a></li>
+        <li><a href='#View-defining'>defining</a></li>
+        <li><a href='#View-addView'>addView</a></li>
+        <li><a href='#View-selectView'>selectView</a></li>
       </ul>
-      <a class='title' href="#Collection">Collection</a>
+      <a class='title' href='#Application'>Application</a>
       <ul class='section'>
-        <li><a href="#Collection-defining">defining</a></li>
-        <li><a href="#Collection-constructor">constructor</a></li>
-        <li><a href="#Collection-load">load</a></li>
-        <li><a href="#Collection-update">update</a></li>
+        <li><a href='#Application-defining'>defining</a></li>
+        <li><a href='#Application-handlePath'>handlePath</a></li>
       </ul>
     </div>
-    <div id="container">
-      <div class="hero-unit">
+    <div id='container'>
+      <div class='hero-unit'>
         <h1>QuickScript.js</h1>
         <p>A client-side javascript framework based on Knockout.js</p>
         <p><a class='btn btn-primary btn-large' href='http://github.com/agquick/quick_script'><i class='icon-share-alt icon-white'></i>View on Github</a></p>
       </div>
-
       <!-- INTRODUCTION -->
-      <h2 id="Introduction">Introduction</h2>
-      <p>QuickScript is a client-side javascript framework which extends Knockout.js to provide model parsing and view routing (among other things...). It was written mainly because I wanted to use knockout, but wanted to make conventions on top of it to keep my code DRY. Keep in mind that these are simply conventions that I have made from project to project, however I'm a big believer that libraries are always more valuable frameworks so that you don't limit yourself in the long run. Essentially, this framework itself is just a combination of several libraries with some conventions on top. Thus, decide if this is the best fit for your project, or if you're better off just using Knockout.js.</p>
+      <h2 id='Introduction'>Introduction</h2>
       <p>
-      QuickScript is written in CoffeeScript, so get familiar with it <a href='http://coffeescript.org'>here</a>.<br/>
-      It is always heavily based on Knockout.js, so get familiar with it <a href='href://knockoutjs.com'>here</a>.
+        QuickScript is a client-side javascript framework which extends Knockout.js to provide model parsing and view routing (among other things...). It was written mainly because I wanted to use knockout, but wanted to make conventions on top of it to keep my code DRY. Keep in mind that these are simply conventions that I have made from project to project, however I'm a big believer that libraries are always more valuable frameworks so that you don't limit yourself in the long run. Essentially, this framework itself is just a combination of several libraries with some conventions on top. Thus, decide if this is the best fit for your project, or if you're better off just using Knockout.js.
       </p>
-
+      <p>
+        QuickScript is written in CoffeeScript, so get familiar with it <a href='http://coffeescript.org'>here</a>.<br/>
+        It is always heavily based on Knockout.js, so get familiar with it <a href='href://knockoutjs.com'>here</a>.
+      </p>
       <!-- INSTALLATION -->
-      <h2 id="Installation">Installation</h2>
+      <h2 id='Installation'>Installation</h2>
       <p>
-      QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. For Rails, first you need to add the gem to your Gemfile:
-<pre>
-gem 'quick_script', :git => 'git@github.com:agquick/quick_script.git'
-</pre>
-
-      Next, you need to add the helpers to your <b>ApplicationController</b>.
-
-<pre>
-class ApplicationController
-    include QuickScript::Interaction
-    ...
-end
-</pre>
-
-      Next, setup your file hierarchy. This is how I typically set up mine, but up to you. The javascript files should be added to your asset pipeline file.
-
-<pre>
-app/
-  views/
-    shared/
-      views.html.haml   # for your view templates (I use haml)
-  assets/
-    javascripts/
-      view_models.js.coffee   # for your application js views
-      models.js.coffee    # for your application models
-      application.js      # add the two files above to this file
-</pre>
-
-      Now setup your application layout.
-
-<pre><code>
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;TodoListApp&lt;/title&gt;
-    <%= stylesheet_link_tag    "application", :media => "all" %>
-    <%= javascript_include_tag "application" %>
-    <%= render :partial => 'shared/views' %>
-    <%= csrf_meta_tags %>
-&lt;/head&gt;
-&lt;body&gt;
-    <%= include_view_box %>
-    <%= include_quick_script_init 'AppView' %>
-&lt;/body&gt;
-&lt;/html&gt;
-</code></pre>
-
-      Now you are ready to start building your application.
+        QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. For Rails, first you need to add the gem to your Gemfile:
+        <pre>gem 'quick_script', :git =&gt; 'git@github.com:agquick/quick_script.git'</pre>
+        Next, you need to add the helpers to your <b>ApplicationController</b>.
+        <pre>class ApplicationController&#x000A;include QuickScript::Interaction&#x000A;...&#x000A;end&#x000A;&lt;/pre&gt;</pre>
+        Next, setup your file hierarchy. This is how I typically set up mine, but up to you. The javascript files should be added to your asset pipeline file.
+        <pre>app/&#x000A;  views/&#x000A;    shared/&#x000A;      views.html.haml   # for your view templates (I use haml)&#x000A;  assets/&#x000A;    javascripts/&#x000A;      view_models.js.coffee   # for your application js views&#x000A;      models.js.coffee    # for your application models&#x000A;      application.js      # add the two files above to this file</pre>
+        Now setup your application layout.
+        <pre>&lt;!DOCTYPE html&gt;&#x000A;&lt;html&gt;&#x000A;  &lt;head&gt;&#x000A;    &lt;title&gt;TodoListApp&lt;/title&gt;&#x000A;    &lt;%= stylesheet_link_tag    &quot;application&quot;, :media =&gt; &quot;all&quot; %&gt;&#x000A;    &lt;%= javascript_include_tag &quot;application&quot; %&gt;&#x000A;    &lt;%= render :partial =&gt; 'shared/views' %&gt;&#x000A;    &lt;%= csrf_meta_tags %&gt;&#x000A;  &lt;/head&gt;&#x000A;  &lt;body&gt;&#x000A;    &lt;%= include_view_box %&gt;&#x000A;    &lt;%= include_quick_script_init 'AppView' %&gt;&#x000A;  &lt;/body&gt;&#x000A;&lt;/html&gt;</pre>
+        Now you are ready to start building your application.
       </p>
-
-      <!-- APPVIEW -->
-      <h2 id="Application">Application</h2>
-      <p>
-      The <b>Application</b> class is the heart of your web application views. You must extend it using the standard coffeescript call, and name it whatever you passed to 'include_quick_script_init'. Here you define the name of your application, initialize your application views, and handle routing. <b>Application</b> extends the <b>View</b> class, so you have all of the functionality available in a normal view. For more information, see the <b>defining</b> method.
-      </p>
-      <p id="Application-defining">
-      <b class='header'>defining</b><code>class @AppView extends @Application</code><br/>
-      To begin developing your application, you need to extend the <b>Application</b> class. This allows you to setup your application flow and settings.
-<pre>
-class @AppView extends @Application
-  init : ->
-    @name = "TodoApp"
-    @addView 'list', TodoListView, 'view-todolist'
-    @addView 'help', HelpView, 'view-help'
-  account_model : User
-  handlePath : =>
-    switch @app.path_parts[1]
-      when 'help'
-        @selectView 'help'
-      when 'home'
-        @selectView 'home'
-      else
-        @app.redirectTo '/home'
-</pre>
-      </p>
-
-      <!-- VIEW -->
-      <h2 id="View">View</h2>
-      <p>
-      Views are used to display data for your application. Views can also be embedded in other views (including your AppView subclass).
-      </p>
-
-      <p id="View-defining">
-      <b class='header'>defining</b><code>class @TodoListView extends View</code><br/>
-      To create a new <b>View</b> subclass, extend the View class using standard coffescript. You should define a <b>init</b> and <b>load</b> method. The <b>init</b> method is used to define any bindable variables for the view. <b>It is important that anything bound to view templates (in a data-bind tag) be defined here, and preferably defined as an observable</b>. Otherwise weird things tend to happen. The <b>load</b> method is used to setup the variables defined in <b>init</b> whenever the view is loaded. This includes loading data from servers, etc.
-<pre>
-class @TodoListView extends @View
-  init : ->
-    @todos = new TodoItem.Collection()
-  load : =>
-    @todos.load ['my_todos']
-</pre>
-      </p>
-
       <!-- MODEL -->
-      <h2 id="Model">Model</h2>
+      <h2 id='Model'>Model</h2>
       <p>
-      Models hold the data objects to be managed by your application. To create a model, simply extend the Model class using coffeescript. For more information, see the <b>defining</b> method.
+        Models hold the data objects to be managed by your application. To create a model, simply extend the Model class using coffeescript. For more information, see the <b>defining</b> method.
       </p>
-
-      <p id="Model-defining">
-      <b class='header'>defining</b><code>class @TodoItem extends Model</code><br/>
-      To create your own <b>Model</b> subclass, you must extend the model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
-<pre>
-class @TodoItem extends Model
-  init : ->
-    @addFields ['description'], ''
-    @addFields ['done'], false
-    @done_str = ko.computed ->
-      if @done() == true then 'done' else 'not yet...'
-    , this
-  setDone : =>
-    @done(true)
-</pre>
-      </p>
-      <p id="Model-constructor">
-      <b class='header'>constructor</b><code>new TodoItem([attributes, [collection]])</code><br/>
-      When instantiating a model, you can pass a JS object to it containing attributes to initialize the object with. You can also pass a collection that the object is bound to. This is set by default for collection-build model objects.
-<pre>
-@todo = new TodoItem(server_data)
-</pre>
-      </p>
-
-      <!-- MODELADAPTER -->
-      <h2 id="ModelAdapter">ModelAdapter</h2>
+      <div id='Model-defining'>
+        <b class='header'>defining</b><code>class @TodoItem extends Model</code><br/>
+        To create your own <b>Model</b> subclass, you must extend the model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
+        <pre>class @TodoItem extends Model&#x000A;	init : -&gt;&#x000A;		@addFields ['description'], ''&#x000A;		@addFields ['done'], false&#x000A;		@done_str = ko.computed -&gt;&#x000A;			if @done() == true then 'done' else 'not yet...'&#x000A;		, this&#x000A;	setDone : =&gt;&#x000A;		@done(true)</pre>
+      </div>
+      <div id='Model-constructor'>
+        <b class='header'>constructor</b><code>new TodoItem([attributes, [collection]])</code><br/>
+        When instantiating a model, you can pass a JS object to it containing attributes to initialize the object with. You can also pass a collection that the object is bound to. This is set by default for collection-build model objects.
+        <pre>@todo = new TodoItem(server_data)</pre>
+      </div>
+      <!-- VIEW -->
+      <h2 id='View'>View</h2>
       <p>
-      The <b>ModelAdapter</b> class allows you to define how a <b>Model</b> retrieves its data. You can define the model adapter as follows:
+        Views are used to display data for your application. Views can also be embedded in other views (including your AppView subclass).
       </p>
-
-      <p id="ModelAdapter-defining">
-      <b class='header'>defining</b><code>Model.includeAdapter([model_adapter])</code><br/>
-<pre>
-class @TodoItem extends Model
-  Model.includeAdapter(new ModelAdapter({load_url : '/api/todo_items', save_url : '/api/todo_item'}))
-  init : ->
-    ...
-</pre>
-      </p>
-
-      <!-- COLLECTION -->
-      <h2 id="Collection">Collection</h2>
+      <div id='View-defining'>
+        <b class='header'>defining</b><code>class @TodoListView extends View</code><br/>
+        To create a new <b>View</b> subclass, extend the View class using standard coffescript. You should define a <b>init</b> and <b>load</b> method. The <b>init</b> method is used to define any bindable variables for the view.
+      </div>
       <p>
-      The <b>Collection</b> class allows you to maintain lists of <b>Model</b> instances. Because most of the functionality is the same despite the Model subclass, you can easily define a collection class for your Model, as seen below.
+        <b>It is important that anything bound to view templates (in a data-bind tag) be defined here, and preferably defined as an observable</b>. Otherwise weird things tend to happen. The <b>load</b> method is used to setup the variables defined in <b>init</b> whenever the view is loaded. This includes loading data from servers, etc.
       </p>
-      <p id="Collection-defining">
-      <b class='header'>defining</b><code>Model.includeCollection(this)</code><br/>
-      To define a Collection for a Model, simply add the code as seen below. This will create a <b>TodoItem.Collection</b> class.
-<pre>
-class @TodoItem extends Model
-  Model.includeCollection(this)
-  init : ->
-    ...
-</pre>
+      <pre>class @TodoListView extends @View&#x000A;	init : -&gt;&#x000A;		@todos = new TodoItem.Collection()&#x000A;	load : =&gt;&#x000A;		@todos.load ['my_todos']</pre>
+      <!-- APPVIEW -->
+      <h2 id='Application'>Application</h2>
+      <p>
+        The <b>Application</b> class is the heart of your web application views. You must extend it using the standard coffeescript call, and name it whatever you passed to 'include_quick_script_init'. Here you define the name of your application, initialize your application views, and handle routing. <b>Application</b> extends the <b>View</b> class, so you have all of the functionality available in a normal view. For more information, see the <b>defining</b> method.
       </p>
-
+      <p id='Application-defining'>
+        <b class='header'>defining</b><code>class @AppView extends @Application</code><br/>
+        To begin developing your application, you need to extend the <b>Application</b> class. This allows you to setup your application flow and settings.
+        <pre>class @AppView extends @Application&#x000A;	init : -&gt;&#x000A;		@name = &quot;TodoApp&quot;&#x000A;		@addView 'list', TodoListView, 'view-todolist'&#x000A;		@addView 'help', HelpView, 'view-help'&#x000A;	account_model : User&#x000A;	handlePath : =&gt;&#x000A;		switch @app.path_parts[1]&#x000A;			when 'help'&#x000A;				@selectView 'help'&#x000A;			when 'home'&#x000A;				@selectView 'home'&#x000A;			else&#x000A;				@app.redirectTo '/home'</pre>
+      </p>
     </div>
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+    <script src='http://code.jquery.com/jquery-latest.js'></script>
+    <script src='js/bootstrap.min.js'></script>
   </body>
 </html>
