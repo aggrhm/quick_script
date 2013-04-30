@@ -7,7 +7,7 @@
 		#sidebar
 			=render "sections/sidebar"
 		#container
-			.hero-unit
+			#top.hero-unit
 				%h1 QuickScript.js
 				%p A client-side javascript framework based on Knockout.js
 				%p <a class='btn btn-primary btn-large' href='http://github.com/agquick/quick_script'><i class='icon-share-alt icon-white'></i>View on Github</a>
@@ -15,8 +15,11 @@
 			=render "sections/introduction"
 			=render "sections/installation"
 			=render "sections/model"
+			=render "sections/collection"
 			=render "sections/view"
 			=render "sections/application"
+			=render "sections/model_adapter"
+			=render "sections/examples"
 
 		%script(src="http://code.jquery.com/jquery-latest.js")
 		%script(src="js/bootstrap.min.js")

@@ -1,21 +1,54 @@
 <!-- VIEW -->
 =header "View"
 %p
-	Views are used to display data for your application. Views can also be embedded in other views (including your AppView subclass).
+	Views hold the business logic for your application. They are bound to your view templates. Views can also be embedded in other views.
 
 #View-defining
-	<b class='header'>defining</b><code>class @TodoListView extends View</code><br/>
-	To create a new <b>View</b> subclass, extend the View class using standard coffescript. You should define a <b>init</b> and <b>load</b> method. The <b>init</b> method is used to define any bindable variables for the view.
+	=subheader "defining", "class @MyView extends @View"
+	:markdown
+		To create a new **View** subclass, extend the View class using standard coffescript. You should define `init` and `load` method. The `init` method is used to define any bindable variables for the view. The `load` method is called whenever the view is displayed, and should be used to update the variables defined in `init`. This usually involves loading data from the server.
 
-%p
-	<b>It is important that anything bound to view templates (in a data-bind tag) be defined here, and preferably defined as an observable</b>. Otherwise weird things tend to happen. The <b>load</b> method is used to setup the variables defined in <b>init</b> whenever the view is loaded. This includes loading data from servers, etc.
+		**It is important that anything bound to view templates (in a data-bind tag) be defined in `init` only, and preferably defined as an observable**. Otherwise weird things tend to happen.
 
-%pre
-	=preserve do
-		:escaped
+		The `load` function can also be used to handle routing. This is especially important for embedded views. The format for this is identical to how `handlePath` in **Application** works.
+
+	%pre
+		:code
 			class @TodoListView extends @View
 				init : ->
 					@todos = new TodoItem.Collection()
 				load : =>
 					@todos.load ['my_todos']
+	
+	:markdown
+		Every **View** instance has access to a few variables that help it do its job:
 
+		`@app` - the **Application** context  
+		`@owner` - the view that owns the current view  
+		`@name` - the name of the current view  
+
+#View-addView
+	=subheader "addView", "@addView(name, view_class, template_name)"
+	:markdown
+		This method adds a view to your application.
+
+		`name` - the name of the view. This is used with `selectView`  
+		`view_class` - the View-extending class that you want to render  
+		`template_name` - the name of the view template that should be bound to the view
+
+	%pre
+		:code
+			class @HomeView extends @View
+				...
+
+			class @AppView extends @Application
+				init : =>
+					@addView('home', HomeView, 'view-home')
+
+#View-selectView
+	=subheader "selectView", "@selectView(name, [*args])"
+	:markdown
+		This method selects an embedded view to be displayed and hides all other embedded views. It is typically called in the routing code of your application, as the view to be rendered usually corresponds with the url path. When called, it also calls the `load` method on view to be displayed, passing the additional arguments along.
+
+		`name` - the name of the view to display  
+		`args` - arguments to pass to the `load` method of the view

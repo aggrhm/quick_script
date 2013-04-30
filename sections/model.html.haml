@@ -4,27 +4,91 @@
 	Models hold the data objects to be managed by your application. To create a model, simply extend the Model class using coffeescript. For more information, see the <b>defining</b> method.
 
 #Model-defining
-	<b class='header'>defining</b><code>class @TodoItem extends Model</code><br/>
-	To create your own <b>Model</b> subclass, you must extend the model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
+	=subheader "defining", "class @MyModel extends @Model"
+	To create your own <b>Model</b> subclass, you must extend the Model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
 
 	%pre
-		=preserve do
-			:escaped
-				class @TodoItem extends Model
-					init : ->
-						@addFields ['description'], ''
-						@addFields ['done'], false
-						@done_str = ko.computed ->
-							if @done() == true then 'done' else 'not yet...'
-						, this
-					setDone : =>
-						@done(true)
+		:code
+			class @TodoItem extends Model
+				init : =>
+					@addFields ['description', 'notes'], ''
+					@addFields ['done'], false
+					@addFields ['created_at', 'updated_at'], 0
+					@created_at_date = ko.computed ->
+						Date.from_utc(@created_at())
+					, this
+					@created_at_str = ko.computed ->
+						@created_at_date().format('longDate')
+					, this
+				setDone : =>
+					@done(true)
 
 #Model-constructor
-	<b class='header'>constructor</b><code>new TodoItem([attributes, [collection]])</code><br/>
+	=subheader "constructor", "new Model([attributes, [collection]])"
 	When instantiating a model, you can pass a JS object to it containing attributes to initialize the object with. You can also pass a collection that the object is bound to. This is set by default for collection-build model objects.
 	%pre
-		=preserve do
-			:escaped
-				@todo = new TodoItem(server_data)
+		:code
+			@todo = new TodoItem(server_data)
+
+#Model-addFields
+	=subheader "addFields", "@addFields(fields, default)"
+	:markdown
+		Adds a field to the Model. The field is an **observable** (see knockoutjs).
+
+	%pre
+		:code
+			class @TodoItem extends @Model
+				init : =>
+					@addFields ['description', 'notes'], ''
+
+#Model-load
+	=subheader "load", "model.load(opts, [callback])"
+	:markdown
+		Loads data from persistent storage using the assigned **ModelAdapter**.  
+		The `opts` argument is a variable to be passed to the server indicating the record to fetch (typically an id).  
+		The `callback` is a function to call once the model has been loaded. The callback function is passed the response from the server.
+
+	%pre
+		:code
+			@todo_item = new TodoItem()
+			@todo_item.load {id : 12345}, (resp)=>
+				if resp.meta == 200
+					# we just loaded an item
+
+#Model-save
+	=subheader "save", "model.save(fields, [callback])"
+	:markdown
+		Saves data to persistent storage using the assigned **ModelAdapter**.  
+		The `fields` variable is an array that indicates the fields of the model that should be sent to the server. The *id* field is automatically included.  
+		The `callback` is a function to call once the model has been saved. The callback function is passed the response from the server.
+
+	%pre
+		:code
+			@todo_item = new TodoItem()
+			@todo_item.save ['description', 'done'], (resp)=>
+				if resp.meta == 200
+					# we just saved this item
+
+#Model-delete
+	=subheader "delete", "model.delete(fields, [callback])"
+	:markdown
+		Deletes the model from persistent storage using the assigned **ModelAdapter**.  
+		The `fields` variable is an array that indicates the fields of the model that should be sent to the server. The *id* field is automatically included.  
+		The `callback` is a function to call once the model has been deleted. The callback function is passed the response from the server.
+
+	%pre
+		:code
+			@todo_item.delete ['id'], (resp)=>
+				if resp.meta == 200
+					# we just deleted this item
+
+#Model-reset
+	=subheader "reset", "model.reset()"
+	:markdown
+		Resets the model to its initialized state. The *id* of the model is also cleared.
+
+	%pre
+		:code
+			@todo_item.reset()
+			# item is now brand new.
 

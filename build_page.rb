@@ -5,6 +5,7 @@ require 'bundler/setup'
 require 'haml'
 
 class PageBuilder
+  include Haml::Helpers
 
   def build(path, to)
     html = self.render(path)
@@ -12,12 +13,14 @@ class PageBuilder
   end
 
   def render(path)
+    puts "Rendering #{path}."
     path = "#{path}.html.haml" unless path.end_with?(".html.haml")
     html = Haml::Engine.new(File.read(path)).render(self)
   end
 
-  def link(text, cls)
-    "<a class='#{cls}' href='##{text}'>#{text}</a>"
+  def link(text, cls, ref=nil)
+    ref = text if ref.nil?
+    "<a class='#{cls}' href='##{ref}'>#{text}</a>"
   end
 
   def ul_links(section_name, anchors)
@@ -30,6 +33,21 @@ class PageBuilder
     "<h2 id='#{section_name}'>#{section_name}</h2>"
   end
 
+  def subheader(name, code="")
+    ret = "<b class='header'>#{name}</b>"
+    ret << "<code class='header'>#{code}</code><br/>" unless code.empty?
+    ret
+  end
+
+end
+
+module Haml::Filters::Code
+  include Haml::Filters::Base
+  def render(text)
+    text = Haml::Helpers.html_escape(text) 
+    text = Haml::Helpers.preserve(text) 
+    text 
+  end
 end
 
 builder = PageBuilder.new

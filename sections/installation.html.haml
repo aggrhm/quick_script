@@ -1,5 +1,6 @@
 <!-- INSTALLATION -->
 %h2#Installation Installation
+
 %p
 	QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. For Rails, first you need to add the gem to your Gemfile:
 
@@ -7,6 +8,7 @@
 		=preserve do
 			:escaped
 				gem 'quick_script', :git => 'git@github.com:agquick/quick_script.git'
+				#gem 'jquery-rails'		# comment this out
 
 	Next, you need to add the helpers to your <b>ApplicationController</b>.
 
@@ -14,27 +16,24 @@
 		=preserve do
 			:escaped
 				class ApplicationController
-				include QuickScript::Interaction
-				...
+					include QuickScript::Interaction
+					...
 				end
-				</pre>
 
 	Next, setup your file hierarchy. This is how I typically set up mine, but up to you. The javascript files should be added to your asset pipeline file.
 
 	%pre
-		=preserve do
-			:escaped
-				app/
-				  views/
-				    shared/
-				      views.html.haml   # for your view templates (I use haml)
-				  assets/
-				    javascripts/
-				      view_models.js.coffee   # for your application js views
-				      models.js.coffee    # for your application models
-				      application.js      # add the two files above to this file
+		:code
+			app/
+				views/
+					shared/
+						_views.html.haml			# for your view templates (I use haml)
+				assets/
+					javascripts/
+						view.js.coffee				# for your application js views
+						models.js.coffee			# for your application js models
 
-	Now setup your application layout.
+	Now update your application layout in app/views/layouts/application.html.erb.
 
 	%pre
 		=preserve do
@@ -53,6 +52,24 @@
 				    <%= include_quick_script_init 'AppView' %>
 				  </body>
 				</html>
+	
+	And update your routing rules in config/routes.rb
+
+	%pre
+		:code
+			TodoList::Application.routes.draw do
+				scope "/api" do
+					# your api routes go here
+
+				end
+
+				# landing page route
+				root :to => "application#layout_only"
+
+				# all routes other than /api or /assets handled by client JS
+				match "*path" => "application#layout_only", :constraints => QuickScript::DEFAULT_ROUTING_RULE
+			end
+
 
 	Now you are ready to start building your application.
 

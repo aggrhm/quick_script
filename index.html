@@ -6,26 +6,28 @@
   </head>
   <body>
     <div id='sidebar'>
-      <a class='title'>QuickScript.js</a>
+      <a class='title' href='#top'>QuickScript.js</a>
       <a class='title' href='#Introduction'>Introduction</a>
       <a class='title' href='#Installation'>Installation</a>
+      <div class='chapter'>Client</div>
       <a class='title' href='#Model'>Model</a>
       <ul class='section'>
-        <li><a href='#View-defining'>defining</a></li>
-        <li><a href='#View-constructor'>constructor</a></li>
-        <li><a href='#View-addFields'>addFields</a></li>
-        <li><a href='#View-addSubModel'>addSubModel</a></li>
-      </ul>
-      <a class='title' href='#ModelAdapter'>ModelAdapter</a>
-      <ul class='section'>
-        <li><a href='#View-defining'>defining</a></li>
+        <li><a href='#Model-defining'>defining</a></li>
+        <li><a href='#Model-constructor'>constructor</a></li>
+        <li><a href='#Model-addFields'>addFields</a></li>
+        <li><a href='#Model-load'>load</a></li>
+        <li><a href='#Model-save'>save</a></li>
+        <li><a href='#Model-delete'>delete</a></li>
+        <li><a href='#Model-reset'>reset</a></li>
       </ul>
       <a class='title' href='#Collection'>Collection</a>
       <ul class='section'>
-        <li><a href='#View-defining'>defining</a></li>
-        <li><a href='#View-constructor'>constructor</a></li>
-        <li><a href='#View-load'>load</a></li>
-        <li><a href='#View-update'>update</a></li>
+        <li><a href='#Collection-defining'>defining</a></li>
+        <li><a href='#Collection-constructor'>constructor</a></li>
+        <li><a href='#Collection-load'>load</a></li>
+        <li><a href='#Collection-addItem'>addItem</a></li>
+        <li><a href='#Collection-removeItemById'>removeItemById</a></li>
+        <li><a href='#Collection-setView'>setView</a></li>
       </ul>
       <a class='title' href='#View'>View</a>
       <ul class='section'>
@@ -36,11 +38,39 @@
       <a class='title' href='#Application'>Application</a>
       <ul class='section'>
         <li><a href='#Application-defining'>defining</a></li>
-        <li><a href='#Application-handlePath'>handlePath</a></li>
+        <li><a href='#Application-path_parts'>path_parts</a></li>
+        <li><a href='#Application-redirectTo'>redirectTo</a></li>
+      </ul>
+      <a class='title' href='#ModelAdapter'>ModelAdapter</a>
+      <ul class='section'>
+        <li><a href='#ModelAdapter-defining'>defining</a></li>
+      </ul>
+      <div class='chapter'>Server</div>
+      <a class='title' href='#ServerModel'>Model</a>
+      <ul class='section'>
+        <li><a href='#ServerModel-defining'>defining</a></li>
+        <li><a href='#ServerModel-to_api'>to_api</a></li>
+      </ul>
+      <a class='title' href='#ServerController'>Controller</a>
+      <ul class='section'>
+        <li><a href='#ServerController-defining'>defining</a></li>
+        <li><a href='#ServerController-index'>index</a></li>
+        <li><a href='#ServerController-save'>save</a></li>
+        <li><a href='#ServerController-delete'>delete</a></li>
+        <li><a href='#ServerController-load_model'>load_model</a></li>
+      </ul>
+      <a class='title' href='#ServerRouting'>Routing</a>
+      <ul class='section'>
+        <li><a href='#ServerRouting-defining'>defining</a></li>
+      </ul>
+      <div class='chapter'>Guides</div>
+      <a class='title' href='#Examples'>Examples</a>
+      <ul class='section'>
+        <li><a href='#Examples-todolist'>todolist</a></li>
       </ul>
     </div>
     <div id='container'>
-      <div class='hero-unit'>
+      <div class='hero-unit' id='top'>
         <h1>QuickScript.js</h1>
         <p>A client-side javascript framework based on Knockout.js</p>
         <p><a class='btn btn-primary btn-large' href='http://github.com/agquick/quick_script'><i class='icon-share-alt icon-white'></i>View on Github</a></p>
@@ -58,13 +88,15 @@
       <h2 id='Installation'>Installation</h2>
       <p>
         QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. For Rails, first you need to add the gem to your Gemfile:
-        <pre>gem 'quick_script', :git =&gt; 'git@github.com:agquick/quick_script.git'</pre>
+        <pre>gem 'quick_script', :git =&gt; 'git@github.com:agquick/quick_script.git'&#x000A;#gem 'jquery-rails'		# comment this out</pre>
         Next, you need to add the helpers to your <b>ApplicationController</b>.
-        <pre>class ApplicationController&#x000A;include QuickScript::Interaction&#x000A;...&#x000A;end&#x000A;&lt;/pre&gt;</pre>
+        <pre>class ApplicationController&#x000A;	include QuickScript::Interaction&#x000A;	...&#x000A;end</pre>
         Next, setup your file hierarchy. This is how I typically set up mine, but up to you. The javascript files should be added to your asset pipeline file.
-        <pre>app/&#x000A;  views/&#x000A;    shared/&#x000A;      views.html.haml   # for your view templates (I use haml)&#x000A;  assets/&#x000A;    javascripts/&#x000A;      view_models.js.coffee   # for your application js views&#x000A;      models.js.coffee    # for your application models&#x000A;      application.js      # add the two files above to this file</pre>
-        Now setup your application layout.
+        <pre>app/&#x000A;	views/&#x000A;		shared/&#x000A;			_views.html.haml			# for your view templates (I use haml)&#x000A;	assets/&#x000A;		javascripts/&#x000A;			view.js.coffee				# for your application js views&#x000A;			models.js.coffee			# for your application js models&#x000A;</pre>
+        Now update your application layout in app/views/layouts/application.html.erb.
         <pre>&lt;!DOCTYPE html&gt;&#x000A;&lt;html&gt;&#x000A;  &lt;head&gt;&#x000A;    &lt;title&gt;TodoListApp&lt;/title&gt;&#x000A;    &lt;%= stylesheet_link_tag    &quot;application&quot;, :media =&gt; &quot;all&quot; %&gt;&#x000A;    &lt;%= javascript_include_tag &quot;application&quot; %&gt;&#x000A;    &lt;%= render :partial =&gt; 'shared/views' %&gt;&#x000A;    &lt;%= csrf_meta_tags %&gt;&#x000A;  &lt;/head&gt;&#x000A;  &lt;body&gt;&#x000A;    &lt;%= include_view_box %&gt;&#x000A;    &lt;%= include_quick_script_init 'AppView' %&gt;&#x000A;  &lt;/body&gt;&#x000A;&lt;/html&gt;</pre>
+        And update your routing rules in config/routes.rb
+        <pre>TodoList::Application.routes.draw do&#x000A;	scope &quot;/api&quot; do&#x000A;		# your api routes go here&#x000A;&#x000A;	end&#x000A;&#x000A;	# landing page route&#x000A;	root :to =&gt; &quot;application#layout_only&quot;&#x000A;&#x000A;	# all routes other than /api or /assets handled by client JS&#x000A;	match &quot;*path&quot; =&gt; &quot;application#layout_only&quot;, :constraints =&gt; QuickScript::DEFAULT_ROUTING_RULE&#x000A;end&#x000A;&#x000A;</pre>
         Now you are ready to start building your application.
       </p>
       <!-- MODEL -->
@@ -73,37 +105,180 @@
         Models hold the data objects to be managed by your application. To create a model, simply extend the Model class using coffeescript. For more information, see the <b>defining</b> method.
       </p>
       <div id='Model-defining'>
-        <b class='header'>defining</b><code>class @TodoItem extends Model</code><br/>
-        To create your own <b>Model</b> subclass, you must extend the model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
-        <pre>class @TodoItem extends Model&#x000A;	init : -&gt;&#x000A;		@addFields ['description'], ''&#x000A;		@addFields ['done'], false&#x000A;		@done_str = ko.computed -&gt;&#x000A;			if @done() == true then 'done' else 'not yet...'&#x000A;		, this&#x000A;	setDone : =&gt;&#x000A;		@done(true)</pre>
+        <b class='header'>defining</b><code class='header'>class @MyModel extends @Model</code><br/>
+        To create your own <b>Model</b> subclass, you must extend the Model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
+        <pre>class @TodoItem extends Model&#x000A;	init : =&gt;&#x000A;		@addFields ['description', 'notes'], ''&#x000A;		@addFields ['done'], false&#x000A;		@addFields ['created_at', 'updated_at'], 0&#x000A;		@created_at_date = ko.computed -&gt;&#x000A;			Date.from_utc(@created_at())&#x000A;		, this&#x000A;		@created_at_str = ko.computed -&gt;&#x000A;			@created_at_date().format('longDate')&#x000A;		, this&#x000A;	setDone : =&gt;&#x000A;		@done(true)&#x000A;</pre>
       </div>
       <div id='Model-constructor'>
-        <b class='header'>constructor</b><code>new TodoItem([attributes, [collection]])</code><br/>
+        <b class='header'>constructor</b><code class='header'>new Model([attributes, [collection]])</code><br/>
         When instantiating a model, you can pass a JS object to it containing attributes to initialize the object with. You can also pass a collection that the object is bound to. This is set by default for collection-build model objects.
-        <pre>@todo = new TodoItem(server_data)</pre>
+        <pre>@todo = new TodoItem(server_data)&#x000A;</pre>
+      </div>
+      <div id='Model-addFields'>
+        <b class='header'>addFields</b><code class='header'>@addFields(fields, default)</code><br/>
+        <p>Adds a field to the Model. The field is an <strong>observable</strong> (see knockoutjs).</p>
+        <pre>class @TodoItem extends @Model&#x000A;	init : =&gt;&#x000A;		@addFields ['description', 'notes'], ''&#x000A;</pre>
+      </div>
+      <div id='Model-load'>
+        <b class='header'>load</b><code class='header'>model.load(opts, [callback])</code><br/>
+        <p>Loads data from persistent storage using the assigned <strong>ModelAdapter</strong>.<br>
+        The <code>opts</code> argument is a variable to be passed to the server indicating the record to fetch (typically an id).<br>
+        The <code>callback</code> is a function to call once the model has been loaded. The callback function is passed the response from the server.</p>
+        <pre>@todo_item = new TodoItem()&#x000A;@todo_item.load {id : 12345}, (resp)=&gt;&#x000A;	if resp.meta == 200&#x000A;		# we just loaded an item&#x000A;</pre>
+      </div>
+      <div id='Model-save'>
+        <b class='header'>save</b><code class='header'>model.save(fields, [callback])</code><br/>
+        <p>Saves data to persistent storage using the assigned <strong>ModelAdapter</strong>.<br>
+        The <code>fields</code> variable is an array that indicates the fields of the model that should be sent to the server. The <em>id</em> field is automatically included.<br>
+        The <code>callback</code> is a function to call once the model has been saved. The callback function is passed the response from the server.</p>
+        <pre>@todo_item = new TodoItem()&#x000A;@todo_item.save ['description', 'done'], (resp)=&gt;&#x000A;	if resp.meta == 200&#x000A;		# we just saved this item&#x000A;</pre>
+      </div>
+      <div id='Model-delete'>
+        <b class='header'>delete</b><code class='header'>model.delete(fields, [callback])</code><br/>
+        <p>Deletes the model from persistent storage using the assigned <strong>ModelAdapter</strong>.<br>
+        The <code>fields</code> variable is an array that indicates the fields of the model that should be sent to the server. The <em>id</em> field is automatically included.<br>
+        The <code>callback</code> is a function to call once the model has been deleted. The callback function is passed the response from the server.</p>
+        <pre>@todo_item.delete ['id'], (resp)=&gt;&#x000A;	if resp.meta == 200&#x000A;		# we just deleted this item&#x000A;</pre>
+      </div>
+      <div id='Model-reset'>
+        <b class='header'>reset</b><code class='header'>model.reset()</code><br/>
+        <p>Resets the model to its initialized state. The <em>id</em> of the model is also cleared.</p>
+        <pre>@todo_item.reset()&#x000A;# item is now brand new.</pre>
+      </div>
+      <!-- COLLECTION -->
+      <h2 id='Collection'>Collection</h2>
+      <p>
+        The <b>Collection</b> class allows you to maintain lists of Model instances. Because most of the functionality is the same despite the Model subclass, you can easily define a collection class for your Model, as seen below.
+      </p>
+      <div id='Collection-defining'>
+        <b class='header'>defining</b><code class='header'>Model.includeCollection(this)</code><br/>
+        To define a Collection for a Model, simply add the code as seen below. This will create a <b>Model.Collection</b> class.
+        <pre>class @TodoItem extends @Model&#x000A;	Model.includeCollection(this)&#x000A;	init : -&gt;&#x000A;		...&#x000A;&#x000A;# now you can use the TodoItem.Collection class</pre>
+      </div>
+      <div id='Collection-constructor'>
+        <b class='header'>constructor</b><code class='header'>collection = new Model.Collection()</code><br/>
+        To create an instance of a collection is easy. See below.
+        <pre>@todo_items = new TodoItem.Collection()&#x000A;</pre>
+      </div>
+      <div id='Collection-load'>
+        <b class='header'>load</b><code class='header'>collection.load(scope, [callback])</code><br/>
+        <p>Loads data from persistent storage using the ModelAdapter assigned to the Model.</p>
+        
+        <p><code>scope</code> - an array defining the scope of the items to be fetched from the storage. The first item in the array denotes the scope method, the following items are arguments to be passed to the scope method. The scope methods are defined at the server. More info about how this works can be found in the Server section of the documentation.<br>
+        <code>callback</code> - the function to call once the server returns. The function is passed the response from the server.</p>
+        <pre>@todo_items = new TodoItem.Collection()&#x000A;@todo_items.load ['all'], (resp)=&gt;&#x000A;	if resp.meta == 200&#x000A;		# collection loaded&#x000A;</pre>
+      </div>
+      <div id='Collection-addItem'>
+        <b class='header'>addItem</b><code class='header'>collection.addItem(model)</code><br/>
+        <p>Adds a model instance to the collection.</p>
+        
+        <p><code>model</code> - model to add to the collection</p>
+        <pre>@todo = new TodoItem()&#x000A;@todo_items = new TodoItem.Collection()&#x000A;@todo_items.addItem(@todo)&#x000A;</pre>
+      </div>
+      <div id='Collection-removeItemById'>
+        <b class='header'>removeItemById</b><code class='header'>collection.removeItemById(id)</code><br/>
+        <p>Removes a model with the corresponding <code>id</code> from the collection. This does not interact with the server or ModelAdapter. To remove an item from the server, you should call <code>delete</code> on the model instance, and call this method once the server returns that it succeeded. You can also call <code>removeFromCollection</code> on the model, which calls this method internally.</p>
+        
+        <p><code>id</code> - id of the model to remove</p>
+        <pre>@todo_items.removeItemById('12345')&#x000A;</pre>
+      </div>
+      <div id='Collection-setView'>
+        <b class='header'>setView</b><code class='header'>collection.setView(view_class, owner)</code><br/>
+        <p>Sets the <strong>View</strong> class that should be instantiated to be bound against each item of the collection when rendered. By default, each element is bound to a default <strong>View</strong> class object. Setting the view allows you to have more control over the functionality provided to each bound collection element when rendered.</p>
+        
+        <p><code>view_class</code> - class to be bound against collection element. When the view_class is instantiated for each element of the collection, the <code>@model</code> variable is set to the collection model for that element.<br>
+        <code>owner</code> - the instance that should be the owner of each element&#39;s view (usually just pass <code>this</code> unless you are doing something more complicated)</p>
+        <pre>class @TodoItemView extends @View&#x000A;	init : =&gt;&#x000A;		@todo_item = @model&#x000A;&#x000A;class @HomeView extends @View&#x000A;	init : =&gt;&#x000A;		@todo_items = new TodoItem.Collection()&#x000A;		@todo_items.setView(TodoItemView, this)</pre>
       </div>
       <!-- VIEW -->
       <h2 id='View'>View</h2>
       <p>
-        Views are used to display data for your application. Views can also be embedded in other views (including your AppView subclass).
+        Views hold the business logic for your application. They are bound to your view templates. Views can also be embedded in other views.
       </p>
       <div id='View-defining'>
-        <b class='header'>defining</b><code>class @TodoListView extends View</code><br/>
-        To create a new <b>View</b> subclass, extend the View class using standard coffescript. You should define a <b>init</b> and <b>load</b> method. The <b>init</b> method is used to define any bindable variables for the view.
+        <b class='header'>defining</b><code class='header'>class @MyView extends @View</code><br/>
+        <p>To create a new <strong>View</strong> subclass, extend the View class using standard coffescript. You should define <code>init</code> and <code>load</code> method. The <code>init</code> method is used to define any bindable variables for the view. The <code>load</code> method is called whenever the view is displayed, and should be used to update the variables defined in <code>init</code>. This usually involves loading data from the server.</p>
+        
+        <p><strong>It is important that anything bound to view templates (in a data-bind tag) be defined in <code>init</code> only, and preferably defined as an observable</strong>. Otherwise weird things tend to happen.</p>
+        
+        <p>The <code>load</code> function can also be used to handle routing. This is especially important for embedded views. The format for this is identical to how <code>handlePath</code> in <strong>Application</strong> works.</p>
+        <pre>class @TodoListView extends @View&#x000A;	init : -&gt;&#x000A;		@todos = new TodoItem.Collection()&#x000A;	load : =&gt;&#x000A;		@todos.load ['my_todos']&#x000A;</pre>
+        <p>Every <strong>View</strong> instance has access to a few variables that help it do its job:</p>
+        
+        <p><code>@app</code> - the <strong>Application</strong> context<br>
+        <code>@owner</code> - the view that owns the current view<br>
+        <code>@name</code> - the name of the current view  </p>
       </div>
-      <p>
-        <b>It is important that anything bound to view templates (in a data-bind tag) be defined here, and preferably defined as an observable</b>. Otherwise weird things tend to happen. The <b>load</b> method is used to setup the variables defined in <b>init</b> whenever the view is loaded. This includes loading data from servers, etc.
-      </p>
-      <pre>class @TodoListView extends @View&#x000A;	init : -&gt;&#x000A;		@todos = new TodoItem.Collection()&#x000A;	load : =&gt;&#x000A;		@todos.load ['my_todos']</pre>
+      <div id='View-addView'>
+        <b class='header'>addView</b><code class='header'>@addView(name, view_class, template_name)</code><br/>
+        <p>This method adds a view to your application.</p>
+        
+        <p><code>name</code> - the name of the view. This is used with <code>selectView</code><br>
+        <code>view_class</code> - the View-extending class that you want to render<br>
+        <code>template_name</code> - the name of the view template that should be bound to the view</p>
+        <pre>class @HomeView extends @View&#x000A;	...&#x000A;&#x000A;class @AppView extends @Application&#x000A;	init : =&gt;&#x000A;		@addView('home', HomeView, 'view-home')&#x000A;</pre>
+      </div>
+      <div id='View-selectView'>
+        <b class='header'>selectView</b><code class='header'>@selectView(name, [*args])</code><br/>
+        <p>This method selects an embedded view to be displayed and hides all other embedded views. It is typically called in the routing code of your application, as the view to be rendered usually corresponds with the url path. When called, it also calls the <code>load</code> method on view to be displayed, passing the additional arguments along.</p>
+        
+        <p><code>name</code> - the name of the view to display<br>
+        <code>args</code> - arguments to pass to the <code>load</code> method of the view</p>
+      </div>
       <!-- APPVIEW -->
       <h2 id='Application'>Application</h2>
       <p>
         The <b>Application</b> class is the heart of your web application views. You must extend it using the standard coffeescript call, and name it whatever you passed to 'include_quick_script_init'. Here you define the name of your application, initialize your application views, and handle routing. <b>Application</b> extends the <b>View</b> class, so you have all of the functionality available in a normal view. For more information, see the <b>defining</b> method.
       </p>
-      <p id='Application-defining'>
-        <b class='header'>defining</b><code>class @AppView extends @Application</code><br/>
+      <div id='Application-defining'>
+        <b class='header'>defining</b><code class='header'>class @AppView extends @Application</code><br/>
         To begin developing your application, you need to extend the <b>Application</b> class. This allows you to setup your application flow and settings.
-        <pre>class @AppView extends @Application&#x000A;	init : -&gt;&#x000A;		@name = &quot;TodoApp&quot;&#x000A;		@addView 'list', TodoListView, 'view-todolist'&#x000A;		@addView 'help', HelpView, 'view-help'&#x000A;	account_model : User&#x000A;	handlePath : =&gt;&#x000A;		switch @app.path_parts[1]&#x000A;			when 'help'&#x000A;				@selectView 'help'&#x000A;			when 'home'&#x000A;				@selectView 'home'&#x000A;			else&#x000A;				@app.redirectTo '/home'</pre>
+        <pre>class @AppView extends @Application&#x000A;	init : -&gt;&#x000A;		@name = &quot;TodoApp&quot;&#x000A;		@addView 'list', TodoListView, 'view-todolist'&#x000A;		@addView 'help', HelpView, 'view-help'&#x000A;	account_model : User&#x000A;</pre>
+        <p>The <code>handlePath</code> method can be overridden to control the routing of the application based on the browser URL. Specifically <code>@app.path_parts</code> contains an array of the, well, parts of the path, split by &#39;/&#39; (note that it starts at 1). Using a simple switch statement you can control the routing of your application.</p>
+        <pre>handlePath : =&gt;&#x000A;	switch @app.path_parts[1]&#x000A;		when 'help'&#x000A;			@selectView 'help'&#x000A;		when 'home', ''&#x000A;			@selectView 'home'&#x000A;		else&#x000A;			@app.redirectTo '/home'&#x000A;</pre>
+      </div>
+      <div id='Application-path_parts'>
+        <b class='header'>path_parts</b><code class='header'>@path_parts[idx]</code><br/>
+        An array that tracks the URL location of the website
+        <pre># user is on page /todo_item/12345&#x000A;root = @path_parts[1]&#x000A;# root = &quot;todo_item&quot;&#x000A;id = @path_parts[2]&#x000A;# id = &quot;12345&quot;&#x000A;</pre>
+      </div>
+      <div id='Application-redirectTo'>
+        <b class='header'>redirectTo</b><code class='header'>@redirectTo(path)</code><br/>
+        <p>Routes the user to a new path (local to the web application)</p>
+        
+        <p><code>path</code> - new path</p>
+        <pre>@redirectTo(&quot;/todo_item/12345&quot;)</pre>
+      </div>
+      <!-- MODELADAPTER -->
+      <h2 id='ModelAdapter'>ModelAdapter</h2>
+      <p>
+        The <b>ModelAdapter</b> class allows you to define how a <b>Model</b> retrieves its data. You can define the ModelAdapter as follows:
+      </p>
+      <div id='ModelAdapter-defining'>
+        <b class='header'>defining</b><code class='header'>Model.includeAdapter(adapter, this)</code><br/>
+        <pre>class @TodoItem extends @Model&#x000A;	Model.includeAdapter(new ModelAdapter({&#x000A;		load_url : '/api/todo_items',		# also used for index&#x000A;		save_url : '/api/todo_item'			# also used for delete&#x000A;	}), this)&#x000A;	init : -&gt;&#x000A;		...</pre>
+      </div>
+      <h2 id='Examples'>Examples</h2>
+      <p>
+        Here are some examples of applications built with QuickScript to give you an idea of how things work.
+      </p>
+      <div id='Examples-todolist'>
+        <b class='header'>todolist</b>
+      </div>
+      <p>
+        Every javascript framework must have a TodoList example, and so here's ours. The repository itself can be found in the demo/ folder of the quick_script repository, with instructions for running it in the README.
+      </p>
+      <p>
+        <p><a href="https://github.com/agquick/quick_script/tree/master/demo"><strong>Todo List Application</strong></a></p>
+        
+        <ul>
+        <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/assets/javascripts/models.js.coffee">Client Models</a></li>
+        <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/assets/javascripts/views.js.coffee">Client Views</a></li>
+        <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/views/shared/_views.html.haml">Client Templates</a></li>
+        <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/models/todo_item.rb">Server Model</a></li>
+        <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/controllers/todo_items_controller.rb">Server Controller</a></li>
+        <li><a href="https://github.com/agquick/quick_script/blob/master/demo/config/routes.rb">Server Routes</a></li>
+        </ul>
       </p>
     </div>
     <script src='http://code.jquery.com/jquery-latest.js'></script>

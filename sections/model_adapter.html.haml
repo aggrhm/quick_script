@@ -1,17 +1,18 @@
-      <!-- MODELADAPTER -->
-      <h2 id="ModelAdapter">ModelAdapter</h2>
-      <p>
-      The <b>ModelAdapter</b> class allows you to define how a <b>Model</b> retrieves its data. You can define the model adapter as follows:
-      </p>
+<!-- MODELADAPTER -->
+=header "ModelAdapter"
+%p
+	The <b>ModelAdapter</b> class allows you to define how a <b>Model</b> retrieves its data. You can define the ModelAdapter as follows:
 
-      <p id="ModelAdapter-defining">
-      <b class='header'>defining</b><code>Model.includeAdapter([model_adapter])</code><br/>
-<pre>
-class @TodoItem extends Model
-  Model.includeAdapter(new ModelAdapter({load_url : '/api/todo_items', save_url : '/api/todo_item'}))
-  init : ->
-    ...
-</pre>
-      </p>
+#ModelAdapter-defining
+	=subheader "defining", "Model.includeAdapter(adapter, this)"
 
-
+	%pre
+		=preserve do
+			:escaped
+				class @TodoItem extends @Model
+					Model.includeAdapter(new ModelAdapter({
+						load_url : '/api/todo_items',		# also used for index
+						save_url : '/api/todo_item'			# also used for delete
+					}), this)
+					init : ->
+						...

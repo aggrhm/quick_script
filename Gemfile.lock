@@ -3,6 +3,7 @@ GEM
   specs:
     haml (4.0.2)
       tilt
+    redcarpet (2.2.2)
     tilt (1.3.7)
 
 PLATFORMS
@@ -10,3 +11,4 @@ PLATFORMS
 
 DEPENDENCIES
   haml
+  redcarpet

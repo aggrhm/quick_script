@@ -1,19 +1,17 @@
-%a.title QuickScript.js
+%a.title(href="#top") QuickScript.js
 
 =link "Introduction", :title
 =link "Installation", :title
 
+.chapter Client
+
 =link "Model", :title
 %ul.section
-	=ul_links "View", ["defining", "constructor", "addFields", "addSubModel"]
-
-=link "ModelAdapter", :title
-%ul.section
-	=ul_links "View", ["defining"]
+	=ul_links "Model", ["defining", "constructor", "addFields", "load", "save", "delete", "reset"]
 
 =link "Collection", :title
 %ul.section
-	=ul_links "View", ["defining", "constructor", "load", "update"]
+	=ul_links "Collection", ["defining", "constructor", "load", "addItem", "removeItemById", "setView"]
 
 =link "View", :title
 %ul.section
@@ -21,5 +19,29 @@
 
 =link "Application", :title
 %ul.section
-	=ul_links("Application", ["defining", "handlePath"])
+	=ul_links("Application", ["defining", "path_parts", "redirectTo"])
+
+=link "ModelAdapter", :title
+%ul.section
+	=ul_links "ModelAdapter", ["defining"]
+
+.chapter Server
+
+=link "Model", :title, "ServerModel"
+%ul.section
+	=ul_links "ServerModel", ["defining", "to_api"]
+
+=link "Controller", :title, "ServerController"
+%ul.section
+	=ul_links "ServerController", ["defining", "index", "save", "delete", "load_model"]
+
+=link "Routing", :title, "ServerRouting"
+%ul.section
+	=ul_links "ServerRouting", ["defining"]
+
+.chapter Guides
+
+=link "Examples", :title
+%ul.section
+	=ul_links "Examples", ["todolist"]
 
