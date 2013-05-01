@@ -16,6 +16,8 @@
 					@addView 'help', HelpView, 'view-help'
 				account_model : User
 	
+#Application-handlePath
+	=subheader "handlePath", "handlePath : =>"
 	:markdown
 		The `handlePath` method can be overridden to control the routing of the application based on the browser URL. Specifically `@app.path_parts` contains an array of the, well, parts of the path, split by '/' (note that it starts at 1). Using a simple switch statement you can control the routing of your application.
 

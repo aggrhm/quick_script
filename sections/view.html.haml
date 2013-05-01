@@ -27,6 +27,31 @@
 		`@owner` - the view that owns the current view  
 		`@name` - the name of the current view  
 
+#View-init
+	=subheader "init", "init : =>"
+	:markdown
+		Initializes view by setting up observables.
+		**It is important that anything bound to view templates (in a data-bind tag) be defined in `init` only, and preferably defined as an observable**. Otherwise weird things tend to happen.
+
+	%pre
+		:code
+			class @TodoListView extends @View
+				init : ->
+					@todos = new TodoItem.Collection()
+
+#View-load
+	=subheader "load", "load : =>"
+	:markdown
+		Refreshes view by loading data from server, etc. Called when the view is made visible using `selectView`, and can also be called manually.
+
+	%pre
+		:code
+			class @TodoListView extends @View
+				... 
+
+				load : =>
+					@todos.load ['my_todos']
+
 #View-addView
 	=subheader "addView", "@addView(name, view_class, template_name)"
 	:markdown

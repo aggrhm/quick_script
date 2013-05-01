@@ -30,7 +30,7 @@ class PageBuilder
   end
 
   def header(section_name)
-    "<h2 id='#{section_name}'>#{section_name}</h2>"
+    "<h2 id='#{section_name.gsub(/\s/, '')}'>#{section_name}</h2>"
   end
 
   def subheader(name, code="")
@@ -46,7 +46,8 @@ module Haml::Filters::Code
   def render(text)
     text = Haml::Helpers.html_escape(text) 
     text = Haml::Helpers.preserve(text) 
-    text 
+    text.gsub!(/\t/, '    ')
+    text
   end
 end
 

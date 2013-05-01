@@ -15,11 +15,11 @@
 
 =link "View", :title
 %ul.section
-	=ul_links "View", ["defining", "addView", "selectView"]
+	=ul_links "View", ["defining", "init", "load", "addView", "selectView"]
 
 =link "Application", :title
 %ul.section
-	=ul_links("Application", ["defining", "path_parts", "redirectTo"])
+	=ul_links("Application", ["defining", "handlePath", "path_parts", "redirectTo"])
 
 =link "ModelAdapter", :title
 %ul.section
@@ -27,15 +27,15 @@
 
 .chapter Server
 
-=link "Model", :title, "ServerModel"
+=link "Server Model", :title, "ServerModel"
 %ul.section
 	=ul_links "ServerModel", ["defining", "to_api"]
 
-=link "Controller", :title, "ServerController"
+=link "Server Controller", :title, "ServerController"
 %ul.section
-	=ul_links "ServerController", ["defining", "index", "save", "delete", "load_model"]
+	=ul_links "ServerController", ["defining", "index", "save", "delete", "json_resp"]
 
-=link "Routing", :title, "ServerRouting"
+=link "Server Routing", :title, "ServerRouting"
 %ul.section
 	=ul_links "ServerRouting", ["defining"]
 

@@ -18,6 +18,7 @@ body {
 	border-right: 1px solid #BBB;
 	box-shadow: 0 0 20px #CCC;
 	overflow-y: auto;
+	overflow-x: hidden;
 }
 
 #sidebar a.title {
