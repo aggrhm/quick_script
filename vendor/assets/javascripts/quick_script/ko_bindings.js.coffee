@@ -139,9 +139,9 @@ QuickScript.initKO = ->
 			is_loading = ko.utils.unwrapObservable(valueAccessor())
 			#loading_text = ko.utils.unwrapObservable(valueAccessor()[1])
 			if is_loading
-				$(element).prepend("<div class='loading-overlay'><img src='/assets/ajax-loader.gif'/></div>")
+				$(element).prepend("<div class='loading-overlay'><img src='/assets/ajax-loader.gif'/></div>") if $(element).children('.loading-overlay').length == 0
 			else
-				$(element).children('.loading-overlay').fadeOut()
+				$(element).children('.loading-overlay').fadeOut('fast', (-> $(this).remove()))
 
 	ko.bindingHandlers.checkedInt =
 		init: (element, valueAccessor, allBindingsAccessor) ->
