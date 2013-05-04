@@ -324,15 +324,15 @@ class @Collection
 			@items(@items().concat(models))
 			@views(@views().concat(views))
 		@model_state(ko.modelStates.READY)
-	nextPage : ->
+	nextPage : =>
 		@page(@page() + 1)
 		@update()
-	prevPage : ->
+	prevPage : =>
 		@page(@page() - 1)
 		@update()
-	hasItems : ->
+	hasItems : =>
 		@items().length > 0
-	length : ->
+	length : =>
 		@items().length
 	addItem : (item)->
 		item.collection = this
@@ -679,9 +679,9 @@ class @Application extends @View
 		console.log("Loading path '#{path}'")
 		@setTitle(@name, true)
 		@previous_path(@path())
-		@path(path)
-		@path_parts = @path().split('/')
+		@path_parts = path.split('/')
 		@path_parts.push('') unless @path_parts[@path_parts.length-1] == ''
+		@path(path)
 		@handlePath(path)
 	handlePath : (path) ->
 	setUser : (data)->
