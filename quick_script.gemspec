@@ -19,4 +19,9 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
   s.add_dependency 'compass-rails'
+  s.add_dependency 'sprockets'
+  s.add_dependency 'sprockets-sass'
+  s.add_dependency 'coffee-script'
+  s.add_dependency 'compass'
+  s.add_dependency 'uglifier'
 end

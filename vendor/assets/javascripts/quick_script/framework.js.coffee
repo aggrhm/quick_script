@@ -12,7 +12,7 @@ class @Model
 	extend : ->
 	constructor: (data, collection, opts) ->
 		@fields = []
-		ko.addFields(['id'], '', this)
+		@addFields(['id'], '')
 		@events = {}
 		@adapter = if @initAdapter? then @initAdapter() else null
 		@collection = collection
@@ -347,6 +347,14 @@ class @Collection
 	getItemById : (id)->
 		list = @items().filter ((item)=> item.id() == id)
 		ret = if list.length > 0 then list[0] else null
+	getViewById : (id)->
+		list = @views().filter ((view)=> view.model.id() == id)
+		ret = if list.length > 0 then list[0] else null
+	getIndexById : (id)->
+		idx = 0
+		for item in @items()
+			return idx if item.id() == id
+			idx = idx + 1
 	nthViews : (n, offset) ->
 		@views().filter (el, i)->
 			(i-offset) % n == 0
@@ -458,6 +466,12 @@ class @View
 			, this
 		@["select_task_#{name}"] = =>
 			@selectView(name)
+	addFields : (fields, def) =>
+		ko.addFields(fields, def, this)
+	validate_for : (field, fn, msg) =>
+		ko.validate_for(field, fn, msg, this)
+	validate_fields : (fields, fn) =>
+		ko.validate_fields(fields, fn, this)
 	viewCount : ->
 		Object.keys(@views).length
 	viewList : ->
@@ -730,7 +744,7 @@ QuickScript.initialize = (opts)->
 	app.afterRender()
 
 	# override links
-	$('a').live 'click', ->
+	$('body').on 'click', 'a', ->
 		if this.href.includes(History.getRootUrl())
 			History.pushState null, null, this.href
 			return false

@@ -157,24 +157,24 @@ Overlay.add = (vm, tmp, opts) ->
 		id = vm.name
 		template = tmp
 		#options['z-index'] = Overlay.instance.zindex + 10
+		$('#overlay-' + id).remove()
 		$('body').append("<div id='overlay-" + id + "' class='modal hide fade'><button class='close' data-bind='click : hideOverlay'>x</button><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
 		$('#overlay-' + id).css(css_opts)
 		$('#overlay-' + id).addClass(cls)
-		$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
-		#$('#backdrop-' + id).click =>
-			#console.log('backdrop clicked.')
-			#Overlay.remove(id)
+		#$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
 		setTimeout ->
 			$('#overlay-' + id).koBind(vm)
-			if opts.stretch == true
-				$("#overlay-#{id} .modal-body").css({'max-height' : ($(window).height() - 200)})
-				$('#overlay-' + id).css({'margin-top' : ($(window).height() - 100)/ -2})
+			#if opts.stretch == true
+				#$("#overlay-#{id} .modal-body").css({'max-height' : ($(window).height() - 200)})
+				#$('#overlay-' + id).css({'margin-top' : ($(window).height() - 100)/ -2})
 			$('#overlay-' + id).on 'hidden', ->
-				$('#overlay-' + id).koClean()
-				$('#overlay-' + id).remove()
+				setTimeout ->
+					$('#overlay-' + id).koClean()
+					$('#overlay-' + id).remove()
+				, 500
 				opts.hidden() if opts.hidden
 			$('#overlay-' + id).on 'shown', opts.shown if opts.shown?
-			$('#overlay-' + id).modal('show')
+			$('#overlay-' + id).modal(opts)
 		, 100
 		#Overlay.instance.zindex = Overlay.instance.zindex + 10
 
@@ -232,6 +232,11 @@ Overlay.removePopovers = ->
 
 Overlay.isVisible = (id) ->
 		$('#overlay-' + id).length > 0
+
+Overlay.show_loading = ->
+	$('body').modalmanager('loading')
+Overlay.hide_loading = ->
+	$('body').modalmanager('loading')
 
 Overlay.popover = (el, vm, tmp, opts)->
 	id = vm.name

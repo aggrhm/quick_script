@@ -63,8 +63,9 @@ QuickScript.initKO = ->
 	ko.bindingHandlers.viewOptions =
 		update : (element, valueAccessor) ->
 			$(element).empty()
-			opts = ko.utils.unwrapObservable(valueAccessor())
-			for view in opts[0]
+			opts = valueAccessor()
+			views = ko.utils.unwrapObservable(opts[0])
+			for view in views
 				$(element).append("<option value='#{opts[2](view)}'>#{opts[1](view)}</option>")
 			if opts[3]?
 				$(element).prepend("<option>#{opts[3]}</option>")
@@ -128,6 +129,20 @@ QuickScript.initKO = ->
 					backgroundSize: 'cover',
 					'background-position': 'center',
 					backgroundColor: '#FFF',
+					width: opts[1],
+					height: opts[2],
+					display: 'inline-block'
+
+	ko.bindingHandlers.containImage =
+		update : (element, valueAccessor) ->
+			opts = valueAccessor()
+			if opts[0]?
+				$(element).css
+					background : 'url(' + ko.utils.unwrapObservable(opts[0]) + ')',
+					backgroundSize: 'contain',
+					'background-position': 'center',
+					backgroundColor: '#FFF',
+					backgroundRepeat: 'no-repeat',
 					width: opts[1],
 					height: opts[2],
 					display: 'inline-block'
@@ -341,7 +356,7 @@ QuickScript.initKO = ->
 			$(element).datepicker
 				onClose : (dateText, inst)->
 					obs(dateText)
-
+	
 	ko.absorbModel = (data, self) ->
 		for prop, val of data
 			continue if typeof(val) == "function"

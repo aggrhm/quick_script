@@ -5,3 +5,4 @@ pkg/*
 
 *.swp
 *.swo
+.sass-cache
