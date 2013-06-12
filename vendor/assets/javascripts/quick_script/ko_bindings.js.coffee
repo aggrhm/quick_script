@@ -224,7 +224,8 @@ QuickScript.initKO = ->
 				theme_advanced_toolbar_location : 'top',
 				theme_advanced_buttons1 : 'bold, italic, underline, separator, undo, redo, separator, bullist, numlist, blockquote, separator, justifyleft, justifycenter, justifyright, separator, image, link, unlink, separator, code',
 				theme_advanced_buttons2 : '',
-				theme_advanced_buttons3 : ''
+				theme_advanced_buttons3 : '',
+				content_css : '/assets/tinymce.css'
 			}
 			val = valueAccessor()
 			options.setup = (ed) ->
@@ -232,6 +233,9 @@ QuickScript.initKO = ->
 					tinyMCE.dom.Event.add ed.getWin(), "blur", ->
 						console.log('leaving...')
 						val(ed.getContent())
+					val.editor = ->
+						tinyMCE.get(element.id)
+					viewModel.onTinyMCEInit(element.id, val) if viewModel.onTinyMCEInit?
 			# handle destroying an editor (based on what jQuery plugin does)
 			ko.utils.domNodeDisposal.addDisposeCallback element, ->
 				ed = tinyMCE.get(element.id)

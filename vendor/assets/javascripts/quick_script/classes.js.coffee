@@ -172,6 +172,7 @@ Overlay.add = (vm, tmp, opts) ->
 					$('#overlay-' + id).koClean()
 					$('#overlay-' + id).remove()
 				, 500
+				vm.onHidden() if vm.onHidden?
 				opts.hidden() if opts.hidden
 			$('#overlay-' + id).on 'shown', opts.shown if opts.shown?
 			$('#overlay-' + id).modal(opts)
