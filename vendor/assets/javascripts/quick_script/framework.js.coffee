@@ -156,6 +156,8 @@ class @Model
 		m = new(@getClass())
 		m.absorb(this)
 		return m
+	checkDirty : (prop)=>
+		@db_state()[prop] != @[prop]()
 	absorb : (model) =>
 		@reset()
 		@handleData(model.toJS())
