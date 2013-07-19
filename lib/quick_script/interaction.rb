@@ -20,10 +20,27 @@ module QuickScript
 				@names = {}
 			end
 			def respond(scope)
-				@names[scope[:name]].call
+        crit = nil
+
+        if @names['before_filter']
+          crit = @names['before_filter'].call
+        end
+
+        scope.selectors.each do |k, v|
+          if crit.nil?
+            crit = @names[k].call(*v)
+          else
+            crit.merge!(@names[k].call(*v))
+          end
+        end
+
+        if crit.is_a? Mongoid::Criteria
+          crit = crit.limit(scope.limit).offset(scope.offset).to_a
+        end
+        return crit
 			end
 			def method_missing(method_sym, *args, &block)
-				@names[method_sym] = block
+				@names[method_sym.to_s] = block
 			end
 		end
 
@@ -43,14 +60,21 @@ module QuickScript
       # handle scope
 			@scope = {}
 			class << @scope
-				def name; return self[:name]; end
+				def selectors; return self[:selectors]; end
 				def args; return self[:args]; end
 				def limit; return self[:limit]; end
 				def page; return self[:page]; end
 				def offset; return self[:offset]; end
 			end
-			@scope[:name] = params[:scope].first.to_sym if params[:scope]
-			@scope[:args] = params[:scope][1..-1] if params[:scope]
+      if params[:scope]
+        if params[:scope].is_a? Array
+          @scope[:selectors] = {params[:scope].first => params[:scope][1..-1]}
+          @scope[:args] = params[:scope][1..-1]
+        else
+          # json selectors
+          @scope[:selectors] = JSON.parse(params[:scope])
+        end
+      end
 			@scope[:limit] = params[:limit].to_i if params[:limit]
 			@scope[:page] = params[:page].to_i if params[:page]
 			@scope[:offset] = (@scope[:page] - 1) * @scope[:limit] if params[:page] && params[:limit]

@@ -529,6 +529,26 @@ class @View
 		Overlay.removePopover(@name)
 	overlayVisible : =>
 		Overlay.isVisible(@name)
+	toAPI : (flds)=>
+		flds ||= @fields
+		obj = {}
+		for prop in flds
+			if typeof(@[prop].toAPI) == 'function'
+				val = @[prop].toAPI()
+				if val != null
+					if val instanceof File
+						obj[prop] = val
+					else
+						obj[prop] = JSON.stringify val
+			else if typeof(@[prop].toJS) == 'function'
+				obj[prop] = @[prop].toJS()
+			else
+				val = @[prop]()
+				if val instanceof Object
+					obj[prop] = JSON.stringify(val)
+				else
+					obj[prop] = val if val != null
+		obj
 
 class @ModelAdapter
 	constructor : (opts)->

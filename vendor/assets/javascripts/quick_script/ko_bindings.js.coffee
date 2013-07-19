@@ -331,7 +331,7 @@ QuickScript.initKO = ->
 					$(element).siblings('label').hide()
 				else
 					$(element).siblings('label').show()
-			$(element).live('blur change keyup', fn)
+			$(element).on('blur change keyup', fn)
 		update: (element, valueAccessor) ->
 			if ($(element).val().length > 0)
 				$(element).siblings('label').hide()
@@ -344,6 +344,7 @@ QuickScript.initKO = ->
 			$(element).tooltip
 				placement: opts.placement || 'bottom'
 				delay: opts.delay || 0
+				html: opts.html || false
 				title: ->
 					ko.utils.unwrapObservable(opts.content)
 
@@ -466,8 +467,8 @@ jQuery.fn.extend
 		$('<div>').append(this.clone()).remove().html()
 	center : ->
     this.css("position","absolute")
-    this.css("top", (($(window).height() - this.outerHeight()) / 2) + $(window).scrollTop() + "px")
-    this.css("left", (($(window).width() - this.outerWidth()) / 2) + $(window).scrollLeft() + "px")
+    this.css("top", (($(window).height() - this.outerHeight(true)) / 2) + $(window).scrollTop() + "px")
+    this.css("left", (($(window).width() - this.outerWidth(true)) / 2) + $(window).scrollLeft() + "px")
     return this
 	koBind : (viewModel, tmpl) ->
 		this.each ->
