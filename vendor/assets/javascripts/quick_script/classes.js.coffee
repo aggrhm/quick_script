@@ -168,10 +168,11 @@ Overlay.add = (vm, tmp, opts) ->
 				#$("#overlay-#{id} .modal-body").css({'max-height' : ($(window).height() - 200)})
 				#$('#overlay-' + id).css({'margin-top' : ($(window).height() - 100)/ -2})
 			$('#overlay-' + id).on 'hidden', ->
+				#console.log 'Hiding overlay.'
 				setTimeout ->
 					$('#overlay-' + id).koClean()
 					$('#overlay-' + id).remove()
-				, 500
+				, 100
 				vm.onHidden() if vm.onHidden?
 				opts.hidden() if opts.hidden
 			$('#overlay-' + id).on 'shown', opts.shown if opts.shown?
