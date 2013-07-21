@@ -362,6 +362,14 @@ QuickScript.initKO = ->
 				onClose : (dateText, inst)->
 					obs(dateText)
 	
+	ko.extenders.usd = (target) ->
+		target.usd = ko.computed
+			read : ->
+				target() / 100.0
+			write : (val)->
+				target(val * 100.0)
+		return target
+	
 	ko.absorbModel = (data, self) ->
 		for prop, val of data
 			continue if typeof(val) == "function"
