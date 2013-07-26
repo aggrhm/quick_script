@@ -157,6 +157,10 @@ QuickScript.initKO = ->
 				element.src = src if element.tagName == "IMG"
 			img.src = src
 
+	ko.bindingHandlers.onImageLoad =
+		init : (element, valueAccessor) ->
+			element.onload = ->
+				valueAccessor()(element)
 	
 	ko.bindingHandlers.loadingOverlay =
 		init : (element, valueAccessor) ->
