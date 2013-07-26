@@ -19,6 +19,7 @@ Date.from_utc = (utc) ->
 Date.from_now = ->
 	new Date()
 Date.from_str = (str)->
+	str = "#{str}"
 	d = new Date()
 	d.setYear( +(str.substring(0, 4)) )
 	d.setMonth( +(str.substring(4, 6)) - 1)
@@ -158,7 +159,7 @@ Overlay.add = (vm, tmp, opts) ->
 		template = tmp
 		#options['z-index'] = Overlay.instance.zindex + 10
 		$('#overlay-' + id).remove()
-		$('body').append("<div id='overlay-" + id + "' class='modal hide fade'><button class='close' data-bind='click : hideOverlay'>x</button><div class='content' data-bind=\"template: '" + template + "'\"></div></div>")
+		$('body').append("<div id='overlay-#{id}' class='modal hide fade'><button class='close' data-bind='click : hideOverlay'>x</button><div class='content #{template}' data-bind=\"template: '#{template}'\"></div></div>")
 		$('#overlay-' + id).css(css_opts)
 		$('#overlay-' + id).addClass(cls)
 		#$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
@@ -176,7 +177,9 @@ Overlay.add = (vm, tmp, opts) ->
 				, 100
 				vm.onHidden() if vm.onHidden?
 				opts.hidden() if opts.hidden
-			$('#overlay-' + id).on 'shown', opts.shown if opts.shown?
+			$('#overlay-' + id).on 'shown', (ev)->
+				vm.onShown(ev.target) if vm.onShown?
+				opts.shown if opts.shown?
 			$('#overlay-' + id).modal(opts)
 		, 100
 		#Overlay.instance.zindex = Overlay.instance.zindex + 10

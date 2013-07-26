@@ -146,7 +146,10 @@ class @Model
 				if val instanceof Object
 					obj[prop] = JSON.stringify(val)
 				else
-					obj[prop] = val if val != null
+					if val?
+						obj[prop] = val
+					else
+						obj[prop] = ''
 		obj
 	toJSON : (flds)=>
 		JSON.stringify(@toJS(flds))
@@ -260,6 +263,9 @@ class @Collection
 		@hasItems = ko.dependentObservable ->
 				@items().length > 0
 			, this
+		@has_items = ko.computed ->
+			@items().length > 0
+		, this
 		@length = ko.computed ->
 				@items().length
 			, this

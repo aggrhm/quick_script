@@ -146,6 +146,17 @@ QuickScript.initKO = ->
 					width: opts[1],
 					height: opts[2],
 					display: 'inline-block'
+
+	ko.bindingHandlers.fadeInImage =
+		update : (element, valueAccessor) ->
+			src = ko.utils.unwrapObservable(valueAccessor())
+			$(element).css(opacity: 0)
+			img = new Image()
+			img.onload = ->
+				$(element).animate({opacity: 1.0}, 1000)
+				element.src = src if element.tagName == "IMG"
+			img.src = src
+
 	
 	ko.bindingHandlers.loadingOverlay =
 		init : (element, valueAccessor) ->
@@ -157,6 +168,13 @@ QuickScript.initKO = ->
 				$(element).prepend("<div class='loading-overlay'><img src='/assets/ajax-loader.gif'/></div>") if $(element).children('.loading-overlay').length == 0
 			else
 				$(element).children('.loading-overlay').fadeOut('fast', (-> $(this).remove()))
+	
+	ko.bindingHandlers.toggleHover =
+		init: (element, valueAccessor, allBindingsAccessor) ->
+			$(element).on 'mouseover', ->
+				valueAccessor()(true)
+			$(element).on 'mouseout', ->
+				valueAccessor()(false)
 
 	ko.bindingHandlers.checkedInt =
 		init: (element, valueAccessor, allBindingsAccessor) ->
@@ -345,8 +363,10 @@ QuickScript.initKO = ->
 				placement: opts.placement || 'bottom'
 				delay: opts.delay || 0
 				html: opts.html || false
-				title: ->
-					ko.utils.unwrapObservable(opts.content)
+				title: ko.utils.unwrapObservable(opts.content)
+		update : (element, valueAccessor) ->
+			opts = valueAccessor()
+			$(element).data('tooltip').options.title = ko.utils.unwrapObservable(opts.content)
 
 	# popover : {template : <tmp>, placement : <pos>}
 	ko.bindingHandlers.popover =
