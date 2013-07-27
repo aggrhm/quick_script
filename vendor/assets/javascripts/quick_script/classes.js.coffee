@@ -178,6 +178,7 @@ Overlay.add = (vm, tmp, opts) ->
 				vm.onHidden() if vm.onHidden?
 				opts.hidden() if opts.hidden
 			$('#overlay-' + id).on 'shown', (ev)->
+				return if ev.target.id != "overlay-#{id}"
 				vm.onShown(ev.target) if vm.onShown?
 				opts.shown if opts.shown?
 			$('#overlay-' + id).modal(opts)
