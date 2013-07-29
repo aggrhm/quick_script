@@ -6,6 +6,18 @@ QuickScript.utils.buildOptions = (hash)->
 		ret.push {value: key, text: val}
 	return ret
 
+QuickScript.includeEventable = (self)->
+	self::handle = (ev, callback)->
+		@_events ||= {}
+		@_events[ev] ||= []
+		@_events[ev].push callback
+	self::trigger = (ev, data)->
+		@_events ||= {}
+		cbs = @_events[ev]
+		if cbs?
+			cbs.forEach (callback)->
+				callback(data)
+
 
 class @Model
 	init : ->
@@ -409,6 +421,7 @@ Collection.APPEND = 2
 Collection.UPDATE = 3
 
 class @View
+	QuickScript.includeEventable(this)
 	init : ->
 	constructor : (@name, @owner, @model)->
 		@app = @owner.app if @owner?
