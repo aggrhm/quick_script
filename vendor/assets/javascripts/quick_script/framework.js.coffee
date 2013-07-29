@@ -282,7 +282,7 @@ class @Collection
 		op ||= Collection.REPLACE
 		reqid = ++@_reqid
 		opts = @loadOptions()
-		opts.scope = scope
+		opts.scope = if (scope instanceof Array) then scope else JSON.stringify(scope)
 		@adapter.index
 			data : opts
 			success : (resp)=>
