@@ -344,6 +344,9 @@ class @Collection
 			@items(@items().concat(models))
 			@views(@views().concat(views))
 		@model_state(ko.modelStates.READY)
+	handleItemData : (data)=>
+		item = @getItemById(data.id)
+		item.handleData(data) if item?
 	nextPage : =>
 		@page(@page() + 1)
 		@update()
