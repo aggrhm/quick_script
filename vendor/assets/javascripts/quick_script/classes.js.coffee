@@ -73,6 +73,7 @@ class @PageTimer
 		@frequency = time * 1000
 		@t_id = -1
 	start : =>
+		return unless @t_id == -1
 		@t_id = setInterval(@callback, @frequency)
 	stop : =>
 		clearInterval(@t_id)

@@ -1,10 +1,22 @@
 @QuickScript = {}
+@QS = QuickScript
 QuickScript.utils = {}
 QuickScript.utils.buildOptions = (hash)->
 	ret = []
 	for key, val of hash
 		ret.push {value: key, text: val}
 	return ret
+QuickScript.utils.renderToString = (tmpl, vm)->
+	$el = $('<div>')
+	$el.koBind(vm, tmpl)
+	html = $el[0].innerHTML
+	$el.koClean()
+	return html
+QuickScript.utils.pluralize = (count, single, plural)->
+	if count == 1
+		return "#{count} #{single}"
+	else
+		return "#{count} #{plural}"
 
 QuickScript.includeEventable = (self)->
 	self::handle = (ev, callback)->
@@ -717,7 +729,7 @@ class @Application extends @View
 		@redirectOnLogin = ko.observable(null)
 		ko.addTemplate "viewbox", """
 				<div data-bind='foreach : viewList()'>
-					<div data-bind="fadeVisible : is_visible(), template : { name : getViewName, afterRender : afterRender, if : is_visible() }, attr : { id : templateID}, bindelem : true"></div>
+					<div data-bind="fadeVisible : is_visible(), template : { name : getViewName, afterRender : afterRender, if : is_visible() }, attr : { id : templateID, 'class' : templateID }, bindelem : true"></div>
 				</div>
 			"""
 		ko.addTemplate "viewbox-slide", """

@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'compass-rails'
   s.add_dependency 'sprockets'
   s.add_dependency 'sprockets-sass'
+  s.add_dependency 'haml-rails'
   s.add_dependency 'coffee-script'
   s.add_dependency 'compass'
   s.add_dependency 'uglifier'
