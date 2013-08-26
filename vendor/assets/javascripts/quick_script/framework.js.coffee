@@ -17,6 +17,14 @@ QuickScript.utils.pluralize = (count, single, plural)->
 		return "#{count} #{single}"
 	else
 		return "#{count} #{plural}"
+QuickScript.log = (msg, lvl)->
+	console.log(msg) if (QS.debug == true && lvl <= QS.log_level)
+QuickScript.debug ||= true
+QuickScript.log_level ||= 5
+QuickScript.start_time = Date.now()
+QuickScript.time = ->
+	now = Date.now()
+	return (now - QS.start_time) / 1000.0
 
 QuickScript.includeEventable = (self)->
 	self::handle = (ev, callback)->
@@ -335,16 +343,19 @@ class @Collection
 	append : (scope, callback)->
 		@_load(scope, Collection.APPEND, callback)
 	handleData : (resp, op) =>
+		#QS.log "COLLECTION::HANDLE_DATA : Starting (#{QS.time()}).", 3
 		models = []
 		views = []
 		op ||= Collection.REPLACE
 		cls = @view_model()
-		if (op == Collection.REPLACE) || (op == Collection.UPDATE)
-			@items([]); @views([])
+		#if (op == Collection.REPLACE) || (op == Collection.UPDATE)
+			#@items([]); @views([])
 		for item, idx in resp
 			model = new @model(item, this)
 			models.push(model)
 			views.push(new cls("view-#{model.id()}", @view_owner(), model))
+
+		#QS.log "COLLECTION::HANDLE_DATA : Finished building data #{QS.time()}.", 3
 
 		if !op? || op == Collection.REPLACE || op == Collection.UPDATE
 			@items(models)
