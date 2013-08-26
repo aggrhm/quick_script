@@ -329,6 +329,36 @@ QuickScript.initKO = ->
 			$(element).children('div').addClass('hidden').removeClass('active')
 			$(element).children("div##{sel_tab}").addClass('active').removeClass('hidden')
 
+	ko.bindingHandlers.tabpanes =
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
+			# find panes
+			$el = $(element)
+			$panes = $el.children('pane')
+			pane_data = $panes.toArray().map (p)->
+				$p = $(p)
+				return {
+					title: $p.attr('title'),
+					key: $p.attr('data-key'),
+					html: p.innerHTML
+				}
+
+			# prepare observable
+			tab_obs = valueAccessor()
+			viewModel[tab_obs] = ko.observable(pane_data[0].key) unless viewModel[tab_obs]?
+
+			# build panes properly
+			str = "<div class='tabbable'><ul class='nav nav-tabs'>"
+			for pane in pane_data
+				str += "<li data-bind=\"css : {active : #{tab_obs}() == '#{pane.key}'}\"><a href='' data-bind=\"click : function(){#{tab_obs}('#{pane.key}');}\">#{pane.title}</a></li>"
+			str += "</ul>"
+			str += "<div class='tab-content'>"
+			for pane in pane_data
+				str += "<div class='tab-pane' data-bind=\"css : {active : #{tab_obs}() == '#{pane.key}'}\">#{pane.html}</div>"
+			str += "</div></div>"
+			element.innerHTML = str
+
+			# bindings applied automatically to descendants
+
 	ko.bindingHandlers.calendar =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			console.log('calendar init')

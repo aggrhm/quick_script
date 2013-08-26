@@ -195,21 +195,25 @@ Overlay.dialog = (msg, opts) ->
 			cancel : Overlay.remove('dialog')
 		Overlay.add(vm, 'view-dialog', { width : 300 })
 
-Overlay.notify = (msg, cls, tm) ->
-		cls = cls || ''
-		tm = tm || 3000
+Overlay.notify = (msg, type, opts) ->
+		opts = opts || {}
+		opts.timeout = opts.timeout || 3000
+		opts.position = opts.position || 'right'
+		type = type || 'info'
+
 		Overlay.clearNotifications()
-		$('body').prepend("<div id='notify' class='notify' style='display: none;'>" + msg + "</div>")
-		if (cls)
-			$('#notify').addClass(cls)
-		$('#notify').fadeIn 'slow', ->
+		$('body').prepend("<div id='qs-notify' class='qs-notify-elegant #{type} p-#{opts.position}' style='display: none;'><img class='icon' src='/assets/qs-notify-icon.png'/><div class='title'>#{msg}</div></div>")
+		$notif = $('#qs-notify')
+		$notif.addClass(opts.css) if (opts.css?)
+		$notif.fadeIn 'slow', ->
 			Overlay.instance.notifyTimeout = setTimeout ->
-					$('#notify').fadeOut('slow')
-				, tm
+				$notif.fadeOut('slow')
+				#console.log 'removing notification'
+			, opts.timeout
 
 Overlay.clearNotifications = ->
 		clearTimeout(Overlay.instance.notifyTimeout)
-		$('#notify').remove()
+		$('#qs-notify').remove()
 
 Overlay.confirm = (msg, opts) ->
 		vm =
