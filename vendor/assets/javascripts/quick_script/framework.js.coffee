@@ -18,6 +18,7 @@ QuickScript.utils.pluralize = (count, single, plural)->
 	else
 		return "#{count} #{plural}"
 QuickScript.log = (msg, lvl)->
+	lvl ||= 1
 	console.log(msg) if (QS.debug == true && lvl <= QS.log_level)
 QuickScript.debug ||= true
 QuickScript.log_level ||= 5
