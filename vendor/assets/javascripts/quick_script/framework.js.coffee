@@ -1,5 +1,6 @@
 @QuickScript = {}
 @QS = QuickScript
+
 QuickScript.utils = {}
 QuickScript.utils.buildOptions = (hash)->
 	ret = []
@@ -17,6 +18,11 @@ QuickScript.utils.pluralize = (count, single, plural)->
 		return "#{count} #{single}"
 	else
 		return "#{count} #{plural}"
+QuickScript.utils.isFunction = (fn)->
+	return (typeof(fn) == 'function')
+QuickScript.utils.isRegularObject = (obj)->
+	return obj.constructor == Object
+
 QuickScript.log = (msg, lvl)->
 	lvl ||= 1
 	console.log(msg) if (QS.debug == true && lvl <= QS.log_level)
@@ -45,8 +51,10 @@ class @Model
 	extend : ->
 	constructor: (data, collection, opts) ->
 		@fields = []
+		@submodels = []
+		@is_submodel = false
 		@addFields(['id'], '')
-		@events = {}
+		#@events = {}
 		@adapter = if @initAdapter? then @initAdapter() else null
 		@collection = collection
 		@db_state = ko.observable({})
@@ -57,34 +65,29 @@ class @Model
 			@is_submodel = opts.is_submodel
 		@extend()
 		@init()
-		@is_ready = ko.dependentObservable ->
-				@model_state() == ko.modelStates.READY
-			, this
-		@is_loading = ko.dependentObservable ->
-				@model_state() == ko.modelStates.LOADING
-			, this
-		@is_saving = ko.dependentObservable ->
+		@addComputed 'is_ready', ->
+			@model_state() == ko.modelStates.READY
+		@addComputed 'is_loading', ->
+			@model_state() == ko.modelStates.LOADING
+		@addComputed 'is_saving', ->
 				@model_state() == ko.modelStates.SAVING
-			, this
-		@is_editing = ko.dependentObservable ->
+		@addComputed 'is_editing', ->
 				@model_state() == ko.modelStates.EDITING
-			, this
-		@is_new = ko.dependentObservable ->
+		@addComputed 'is_new', ->
 				@id() == ''
-			, this
-		@is_dirty = ko.dependentObservable ->
+		@addComputed 'is_dirty', ->
 				JSON.stringify(@db_state()) != JSON.stringify(@toJS())
-			, this
-		@has_errors = ko.dependentObservable ->
+		@addComputed 'has_errors', ->
 				@errors().length > 0
-			, this
 		@handleData(data || {})
 	addFields : (fields, def_val) ->
 		ko.addFields fields, def_val, this
-	addComputed : (field, fn) ->
-		this[field] = ko.computed fn, this
-	addSubModel : (field_name, class_name) ->
-		ko.addSubModel field_name, class_name, this
+	addComputed : (field, fn_opts) ->
+		ko.addComputed field, fn_opts, this
+	addSubModel : (field_name, class_name, nested) ->
+		nested ||= false
+		if nested == true || @is_submodel == false
+			ko.addSubModel field_name, class_name, this
 	handleData : (resp) ->
 		ko.absorbModel(resp, this)
 		@db_state(@toJS())
@@ -204,6 +207,9 @@ Model.includeCollection = (self)->
 			@adapter = self.Adapter
 			@model = self
 Model.includeAdapter = (adapter, self)->
+	if !adapter.save? && !adapter.load?
+		adapter.type ||= ModelAdapter
+		adapter = new adapter.type(adapter)
 	self.Adapter = adapter
 	self::initAdapter = (=> adapter)
 
@@ -286,12 +292,6 @@ class @Collection
 				obs(curr)
 				console.log("Scope changed from #{prev} to #{curr}")
 				#@load()
-			, this
-		@scopeSelector = ko.observable()
-		@scopeSelector.subscribe (val) ->
-				opts = @scope()
-				opts[@scopeSelector()] = []
-				@scope(opts)
 			, this
 		@hasItems = ko.dependentObservable ->
 				@items().length > 0
@@ -516,6 +516,8 @@ class @View
 			@selectView(name)
 	addFields : (fields, def) =>
 		ko.addFields(fields, def, this)
+	addComputed : (field, fn_opts) ->
+		ko.addComputed field, fn_opts, this
 	validate_for : (field, fn, msg) =>
 		ko.validate_for(field, fn, msg, this)
 	validate_fields : (fields, fn) =>

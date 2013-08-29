@@ -339,7 +339,8 @@ QuickScript.initKO = ->
 				return {
 					title: $p.attr('title'),
 					key: $p.attr('data-key'),
-					html: p.innerHTML
+					html: p.innerHTML,
+					visible: $p.attr('data-visible')
 				}
 
 			# prepare observable
@@ -349,7 +350,9 @@ QuickScript.initKO = ->
 			# build panes properly
 			str = "<div class='tabbable'><ul class='nav nav-tabs'>"
 			for pane in pane_data
-				str += "<li data-bind=\"css : {active : #{tab_obs}() == '#{pane.key}'}\"><a href='' data-bind=\"click : function(){#{tab_obs}('#{pane.key}');}\">#{pane.title}</a></li>"
+				click_db = "click : function(){#{tab_obs}('#{pane.key}');}"
+				visible_db = if pane.visible? then ", visible : #{pane.visible}" else ""
+				str += "<li data-bind=\"css : {active : #{tab_obs}() == '#{pane.key}'}\"><a href='' data-bind=\"#{click_db}#{visible_db}\">#{pane.title}</a></li>"
 			str += "</ul>"
 			str += "<div class='tab-content'>"
 			for pane in pane_data
@@ -448,7 +451,13 @@ QuickScript.initKO = ->
 		for prop, val of data
 			continue if typeof(val) == "function"
 			if !self[prop]?
-				self[prop] = ko.observable(val)
+				if self.submodels? && self.submodels[prop]?
+					# add submodel
+					ko.addSubModel(prop, self.submodels[prop], self)
+					self[prop].handleData(val)
+				else
+					# add regular observable
+					self[prop] = ko.observable(val)
 			else if (typeof(self[prop].handleData) == "function")
 				self[prop].handleData(val)
 			else
@@ -476,6 +485,16 @@ QuickScript.initKO = ->
 		if (typeof(field) == "string")
 			self.fields.pushOnce(field)
 	
+	ko.addComputed = (field, fn_opts, self) ->
+		opts = {}
+		if QS.utils.isFunction(fn_opts)
+			opts = {read: fn_opts}
+		else
+			opts = fn_opts
+		opts.owner = self
+		opts.deferEvaluation = true
+		self[field] = ko.computed opts, self
+	
 	ko.validate_for = (field, fn, msg, self) ->
 		self.validations = {} unless self.validations?
 		self.validations[field] = [] unless self.validations[field]?
@@ -502,6 +521,7 @@ QuickScript.initKO = ->
 		else
 			self[field] = new model({}, self, {is_submodel : true})
 		self.fields.pushOnce(field) if typeof(field) == "string"
+		self.submodels[field] = model if typeof(field) == "string"
 
 	ko.intercepter = (observable, write_fn, self) ->
 		underlying_observable = observable
