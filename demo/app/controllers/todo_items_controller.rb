@@ -8,7 +8,7 @@ class TodoItemsController < ApplicationController
     else
       @todo_items = respond_to_scope do |scope|
         scope.all {
-          TodoItem.limit(@scope.limit).offset(@scope.offset)
+          TodoItem  # QuickScript automatically handles page, offset, and limit params
         }
       end
       render :json => json_resp(@todo_items.collect{|t| t.to_api})

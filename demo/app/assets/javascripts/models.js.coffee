@@ -10,9 +10,7 @@ class @TodoItem extends @Model
 		@addFields ['description', 'notes'], ''
 		@addFields ['done'], false
 		@addFields ['created_at', 'updated_at'], 0
-		@created_at_date = ko.computed ->
+		@addComputed 'created_at_date', ->
 			Date.from_utc(@created_at())
-		, this
-		@created_at_str = ko.computed ->
+		@addComputed 'created_at_str', ->
 			@created_at_date().format('longDate')
-		, this

@@ -1,0 +1,8 @@
+.todo-item(data-bind="css : {done : todo_item.done()}")
+  %label.checkbox
+    %input(type="checkbox" data-bind="checked : todo_item.done")
+    %span.desc(data-bind="text : todo_item.description")
+  .details
+    %span.time(data-bind="text : todo_item.created_at_str")
+    %a.actions(data-bind="click : deleteItem") remove
+

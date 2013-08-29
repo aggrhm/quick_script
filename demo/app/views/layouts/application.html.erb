@@ -4,7 +4,7 @@
   <title>TodoList</title>
   <%= stylesheet_link_tag    "application", :media => "all" %>
   <%= javascript_include_tag "application" %>
-  <%= render :partial => 'shared/views' %>
+  <%= include_quick_script_views 'app/assets/views' %>
   <%= csrf_meta_tags %>
 </head>
 <body>

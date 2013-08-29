@@ -34,9 +34,7 @@ module QuickScript
           end
         end
 
-        if crit.is_a? Mongoid::Criteria
-          crit = crit.limit(scope.limit).offset(scope.offset).to_a
-        end
+        crit = crit.limit(scope.limit).offset(scope.offset).to_a
         return crit
 			end
 			def method_missing(method_sym, *args, &block)

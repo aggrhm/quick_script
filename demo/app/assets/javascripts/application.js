@@ -11,6 +11,7 @@
 // GO AFTER THE REQUIRES BELOW.
 //
 //= require quick_script
+//= require jquery.ui.all
 // require jquery
 // require jquery_ujs
 //= require_tree .

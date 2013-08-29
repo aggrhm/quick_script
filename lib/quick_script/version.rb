@@ -1,3 +1,3 @@
 module QuickScript
-  VERSION = "0.12.1"
+  VERSION = "1.1.0"
 end

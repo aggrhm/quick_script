@@ -10,7 +10,7 @@ class @TodoItemView extends @View
 			if resp.meta == 200
 				@todo_item.removeFromCollection()
 			else
-				Overlay.notify 'Could not delete item!', 'bg-red'
+				Overlay.notify 'Could not delete item!', 'error'
 	updateStatus : =>
 		@todo_item.save ['done']
 
@@ -31,11 +31,11 @@ class @HomeView extends @View
 				@todo_items.addItem(t)
 				@new_item.reset()
 			else
-				Overlay.notify resp.data.errors[0], 'bg-red'
+				Overlay.notify resp.data.errors[0], 'error'
 	highlightItem : (el)=>
 		$(el).effect('highlight', {}, 3000) if (el.nodeType == 1 && !@todo_items.is_loading())
 	fadeOutItem : (el)=>
-		$(el).fadeOut()
+		$(el).fadeOut() if (el.nodeType == 1)
 
 # APPVIEW - application-level view
 class @AppView extends @Application

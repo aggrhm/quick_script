@@ -1,0 +1,37 @@
+@import 'quick_script/mixins'
+
+.view-home
+  a
+    +clickable
+
+  #todo-container
+    +border-radius(10px)
+    width: 700px
+    margin: 50px auto
+    border: 2px solid #AAA
+    padding: 10px
+
+    .new-item
+      text-align: center
+
+    .item-list
+      
+    .todo-item
+      position: relative
+      padding-left: 100px
+      padding-top: 10px
+      border-top: 1px solid #CCC
+      margin-top: 10px
+
+      .desc
+        font-size: 30px
+
+      .details
+        +italic
+        padding-left: 20px
+        color: #AAA
+
+      &.done
+        .desc
+          text-decoration: line-through
+

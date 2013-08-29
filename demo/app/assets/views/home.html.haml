@@ -1,0 +1,21 @@
+#todo-container(data-bind="loadingOverlay : todo_items.is_loading()")
+  %h1 My Todo List
+
+  %form.form-horizontal.new-item
+
+    .input-append
+      %input.span4(type="text" placeholder="What do you have to do?" data-bind="value : new_item.description, handleEnter : addTodoItem")
+      %button.btn.btn-primary(data-bind="click : addTodoItem") Add
+
+  .item-list(data-bind="foreach : {data : todo_items.views, afterAdd : highlightItem, beforeRemove : fadeOutItem }")
+
+    .todo-item(data-bind="css : {done : todo_item.done()}")
+      %label.checkbox
+        %input(type="checkbox" data-bind="checked : todo_item.done")
+        %span.desc(data-bind="text : todo_item.description")
+      .details
+        %span.time(data-bind="text : todo_item.created_at_str")
+        %a.actions(data-bind="click : deleteItem") remove
+
+
+
