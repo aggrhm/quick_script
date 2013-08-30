@@ -88,6 +88,7 @@ class @Model
 		nested ||= false
 		if nested == true || @is_submodel == false
 			ko.addSubModel field_name, class_name, this
+		@submodels[field_name] = class_name if typeof(field_name) == "string"
 	handleData : (resp) ->
 		ko.absorbModel(resp, this)
 		@db_state(@toJS())
