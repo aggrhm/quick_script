@@ -31,6 +31,8 @@
 
 		For handling a collection, you will need to use the `@scope` variable and `respond_to_scope` helper. `respond_to_scope` works similarly to `respond_to` with Rails, except you are responding to a scoping method (the first string in the `scope` array of the `load` method in a Collection (see client Collection). Within the `respond_to_scope` block, you write separate handlers for each scoping method.
 
+		The `respond_to_scope` method automatically handles `offset` and `limit` params sent in the request, so in the scoping function, you need to just select the proper `ActiveRecord::Relation` using `where` clauses.
+
 	%pre
 		:code
 			def index
@@ -39,7 +41,7 @@
 				else
 					@todo_items = respond_to_scope do |scope|
 						scope.all {
-							TodoItem.limit(@scope.limit).offset(@scope.offset)
+							TodoItem
 						}
 					end
 					render :json => json_resp(@todo_items.collect{|t| t.to_api})

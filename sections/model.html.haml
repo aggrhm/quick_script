@@ -14,12 +14,10 @@
 					@addFields ['description', 'notes'], ''
 					@addFields ['done'], false
 					@addFields ['created_at', 'updated_at'], 0
-					@created_at_date = ko.computed ->
+					@addComputed 'created_at_date', ->
 						Date.from_utc(@created_at())
-					, this
-					@created_at_str = ko.computed ->
+					@addComputed 'created_at_str', ->
 						@created_at_date().format('longDate')
-					, this
 				setDone : =>
 					@done(true)
 
@@ -40,6 +38,18 @@
 			class @TodoItem extends @Model
 				init : =>
 					@addFields ['description', 'notes'], ''
+
+#Model-addComputed
+	=subheader "addComputed", "@addComputed(field, function)"
+	:markdown
+		Adds a computed field to the Model. The field is an **dependent observable** (see knockoutjs).
+
+	%pre
+		:code
+			class @TodoItem extends @Model
+				init : =>
+					@addComputed 'created_at_date', ->
+						Date.from_utc(@created_at())
 
 #Model-load
 	=subheader "load", "model.load(opts, [callback])"

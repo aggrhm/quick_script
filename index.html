@@ -15,6 +15,7 @@
         <li><a href='#Model-defining'>defining</a></li>
         <li><a href='#Model-constructor'>constructor</a></li>
         <li><a href='#Model-addFields'>addFields</a></li>
+        <li><a href='#Model-addComputed'>addComputed</a></li>
         <li><a href='#Model-load'>load</a></li>
         <li><a href='#Model-save'>save</a></li>
         <li><a href='#Model-delete'>delete</a></li>
@@ -85,7 +86,7 @@
       </p>
       <p>
         QuickScript is written in CoffeeScript, so get familiar with it <a href='http://coffeescript.org'>here</a>.<br/>
-        It is always heavily based on Knockout.js, so get familiar with it <a href='href://knockoutjs.com'>here</a>.
+        It is also heavily based on Knockout.js, so get familiar with it <a href='href://knockoutjs.com'>here</a>.
       </p>
       <!-- INSTALLATION -->
       <h2 id='Installation'>Installation</h2>
@@ -94,12 +95,13 @@
         <pre>gem 'quick_script', :git =&gt; 'git@github.com:agquick/quick_script.git'&#x000A;#gem 'jquery-rails'		# comment this out</pre>
         Next, you need to add the helpers to your <b>ApplicationController</b>.
         <pre>class ApplicationController&#x000A;	include QuickScript::Interaction&#x000A;	...&#x000A;end</pre>
-        Next, setup your file hierarchy. This is how I typically set up mine, but up to you. The javascript files should be added to your asset pipeline file.
-        <pre>app/&#x000A;    views/&#x000A;        shared/&#x000A;            _views.html.haml            # for your view templates (I use haml)&#x000A;    assets/&#x000A;        javascripts/&#x000A;            view.js.coffee                # for your application js views&#x000A;            models.js.coffee            # for your application js models&#x000A;</pre>
+        Next, setup your file hierarchy. This is how I set up mine for the TodoList example, but up to you. The javascript files should be added to your asset pipeline file.
+        <pre>app/&#x000A;    assets/&#x000A;        views/&#x000A;            todo_item/&#x000A;                row.html.haml                    # our partial template for a TodoItem row&#x000A;            home.html.haml                    # our root home view template (I use haml)&#x000A;        javascripts/&#x000A;            view.js.coffee                    # for our application js views&#x000A;            models.js.coffee                # for our application js models&#x000A;        stylesheets/&#x000A;            home.css.sass                        # for our home css&#x000A;</pre>
+        One good thing about QuickScript is all of your client-side files are found in the /assets folder of your rails app. The view names correspond to their file path, as we will see later. For example, the home.html.haml view template is given the id 'view-home', while the row.html.haml template has the id 'view-todo_item-row'. You will use this id to reference the view when building your application.
         Now update your application layout in app/views/layouts/application.html.erb.
-        <pre>&lt;!DOCTYPE html&gt;&#x000A;&lt;html&gt;&#x000A;  &lt;head&gt;&#x000A;    &lt;title&gt;TodoListApp&lt;/title&gt;&#x000A;    &lt;%= stylesheet_link_tag    &quot;application&quot;, :media =&gt; &quot;all&quot; %&gt;&#x000A;    &lt;%= javascript_include_tag &quot;application&quot; %&gt;&#x000A;    &lt;%= render :partial =&gt; 'shared/views' %&gt;&#x000A;    &lt;%= csrf_meta_tags %&gt;&#x000A;  &lt;/head&gt;&#x000A;  &lt;body&gt;&#x000A;    &lt;%= include_view_box %&gt;&#x000A;    &lt;%= include_quick_script_init 'AppView' %&gt;&#x000A;  &lt;/body&gt;&#x000A;&lt;/html&gt;</pre>
+        <pre>&lt;!DOCTYPE html&gt;&#x000A;&lt;html&gt;&#x000A;  &lt;head&gt;&#x000A;    &lt;title&gt;TodoListApp&lt;/title&gt;&#x000A;    &lt;%= stylesheet_link_tag    &quot;application&quot;, :media =&gt; &quot;all&quot; %&gt;&#x000A;    &lt;%= javascript_include_tag &quot;application&quot; %&gt;&#x000A;		&lt;%= include_quick_script_views 'app/assets/views' %&gt;&#x000A;    &lt;%= csrf_meta_tags %&gt;&#x000A;  &lt;/head&gt;&#x000A;  &lt;body&gt;&#x000A;    &lt;%= include_view_box %&gt;&#x000A;    &lt;%= include_quick_script_init 'AppView' %&gt;&#x000A;  &lt;/body&gt;&#x000A;&lt;/html&gt;</pre>
         And update your routing rules in config/routes.rb
-        <pre>TodoList::Application.routes.draw do&#x000A;    scope &quot;/api&quot; do&#x000A;        # your api routes go here&#x000A;&#x000A;    end&#x000A;&#x000A;    # landing page route&#x000A;    root :to =&gt; &quot;application#layout_only&quot;&#x000A;&#x000A;    # all routes other than /api or /assets handled by client JS&#x000A;    match &quot;*path&quot; =&gt; &quot;application#layout_only&quot;, :constraints =&gt; QuickScript::DEFAULT_ROUTING_RULE&#x000A;end&#x000A;&#x000A;</pre>
+        <pre>TodoList::Application.routes.draw do&#x000A;    scope &quot;/api&quot; do&#x000A;        # your api routes go here&#x000A;        match &quot;todo_items&quot; =&gt; &quot;todo_items#index&quot;, :via =&gt; :get&#x000A;        match &quot;todo_item&quot; =&gt; &quot;todo_items#save&quot;, :via =&gt; :post&#x000A;        match &quot;todo_item&quot; =&gt; &quot;todo_items#delete&quot;, :via =&gt; :delete&#x000A;    end&#x000A;&#x000A;    # landing page route&#x000A;    root :to =&gt; &quot;application#layout_only&quot;&#x000A;&#x000A;    # all routes other than /api or /assets handled by client JS&#x000A;    match &quot;*path&quot; =&gt; &quot;application#layout_only&quot;, :constraints =&gt; QuickScript::DEFAULT_ROUTING_RULE&#x000A;end&#x000A;&#x000A;</pre>
         Now you are ready to start building your application.
       </p>
       <!-- MODEL -->
@@ -110,7 +112,7 @@
       <div id='Model-defining'>
         <b class='header'>defining</b><code class='header'>class @MyModel extends @Model</code><br/>
         To create your own <b>Model</b> subclass, you must extend the Model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
-        <pre>class @TodoItem extends Model&#x000A;    init : =&gt;&#x000A;        @addFields ['description', 'notes'], ''&#x000A;        @addFields ['done'], false&#x000A;        @addFields ['created_at', 'updated_at'], 0&#x000A;        @created_at_date = ko.computed -&gt;&#x000A;            Date.from_utc(@created_at())&#x000A;        , this&#x000A;        @created_at_str = ko.computed -&gt;&#x000A;            @created_at_date().format('longDate')&#x000A;        , this&#x000A;    setDone : =&gt;&#x000A;        @done(true)&#x000A;</pre>
+        <pre>class @TodoItem extends Model&#x000A;    init : =&gt;&#x000A;        @addFields ['description', 'notes'], ''&#x000A;        @addFields ['done'], false&#x000A;        @addFields ['created_at', 'updated_at'], 0&#x000A;        @addComputed 'created_at_date', -&gt;&#x000A;            Date.from_utc(@created_at())&#x000A;        @addComputed 'created_at_str', -&gt;&#x000A;            @created_at_date().format('longDate')&#x000A;    setDone : =&gt;&#x000A;        @done(true)&#x000A;</pre>
       </div>
       <div id='Model-constructor'>
         <b class='header'>constructor</b><code class='header'>new Model([attributes, [collection]])</code><br/>
@@ -121,6 +123,11 @@
         <b class='header'>addFields</b><code class='header'>@addFields(fields, default)</code><br/>
         <p>Adds a field to the Model. The field is an <strong>observable</strong> (see knockoutjs).</p>
         <pre>class @TodoItem extends @Model&#x000A;    init : =&gt;&#x000A;        @addFields ['description', 'notes'], ''&#x000A;</pre>
+      </div>
+      <div id='Model-addComputed'>
+        <b class='header'>addComputed</b><code class='header'>@addComputed(field, function)</code><br/>
+        <p>Adds a computed field to the Model. The field is an <strong>dependent observable</strong> (see knockoutjs).</p>
+        <pre>class @TodoItem extends @Model&#x000A;    init : =&gt;&#x000A;        @addComputed 'created_at_date', -&gt;&#x000A;            Date.from_utc(@created_at())&#x000A;</pre>
       </div>
       <div id='Model-load'>
         <b class='header'>load</b><code class='header'>model.load(opts, [callback])</code><br/>
@@ -247,7 +254,7 @@
       <div id='Application-defining'>
         <b class='header'>defining</b><code class='header'>class @AppView extends @Application</code><br/>
         To begin developing your application, you need to extend the <b>Application</b> class. This allows you to setup your application flow and settings.
-        <pre>class @AppView extends @Application&#x000A;    init : -&gt;&#x000A;        @name = &quot;TodoApp&quot;&#x000A;        @addView 'list', TodoListView, 'view-todolist'&#x000A;        @addView 'help', HelpView, 'view-help'&#x000A;    account_model : User&#x000A;</pre>
+        <pre>class @AppView extends @Application&#x000A;    init : -&gt;&#x000A;        @name = &quot;TodoApp&quot;&#x000A;        @addView 'home', HomeView, 'view-home'&#x000A;    account_model : User&#x000A;</pre>
       </div>
       <div id='Application-handlePath'>
         <b class='header'>handlePath</b><code class='header'>handlePath : =></code><br/>
@@ -273,7 +280,7 @@
       </p>
       <div id='ModelAdapter-defining'>
         <b class='header'>defining</b><code class='header'>Model.includeAdapter(adapter, this)</code><br/>
-        <pre>class @TodoItem extends @Model&#x000A;	Model.includeAdapter(new ModelAdapter({&#x000A;		load_url : '/api/todo_items',		# also used for index&#x000A;		save_url : '/api/todo_item'			# also used for delete&#x000A;	}), this)&#x000A;	init : -&gt;&#x000A;		...</pre>
+        <pre>class @TodoItem extends @Model&#x000A;	Model.includeAdapter&#x000A;		type : ModelAdapter					# this is optional, type is ModelAdapter by default&#x000A;		load_url : '/api/todo_items',		# also used for index&#x000A;		save_url : '/api/todo_item'			# also used for delete&#x000A;	, this&#x000A;	init : -&gt;&#x000A;		...</pre>
       </div>
       <h2 id='ServerModel'>Server Model</h2>
       <p>
@@ -305,7 +312,9 @@
         <p>For handling a single item, you can simply check the <code>params[:id]</code>, and server that record if it is found.</p>
         
         <p>For handling a collection, you will need to use the <code>@scope</code> variable and <code>respond_to_scope</code> helper. <code>respond_to_scope</code> works similarly to <code>respond_to</code> with Rails, except you are responding to a scoping method (the first string in the <code>scope</code> array of the <code>load</code> method in a Collection (see client Collection). Within the <code>respond_to_scope</code> block, you write separate handlers for each scoping method.</p>
-        <pre>def index&#x000A;    if params[:id]&#x000A;        render :json =&gt; json_resp(@todo_item.to_api)&#x000A;    else&#x000A;        @todo_items = respond_to_scope do |scope|&#x000A;            scope.all {&#x000A;                TodoItem.limit(@scope.limit).offset(@scope.offset)&#x000A;            }&#x000A;        end&#x000A;        render :json =&gt; json_resp(@todo_items.collect{|t| t.to_api})&#x000A;    end&#x000A;end&#x000A;</pre>
+        
+        <p>The <code>respond_to_scope</code> method automatically handles <code>offset</code> and <code>limit</code> params sent in the request, so in the scoping function, you need to just select the proper <code>ActiveRecord::Relation</code> using <code>where</code> clauses.</p>
+        <pre>def index&#x000A;    if params[:id]&#x000A;        render :json =&gt; json_resp(@todo_item.to_api)&#x000A;    else&#x000A;        @todo_items = respond_to_scope do |scope|&#x000A;            scope.all {&#x000A;                TodoItem&#x000A;            }&#x000A;        end&#x000A;        render :json =&gt; json_resp(@todo_items.collect{|t| t.to_api})&#x000A;    end&#x000A;end&#x000A;</pre>
         <p>Once you have fetched the proper records, you can use the <code>json_resp</code> helper to serve them. The methods simply JSON-ifies anything you give it, and builds the response object to send to the client, including the meta field for indicating the status of the response.</p>
         
         <p>The <code>@scope</code> variable holds all the details about the request</p>
@@ -356,7 +365,7 @@
         <ul>
         <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/assets/javascripts/models.js.coffee">Client Models</a></li>
         <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/assets/javascripts/views.js.coffee">Client Views</a></li>
-        <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/views/shared/_views.html.haml">Client Templates</a></li>
+        <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/assets/views/">Client Templates</a></li>
         <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/models/todo_item.rb">Server Model</a></li>
         <li><a href="https://github.com/agquick/quick_script/blob/master/demo/app/controllers/todo_items_controller.rb">Server Controller</a></li>
         <li><a href="https://github.com/agquick/quick_script/blob/master/demo/config/routes.rb">Server Routes</a></li>

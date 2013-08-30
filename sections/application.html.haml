@@ -12,8 +12,7 @@
 			class @AppView extends @Application
 				init : ->
 					@name = "TodoApp"
-					@addView 'list', TodoListView, 'view-todolist'
-					@addView 'help', HelpView, 'view-help'
+					@addView 'home', HomeView, 'view-home'
 				account_model : User
 	
 #Application-handlePath

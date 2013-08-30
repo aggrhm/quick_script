@@ -20,18 +20,23 @@
 					...
 				end
 
-	Next, setup your file hierarchy. This is how I typically set up mine, but up to you. The javascript files should be added to your asset pipeline file.
+	Next, setup your file hierarchy. This is how I set up mine for the TodoList example, but up to you. The javascript files should be added to your asset pipeline file.
 
 	%pre
 		:code
 			app/
-				views/
-					shared/
-						_views.html.haml			# for your view templates (I use haml)
 				assets/
+					views/
+						todo_item/
+							row.html.haml					# our partial template for a TodoItem row
+						home.html.haml					# our root home view template (I use haml)
 					javascripts/
-						view.js.coffee				# for your application js views
-						models.js.coffee			# for your application js models
+						view.js.coffee					# for our application js views
+						models.js.coffee				# for our application js models
+					stylesheets/
+						home.css.sass						# for our home css
+
+	One good thing about QuickScript is all of your client-side files are found in the /assets folder of your rails app. The view names correspond to their file path, as we will see later. For example, the home.html.haml view template is given the id 'view-home', while the row.html.haml template has the id 'view-todo_item-row'. You will use this id to reference the view when building your application.
 
 	Now update your application layout in app/views/layouts/application.html.erb.
 
@@ -44,7 +49,7 @@
 				    <title>TodoListApp</title>
 				    <%= stylesheet_link_tag    "application", :media => "all" %>
 				    <%= javascript_include_tag "application" %>
-				    <%= render :partial => 'shared/views' %>
+						<%= include_quick_script_views 'app/assets/views' %>
 				    <%= csrf_meta_tags %>
 				  </head>
 				  <body>
@@ -60,7 +65,9 @@
 			TodoList::Application.routes.draw do
 				scope "/api" do
 					# your api routes go here
-
+					match "todo_items" => "todo_items#index", :via => :get
+					match "todo_item" => "todo_items#save", :via => :post
+					match "todo_item" => "todo_items#delete", :via => :delete
 				end
 
 				# landing page route
