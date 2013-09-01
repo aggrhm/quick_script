@@ -446,6 +446,22 @@ QuickScript.initKO = ->
 			write : (val)->
 				target(val * 100.0)
 		return target
+
+	ko.extenders.date = (target) ->
+		target.date = ko.computed
+			read : ->
+				Date.from_utc(target())
+			deferEvaluation : true
+		target.date_str = ko.computed
+			read : ->
+				target.date().format('mmm d, yyyy')
+			deferEvaluation : true
+		target.ago_str = ko.computed
+			read : ->
+				"#{(new TimeLength(target.date())).toString()} ago"
+			deferEvaluation : true
+		return target
+				
 	
 	ko.absorbModel = (data, self) ->
 		for prop, val of data
