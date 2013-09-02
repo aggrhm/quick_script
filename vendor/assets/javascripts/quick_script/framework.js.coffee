@@ -22,6 +22,12 @@ QuickScript.utils.isFunction = (fn)->
 	return (typeof(fn) == 'function')
 QuickScript.utils.isRegularObject = (obj)->
 	return obj.constructor == Object
+QuickScript.utils.uuid = ->
+	Math.random().toString().substring(2)
+QuickScript.utils.linkify = (text)->
+	exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig
+	return text.replace(exp,"<a href='$1'>$1</a>")
+
 
 QuickScript.log = (msg, lvl)->
 	lvl ||= 1
@@ -39,6 +45,7 @@ QuickScript.includeEventable = (self)->
 		@_events[ev] ||= []
 		@_events[ev].push callback
 	self::trigger = (ev, data)->
+		QS.log "EVENTABLE::TRIGGER : #{ev}", 5
 		@_events ||= {}
 		cbs = @_events[ev]
 		if cbs?
@@ -50,6 +57,7 @@ class @Model
 	init : ->
 	extend : ->
 	constructor: (data, collection, opts) ->
+		@_uuid = QS.utils.uuid()
 		@fields = []
 		@submodels = []
 		@is_submodel = false
@@ -267,6 +275,7 @@ class @Collection
 		@adapter = @opts.adapter || new ModelAdapter()
 		@template = ko.observable(@opts.template)
 		@model_state = ko.observable(0)
+		@items.subscribe @updateViews
 		@is_ready = ko.dependentObservable ->
 				@model_state() == ko.modelStates.READY
 			, this
@@ -308,6 +317,39 @@ class @Collection
 		opts = args
 		opts.unshift(scp)
 		@scope(opts)
+	updateViews : (items)=>
+		view_cls = @view_model()
+		view_owner = @view_owner()
+		ra = items
+		ca = @views()
+		max_len = Math.max(ra.length, ca.length)
+
+		# cache views by model
+		mh = {}
+		ca.forEach (view)->
+			mh[view.model._uuid] = view
+		#QS.log mh
+
+		# iterate possible positions
+		for idx in [(max_len-1)..0]
+			# here we will check if any of the views in the current list
+			# have models that match ones in the new list
+			rm = ra[idx]
+			cm = if ca[idx]? then ca[idx].model else null
+
+			if !rm?
+				# item has been deleted
+				ca.splice(idx, 1)
+			else
+				# models aren't the same
+				# check if another view in list has model
+				view_name = "view-#{rm.id()}"
+				same_view = mh[rm._uuid]
+				if same_view?
+					ca[idx] = same_view
+				else
+					ca[idx] = new view_cls(view_name, view_owner, rm)
+		@views.valueHasMutated()
 	setView : (view_model, view_owner) =>
 		@view_model(view_model)
 		@view_owner(view_owner)
@@ -352,22 +394,61 @@ class @Collection
 		cls = @view_model()
 		#if (op == Collection.REPLACE) || (op == Collection.UPDATE)
 			#@items([]); @views([])
-		for item, idx in resp
-			model = new @model(item, this)
-			models.push(model)
-			views.push(new cls("view-#{model.id()}", @view_owner(), model))
+		if op == Collection.UPDATE
+			curr_a = @items()
+			curr_len = @items().length
+			new_a = resp
+			new_len = resp.length
+			max_len = Math.max(curr_len, new_len)
 
-		#QS.log "COLLECTION::HANDLE_DATA : Finished building data #{QS.time()}.", 3
+			# build temp id hash
+			id_h = {}
+			curr_a.forEach (itm)->
+				id_h[itm.id()] = itm
 
-		if !op? || op == Collection.REPLACE || op == Collection.UPDATE
-			@items(models)
-			@views(views)
-		else if op == Collection.INSERT
-			@items(models.concat(@items()))
-			@views(views.concat(@views()))
-		else if op == Collection.APPEND
-			@items(@items().concat(models))
-			@views(@views().concat(views))
+			# iterate possible positions
+			for idx in [(max_len-1)..0]
+				c_el = curr_a[idx]
+				c_id = if c_el? then c_el.id() else null
+				r_el = new_a[idx]
+				r_id = if r_el? then r_el.id else null
+
+				if c_id == r_id
+					# absorb if ids are the same
+					c_el.handleData(r_el)
+				else if r_id == null
+					# this position is now empty, need to delete
+					curr_a.splice(idx, 1)
+				else
+					# item ids aren't the same
+					#	find item in temp hash
+					same_itm = id_h[r_id]
+					if same_itm?
+						# replace old with new
+						curr_a[idx] = same_itm
+						curr_a[idx].handleData(r_el)
+					else
+						# item not found, must be new
+						curr_a[idx] = new @model(r_el, this)
+
+			@items.valueHasMutated()
+
+		else
+			for item, idx in resp
+				model = new @model(item, this)
+				models.push(model)
+				views.push(new cls("view-#{model.id()}", @view_owner(), model))
+
+			#QS.log "COLLECTION::HANDLE_DATA : Finished building data #{QS.time()}.", 3
+			if !op? || op == Collection.REPLACE
+				@items(models)
+				#@views(views)
+			else if op == Collection.INSERT
+				@items(models.concat(@items())) if models.length > 0
+				#@views(views.concat(@views()))
+			else if op == Collection.APPEND
+				@items(@items().concat(models)) if models.length > 0
+				#@views(@views().concat(views))
 		@model_state(ko.modelStates.READY)
 	handleItemData : (data)=>
 		item = @getItemById(data.id)
@@ -382,16 +463,28 @@ class @Collection
 		@items().length > 0
 	length : =>
 		@items().length
-	addItem : (item)->
+	addItem : (item, notify)->
+		notify ||= true
 		item.collection = this
 		cls = @view_model()
 		view = new cls("view-#{item.id()}", @view_owner(), item)
-		@items.push(item)
-		@views.push(view)
+		@items().push(item)
+		#@views().push(view)
+		@items.valueHasMutated() if notify
+		#@views.valueHasMutated() if notify
 		return view
-	removeItem : (idx)->
-		@items.splice(idx, 1)
-		@views.splice(idx, 1)
+	removeItem : (idx, notify)->
+		notify ||= true
+		@items().splice(idx, 1)
+		#@views().splice(idx, 1)
+		@items.valueHasMutated() if notify
+		#@views.valueHasMutated() if notify
+	moveItem : (from, to, notify)->
+		notify ||= true
+		@items().splice(to, 0, @items().splice(from, 1)[0])
+		#@views().splice(to, 0, @views().splice(from, 1)[0])
+		@items.valueHasMutated() if notify
+		#@views.valueHasMutated() if notify
 	getItemById : (id)->
 		list = @items().filter ((item)=> item.id() == id)
 		ret = if list.length > 0 then list[0] else null
@@ -403,6 +496,7 @@ class @Collection
 		for item in @items()
 			return idx if item.id() == id
 			idx = idx + 1
+		return null
 	nthViews : (n, offset) ->
 		@views().filter (el, i)->
 			(i-offset) % n == 0
@@ -411,14 +505,14 @@ class @Collection
 		@items().forEach (item, idx, array)=>
 			if ids.includes(item.id())
 				@items.splice(idx, 1)
-				@views.splice(idx, 1)
+				#@views.splice(idx, 1)
 			else
 				ids.push(item.id())
 	removeIf : (callback)->
 		@items().forEach (item, idx, array)=>
 			if callback(item, idx)
 				@items.splice(idx, 1)
-				@views.splice(idx, 1)
+				#@views.splice(idx, 1)
 	removeItemById : (id)->
 		@removeIf (item)=>
 			item.id() == id
@@ -427,7 +521,7 @@ class @Collection
 	reset : ->
 		@page(1)
 		@items([])
-		@views([])
+		#@views([])
 	absorb : (model) =>
 		@reset()
 		@handleData(model.toJS())
@@ -605,12 +699,18 @@ class @ModelAdapter
 		@load_url = null
 		@index_url = null
 		@host = ''
+		@notifier = null
+		@event_scope = null
 		for prop,val of opts
 			@[prop] = val
+	setNotifier : (notif, scope)->
+		@notifier = notif
+		@event_scope = scope
 	load : (opts)->
 		opts.type = 'GET'
 		opts.url = @load_url
 		opts.data["_cv"] = Date.now() if opts.data?
+		opts.event_name = "updated"
 		@send opts
 	index : (opts)->
 		opts.type = 'GET'
@@ -626,12 +726,14 @@ class @ModelAdapter
 			error : opts.error
 	save : (opts)->
 		opts.url = @save_url
+		opts.event_name = "updated"
 		@send opts
 	send : (opts)->
-		ModelAdapter.send(@host, opts)
+		ModelAdapter.send(@host, opts, this)
 	delete : (opts)->
 		opts.type = 'DELETE'
 		opts.url = @save_url
+		opts.event_name = "deleted"
 		@send opts
 	add_method : (fn_name, fn)->
 		@[fn_name] = fn.bind(this)
@@ -642,13 +744,17 @@ class @ModelAdapter
 			opts.type = http_m
 			@send opts
 			
-ModelAdapter.send = (host, opts)->
+ModelAdapter.send = (host, opts, self)->
 	def_err_fn = ->
 		opts.success({meta : 500, data : {errors : ['An error occurred.']}})
+	success_fn = opts.callback || opts.success
 	opts.type = 'POST' if !opts.type?
 	opts.url = host + opts.url
 	opts.error = def_err_fn unless opts.error?
-	opts.success = opts.callback if opts.callback?
+	opts.success = (resp)->
+		success_fn(resp) if success_fn?
+		if self.notifier? && self.event_scope? && opts.event_name? && resp.meta == 200
+			self.notifier.trigger "#{self.event_scope}.#{opts.event_name}", resp.data
 	$.ajax_qs opts
 
 class @AccountAdapter
@@ -707,7 +813,7 @@ class @AccountAdapter
 		opts.url = @activate_url
 		@send opts
 	send : (opts)->
-		ModelAdapter.send(@host, opts)
+		ModelAdapter.send(@host, opts, this)
 	delete : (opts)->
 		opts.type = 'DELETE'
 		opts.url = @save_url
