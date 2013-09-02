@@ -45,6 +45,7 @@ QuickScript.includeEventable = (self)->
 		@_events[ev] ||= []
 		@_events[ev].push callback
 	self::trigger = (ev, data)->
+		QS.log "EVENTABLE::TRIGGER : #{ev}", 5
 		@_events ||= {}
 		cbs = @_events[ev]
 		if cbs?
@@ -698,12 +699,18 @@ class @ModelAdapter
 		@load_url = null
 		@index_url = null
 		@host = ''
+		@notifier = null
+		@event_scope = null
 		for prop,val of opts
 			@[prop] = val
+	setNotifier : (notif, scope)->
+		@notifier = notif
+		@event_scope = scope
 	load : (opts)->
 		opts.type = 'GET'
 		opts.url = @load_url
 		opts.data["_cv"] = Date.now() if opts.data?
+		opts.event_name = "updated"
 		@send opts
 	index : (opts)->
 		opts.type = 'GET'
@@ -719,12 +726,14 @@ class @ModelAdapter
 			error : opts.error
 	save : (opts)->
 		opts.url = @save_url
+		opts.event_name = "updated"
 		@send opts
 	send : (opts)->
-		ModelAdapter.send(@host, opts)
+		ModelAdapter.send(@host, opts, this)
 	delete : (opts)->
 		opts.type = 'DELETE'
 		opts.url = @save_url
+		opts.event_name = "deleted"
 		@send opts
 	add_method : (fn_name, fn)->
 		@[fn_name] = fn.bind(this)
@@ -735,13 +744,17 @@ class @ModelAdapter
 			opts.type = http_m
 			@send opts
 			
-ModelAdapter.send = (host, opts)->
+ModelAdapter.send = (host, opts, self)->
 	def_err_fn = ->
 		opts.success({meta : 500, data : {errors : ['An error occurred.']}})
+	success_fn = opts.callback || opts.success
 	opts.type = 'POST' if !opts.type?
 	opts.url = host + opts.url
 	opts.error = def_err_fn unless opts.error?
-	opts.success = opts.callback if opts.callback?
+	opts.success = (resp)->
+		success_fn(resp) if success_fn?
+		if self.notifier? && self.event_scope? && opts.event_name? && resp.meta == 200
+			self.notifier.trigger "#{self.event_scope}.#{opts.event_name}", resp.data
 	$.ajax_qs opts
 
 class @AccountAdapter
@@ -800,7 +813,7 @@ class @AccountAdapter
 		opts.url = @activate_url
 		@send opts
 	send : (opts)->
-		ModelAdapter.send(@host, opts)
+		ModelAdapter.send(@host, opts, this)
 	delete : (opts)->
 		opts.type = 'DELETE'
 		opts.url = @save_url
