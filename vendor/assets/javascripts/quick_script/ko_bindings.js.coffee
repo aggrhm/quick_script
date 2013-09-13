@@ -165,6 +165,14 @@ QuickScript.initKO = ->
 		init : (element, valueAccessor) ->
 			element.onload = ->
 				valueAccessor()(element)
+
+	ko.bindingHandlers.preloadImage =
+		init : (element, valueAccessor) ->
+			opts = valueAccessor()
+			img = new Image()
+			img.onload = ->
+				opts.after(element)
+			img.src = opts.src
 	
 	ko.bindingHandlers.loadingOverlay =
 		init : (element, valueAccessor) ->
@@ -438,6 +446,11 @@ QuickScript.initKO = ->
 			$(element).datepicker
 				onClose : (dateText, inst)->
 					obs(dateText)
+	
+	ko.bindingHandlers.linkify =
+		update : (element, valueAccessor, bindingsAccessor, viewModel, bindingContext) ->
+			text = ko.utils.unwrapObservable(valueAccessor())
+			$(element).html(QS.utils.linkify(text))
 	
 	ko.extenders.usd = (target) ->
 		target.usd = ko.computed

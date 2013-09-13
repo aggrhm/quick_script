@@ -1,32 +1,45 @@
 @QuickScript = {}
 @QS = QuickScript
 
-QuickScript.utils = {}
-QuickScript.utils.buildOptions = (hash)->
-	ret = []
-	for key, val of hash
-		ret.push {value: key, text: val}
-	return ret
-QuickScript.utils.renderToString = (tmpl, vm)->
-	$el = $('<div>')
-	$el.koBind(vm, tmpl)
-	html = $el[0].innerHTML
-	$el.koClean()
-	return html
-QuickScript.utils.pluralize = (count, single, plural)->
-	if count == 1
-		return "#{count} #{single}"
-	else
-		return "#{count} #{plural}"
-QuickScript.utils.isFunction = (fn)->
-	return (typeof(fn) == 'function')
-QuickScript.utils.isRegularObject = (obj)->
-	return obj.constructor == Object
-QuickScript.utils.uuid = ->
-	Math.random().toString().substring(2)
-QuickScript.utils.linkify = (text)->
-	exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig
-	return text.replace(exp,"<a href='$1'>$1</a>")
+QuickScript.utils =
+	buildOptions : (hash)->
+		ret = []
+		for key, val of hash
+			ret.push {value: key, text: val}
+		return ret
+	renderToString : (tmpl, vm)->
+		$el = $('<div>')
+		$el.koBind(vm, tmpl)
+		html = $el[0].innerHTML
+		$el.koClean()
+		return html
+	pluralize : (count, single, plural)->
+		if count == 1
+			return "#{count} #{single}"
+		else
+			return "#{count} #{plural}"
+	isFunction : (fn)->
+		return (typeof(fn) == 'function')
+	isRegularObject : (obj)->
+		return obj.constructor == Object
+	uuid : ->
+		Math.random().toString().substring(2)
+	linkify : (text)->
+		exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig
+		return text.replace(exp,"<a target='_blank' href='$1'>$1</a>")
+	getMouseCoords : (ev, type, opts)->
+		type ||= 'absolute'
+		coords = null
+		if ev.originalEvent.offsetX? && ev.originalEvent.offsetY?
+			coords = {x: ev.originalEvent.offsetX, y: ev.originalEvent.offsetY}
+		else
+			coords = {x: ev.originalEvent.layerX, y: ev.originalEvent.layerY}
+
+		if type == 'relative'
+			ts = {w: ev.currentTarget.offsetWidth, h: ev.currentTarget.offsetHeight}
+			return {x: (coords.x / ts.w) * 100, y: (coords.y / ts.h) * 100}
+		else
+			return coords
 
 
 QuickScript.log = (msg, lvl)->
