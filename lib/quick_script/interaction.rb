@@ -34,7 +34,11 @@ module QuickScript
           end
         end
 
-        crit = crit.limit(scope.limit).offset(scope.offset).to_a
+        if crit.respond_to? :limit
+          crit = crit.limit(scope.limit).offset(scope.offset).to_a
+        else
+          crit = crit[scope.offset..(scope.offset + scope.limit)]
+        end
         return crit
 			end
 			def method_missing(method_sym, *args, &block)

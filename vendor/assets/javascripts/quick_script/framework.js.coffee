@@ -223,12 +223,14 @@ class @Model
 		@reset()
 		@handleData(model.toJS())
 Model.includeCollection = (self)->
+	self ||= this
 	self.Collection = class extends Collection
 		constructor : (opts)->
 			super(opts)
 			@adapter = self.Adapter
 			@model = self
 Model.includeAdapter = (adapter, self)->
+	self ||= this
 	if !adapter.save? && !adapter.load?
 		adapter.type ||= ModelAdapter
 		adapter = new adapter.type(adapter)
@@ -466,6 +468,7 @@ class @Collection
 	handleItemData : (data)=>
 		item = @getItemById(data.id)
 		item.handleData(data) if item?
+		return item
 	nextPage : =>
 		@page(@page() + 1)
 		@update()
