@@ -643,7 +643,7 @@ if SupportManager.hasFormData()
 		req.open opts.type, url, true
 		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
 		opts.loading(true) if opts.loading?
-		req.send(data)
+		if opts.type == "GET" then req.send() else req.send(data)
 		return req
 else
 	# IE compliant
