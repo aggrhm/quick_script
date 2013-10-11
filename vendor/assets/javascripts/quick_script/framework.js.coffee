@@ -346,24 +346,25 @@ class @Collection
 		#QS.log mh
 
 		# iterate possible positions
-		for idx in [(max_len-1)..0]
-			# here we will check if any of the views in the current list
-			# have models that match ones in the new list
-			rm = ra[idx]
-			cm = if ca[idx]? then ca[idx].model else null
+		if max_len > 0
+			for idx in [(max_len-1)..0]
+				# here we will check if any of the views in the current list
+				# have models that match ones in the new list
+				rm = ra[idx]
+				cm = if ca[idx]? then ca[idx].model else null
 
-			if !rm?
-				# item has been deleted
-				ca.splice(idx, 1)
-			else
-				# models aren't the same
-				# check if another view in list has model
-				view_name = "view-#{rm.id()}"
-				same_view = mh[rm._uuid]
-				if same_view?
-					ca[idx] = same_view
+				if !rm?
+					# item has been deleted
+					ca.splice(idx, 1)
 				else
-					ca[idx] = new view_cls(view_name, view_owner, rm)
+					# models aren't the same
+					# check if another view in list has model
+					view_name = "view-#{rm.id()}"
+					same_view = mh[rm._uuid]
+					if same_view?
+						ca[idx] = same_view
+					else
+						ca[idx] = new view_cls(view_name, view_owner, rm)
 		@views.valueHasMutated()
 	setView : (view_model, view_owner) =>
 		@view_model(view_model)
@@ -422,29 +423,30 @@ class @Collection
 				id_h[itm.id()] = itm
 
 			# iterate possible positions
-			for idx in [(max_len-1)..0]
-				c_el = curr_a[idx]
-				c_id = if c_el? then c_el.id() else null
-				r_el = new_a[idx]
-				r_id = if r_el? then r_el.id else null
+			if max_len > 0
+				for idx in [(max_len-1)..0]
+					c_el = curr_a[idx]
+					c_id = if c_el? then c_el.id() else null
+					r_el = new_a[idx]
+					r_id = if r_el? then r_el.id else null
 
-				if c_id == r_id
-					# absorb if ids are the same
-					c_el.handleData(r_el)
-				else if r_id == null
-					# this position is now empty, need to delete
-					curr_a.splice(idx, 1)
-				else
-					# item ids aren't the same
-					#	find item in temp hash
-					same_itm = id_h[r_id]
-					if same_itm?
-						# replace old with new
-						curr_a[idx] = same_itm
-						curr_a[idx].handleData(r_el)
+					if c_id == r_id
+						# absorb if ids are the same
+						c_el.handleData(r_el)
+					else if r_id == null
+						# this position is now empty, need to delete
+						curr_a.splice(idx, 1)
 					else
-						# item not found, must be new
-						curr_a[idx] = new @model(r_el, this)
+						# item ids aren't the same
+						#	find item in temp hash
+						same_itm = id_h[r_id]
+						if same_itm?
+							# replace old with new
+							curr_a[idx] = same_itm
+							curr_a[idx].handleData(r_el)
+						else
+							# item not found, must be new
+							curr_a[idx] = new @model(r_el, this)
 
 			@items.valueHasMutated()
 

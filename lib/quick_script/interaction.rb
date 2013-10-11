@@ -64,9 +64,9 @@ module QuickScript
 			class << @scope
 				def selectors; return self[:selectors]; end
 				def args; return self[:args]; end
-				def limit; return self[:limit]; end
-				def page; return self[:page]; end
-				def offset; return self[:offset]; end
+				def limit; return self[:limit] || 100; end
+				def page; return self[:page] || 1; end
+				def offset; return self[:offset] || 0; end
 			end
       if params[:scope]
         if params[:scope].is_a? Array
