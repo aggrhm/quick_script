@@ -777,14 +777,14 @@ ModelAdapter.send = (host, opts, self)->
 
 class @AccountAdapter
 	constructor : (opts)->
-		@login_url = "/api/account/login"
-		@logout_url = "/api/account/logout"
-		@register_url = "/api/account/register"
-		@enter_code_url = "/api/account/enter_code"
-		@reset_url = "/api/account/reset"
-		@activate_url = "/api/account/activate"
-		@save_url = "/api/account/save"
-		@load_url = "/api/account/load"
+		@login_url = "/account/login"
+		@logout_url = "/account/logout"
+		@register_url = "/account/register"
+		@enter_code_url = "/account/enter_code"
+		@reset_url = "/account/reset"
+		@activate_url = "/account/activate"
+		@save_url = "/account/save"
+		@load_url = "/account"
 		@login_key = "email"
 		@password_key = "password"
 		@host = ""
@@ -814,13 +814,9 @@ class @AccountAdapter
 		@send opts
 	load : (opts) ->
 		opts ||= {}
-		$.ajax_qs
-			type : 'POST'
-			url : @load_url
-			data : opts.data
-			progress : opts.progress
-			success : opts.success
-			error : opts.error
+		opts.type = 'GET'
+		opts.url = @load_url
+		@send opts
 	resetPassword : (login, opts)->
 		opts.data = {}
 		opts.data[@login_key] = login
@@ -896,6 +892,11 @@ class @Application extends @View
 	setUser : (data)->
 		console.log(data)
 		@current_user.handleData(data) if data != null
+	loadUser : (adapter)->
+		adapter.load
+			async : false
+			callback : (resp)=>
+				@setUser(resp.data) if resp.meta == 200
 	redirectTo : (path) ->
 		History.pushState(null, null, path)
 	loginTo : (path, user_data, opts)->
@@ -928,7 +929,7 @@ QuickScript.initialize = (opts)->
 	# initialization
 	QuickScript.initKO()
 	app = new window[app_class]()
-	app.setUser(current_user)
+	app.setUser(current_user) if current_user?
 
 	# navigation
 	History.Adapter.bind window, 'statechange', ->

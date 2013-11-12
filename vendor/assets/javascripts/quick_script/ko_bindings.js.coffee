@@ -615,6 +615,8 @@ if SupportManager.hasFormData()
 		data = new FormData()
 		req = new XMLHttpRequest()
 		url = opts.url
+		opts.async = true unless opts.async?
+
 		if opts.type == "GET"
 			url = url + "?"
 			first = true
@@ -640,7 +642,7 @@ if SupportManager.hasFormData()
 		if opts.progress?
 			req.upload.addEventListener 'progress', (ev)->
 				opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
-		req.open opts.type, url, true
+		req.open opts.type, url, opts.async
 		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
 		opts.loading(true) if opts.loading?
 		if opts.type == "GET" then req.send() else req.send(data)
@@ -651,6 +653,8 @@ else
 		#data = new FormData()
 		req = new XMLHttpRequest()
 		url = opts.url
+		opts.async = true unless opts.async?
+
 		# build data
 		data_s = ''
 		for key, val of opts.data
@@ -676,7 +680,7 @@ else
 			req.upload.addEventListener 'progress', (ev)->
 				opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
 		###
-		req.open opts.type, url, true
+		req.open opts.type, url, opts.async
 		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
 		req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
 		opts.loading(true) if opts.loading?

@@ -18,11 +18,10 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
-  s.add_dependency 'compass-rails'
-  s.add_dependency 'sprockets'
-  s.add_dependency 'sprockets-sass'
-  s.add_dependency 'haml-rails'
-  s.add_dependency 'coffee-script'
-  s.add_dependency 'compass'
-  s.add_dependency 'uglifier'
+  s.add_runtime_dependency 'compass-rails'
+  s.add_runtime_dependency 'haml-rails'
+  s.add_development_dependency 'sprockets'
+  s.add_development_dependency 'sprockets-sass'
+  s.add_development_dependency 'coffee-script'
+  s.add_development_dependency 'uglifier'
 end
