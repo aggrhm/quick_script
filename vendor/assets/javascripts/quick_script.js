@@ -3,8 +3,8 @@
 // require ./quick_script/jquery-ui.min
 //= require ./quick_script/jquery.iframe-transport
 //= require ./quick_script/bootstrap
-//= require ./quick_script/bootstrap-modalmanager
-//= require ./quick_script/bootstrap-modal
+// require ./quick_script/bootstrap-modalmanager
+// require ./quick_script/bootstrap-modal
 // require ./quick_script/jquery.qtip.min
 // require ./quick_script/jquery.poshytip.min
 // require ./quick_script/jquery.fileupload
