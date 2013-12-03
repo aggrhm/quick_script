@@ -51,12 +51,32 @@ module QuickScript
 			meta = 404 if meta == false 
 			opts[:data] = data
 			opts[:meta] = meta
+
+      if meta != 200 && opts[:error].blank?
+        opts[:error] = "An error occurred"
+      end
 			opts.to_json
 		end
 
 		def json_error(errors, meta = 404, opts = {})
-			json_resp({:errors => errors}, meta, opts)
+			json_resp({:errors => errors}, meta, {error: errors[0]})
 		end
+
+    def render_error(err)
+      render :json => json_error([err])
+    end
+
+    def render_result(result)
+      if result[:success]
+        render :json => json_resp(result[:data].to_api)
+      else
+        if result[:data]
+          render :json => json_error(result[:data], result[:meta] || false, {error: result[:error]})
+        else
+          render_error(result[:error])
+        end
+      end
+    end
 
 		def handle_params
       # handle scope
