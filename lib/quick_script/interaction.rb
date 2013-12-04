@@ -66,9 +66,9 @@ module QuickScript
       render :json => json_error([err])
     end
 
-    def render_result(result)
+    def render_result(result, extra={})
       if result[:success]
-        render :json => json_resp(result[:data].to_api)
+        render :json => json_resp(result[:data].to_api, extra)
       else
         if result[:data]
           render :json => json_error(result[:data], result[:meta] || false, {error: result[:error]})
