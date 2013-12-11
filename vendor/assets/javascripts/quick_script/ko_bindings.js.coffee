@@ -453,6 +453,21 @@ QuickScript.initKO = ->
 			text = ko.utils.unwrapObservable(valueAccessor())
 			$(element).html(QS.utils.linkify(text))
 	
+	# radioClick : [<observable>, <value>]
+	ko.bindingHandlers.radioClick =
+		init : (element, valueAccessor) ->
+			obs = valueAccessor()[0]
+			val = valueAccessor()[1]
+			$(element).click ->
+				obs(val)
+		update : (element, valueAccessor) ->
+			obs = valueAccessor()[0]
+			val = valueAccessor()[1]
+			if obs() == val
+				$(element).attr('disabled', true)
+			else
+				$(element).removeAttr('disabled')
+	
 	ko.extenders.usd = (target) ->
 		target.usd = ko.computed
 			read : ->
