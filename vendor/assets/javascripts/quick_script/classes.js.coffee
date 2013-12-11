@@ -226,8 +226,11 @@ Overlay.confirm = (msg, opts) ->
 				opts.no() if opts.no?
 		tmp = "<div id='qs-overlay-confirm' class='modal hide fade'><div class='modal-header'><h4>Continue?</h4></div><div class='modal-body' style='font-size: 20px;' data-bind='text : message'></div><div class='modal-footer'><button class='btn btn-danger' data-bind='click : no'>No</button><button class='btn btn-success' data-bind='click : yes'>Yes</button></div></div>"
 		$modal = $('#qs-overlay-confirm')
-		$('body').append(tmp) if $modal.length == 0
-		$modal.koClean()
+		if $modal.length == 0
+			$modal = $(tmp)
+			$modal.appendTo('body')
+		else
+			$modal.koClean()
 		$modal.koBind(vm)
 		$modal.modal
 			backdrop : 'static'
@@ -242,8 +245,11 @@ Overlay.alert = (msg, opts) ->
 				opts.ok() if opts.ok?
 		tmp = "<div id='qs-overlay-alert' class='modal hide fade'><div class='modal-header'><h4>Alert!</h4></div><div class='modal-body' style='font-size: 20px;' data-bind='text : message'></div><div class='modal-footer'><button class='btn btn-primary' data-bind='click : ok'>OK</button></div></div>"
 		$modal = $('#qs-overlay-alert')
-		$('body').append(tmp) if $modal.length == 0
-		$modal.koClean()
+		if $modal.length == 0
+			$modal = $(tmp)
+			$modal.appendTo('body')
+		else
+			$modal.koClean()
 		$modal.koBind(vm)
 		$modal.modal
 			backdrop : 'static'
