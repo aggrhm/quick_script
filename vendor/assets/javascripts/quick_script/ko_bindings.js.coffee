@@ -460,6 +460,7 @@ QuickScript.initKO = ->
 			val = valueAccessor()[1]
 			$(element).click ->
 				obs(val)
+				return false
 		update : (element, valueAccessor) ->
 			obs = valueAccessor()[0]
 			val = valueAccessor()[1]
