@@ -133,7 +133,6 @@ QuickScript.initKO = ->
 					background : 'url(' + ko.utils.unwrapObservable(opts[0]) + ')',
 					backgroundSize: 'cover',
 					'background-position': 'center',
-					backgroundColor: '#FFF',
 					width: opts[1],
 					height: opts[2],
 					display: 'inline-block'
@@ -146,7 +145,6 @@ QuickScript.initKO = ->
 					background : 'url(' + ko.utils.unwrapObservable(opts[0]) + ')',
 					backgroundSize: 'contain',
 					'background-position': 'center',
-					backgroundColor: '#FFF',
 					backgroundRepeat: 'no-repeat',
 					width: opts[1],
 					height: opts[2],
