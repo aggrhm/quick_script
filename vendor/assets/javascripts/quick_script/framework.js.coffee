@@ -566,7 +566,7 @@ Collection.UPDATE = 3
 class @View
 	QuickScript.includeEventable(this)
 	init : ->
-	constructor : (@name, @owner, @model)->
+	constructor : (@name, @owner, @model, @opts)->
 		@app = @owner.app if @owner?
 		@views = {}
 		@events = {}
