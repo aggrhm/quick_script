@@ -66,6 +66,14 @@ module QuickScript
     end
 
   end
+
+  def self.parse_bool(val)
+    if val == true || val == "true" || val == 1
+      return true
+    else
+      return false
+    end
+  end
 	
 end
 
