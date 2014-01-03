@@ -79,12 +79,10 @@ code, pre, tt {
 pre {
 	font-size: 12px;
 	padding: 2px 0 2px 15px;
-	border: 4px solid #BBB;
-	border-top: 0;
-	border-bottom: 0;
+	border: 1px solid #BBB;
 	margin: 10px 0 25px;
 	tab-size: 4;
-	background-color: transparent;
-	border-radius: 0px;
-	-webkit-border-radius: 0px;
+	background-color: white;
+	border-radius: 5px;
+	-webkit-border-radius: 5px;
 }

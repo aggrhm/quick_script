@@ -4,80 +4,86 @@
 %p
 	QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. For Rails, first you need to add the gem to your Gemfile:
 
-	%pre
-		=preserve do
-			:escaped
-				gem 'quick_script', :git => 'git@github.com:agquick/quick_script.git'
-				#gem 'jquery-rails'		# comment this out
+:coderay
+	#!ruby
+	gem 'quick_script', :git => 'git@github.com:agquick/quick_script.git'
+	#gem 'jquery-rails'		# comment this out
 
+%p
 	Next, you need to add the helpers to your <b>ApplicationController</b>.
 
-	%pre
-		=preserve do
-			:escaped
-				class ApplicationController
-					include QuickScript::Interaction
-					...
-				end
+:coderay
+	#!ruby
+	class ApplicationController
+		include QuickScript::Interaction
+		...
+	end
 
+%p
 	Next, setup your file hierarchy. This is how I set up mine for the TodoList example, but up to you. The javascript files should be added to your asset pipeline file.
 
-	%pre
-		:code
-			app/
-				assets/
-					views/
-						todo_item/
-							row.html.haml					# our partial template for a TodoItem row
-						home.html.haml					# our root home view template (I use haml)
-					javascripts/
-						view.js.coffee					# for our application js views
-						models.js.coffee				# for our application js models
-					stylesheets/
-						home.css.sass						# for our home css
+:coderay
+	#!text
+	app/
+		assets/
+			views/
+				todo_item/
+					row.html.haml					# our partial template for a TodoItem row
+				home.html.haml					# our root home view template (I use haml)
+			javascripts/
+				view.js.coffee					# for our application js views
+				models.js.coffee				# for our application js models
+			stylesheets/
+				home.css.sass						# for our home css
 
-	One good thing about QuickScript is all of your client-side files are found in the /assets folder of your rails app. The view names correspond to their file path, as we will see later. For example, the home.html.haml view template is given the id 'view-home', while the row.html.haml template has the id 'view-todo_item-row'. You will use this id to reference the view when building your application.
+%p
+	:markdown
+		One good thing about QuickScript is all of your client-side files are found in the `/assets` folder of your rails app. The view names correspond to their file path, as we will see later. For example, the `home.html.haml` view template is given the id 'view-home', while the `row.html.haml` template has the id 'view-todo_item-row'. You will use this id to reference the view when building your application.
 
-	Now update your application layout in app/views/layouts/application.html.erb.
+%p
+	:markdown
+		Now update your application layout in `app/views/layouts/application.html.erb`.
 
-	%pre
-		=preserve do
-			:escaped
-				<!DOCTYPE html>
-				<html>
-				  <head>
-				    <title>TodoListApp</title>
-				    <%= stylesheet_link_tag    "application", :media => "all" %>
-				    <%= javascript_include_tag "application" %>
-						<%= include_quick_script_views 'app/assets/views' %>
-				    <%= csrf_meta_tags %>
-				  </head>
-				  <body>
-				    <%= include_view_box %>
-				    <%= include_quick_script_init 'AppView' %>
-				  </body>
-				</html>
+	:coderay
+		#!erb
+		<!DOCTYPE html>
+		<html>
+			<head>
+				<title>TodoListApp</title>
+				<%= stylesheet_link_tag "application", :media => "all" %>
+				<%= javascript_include_tag "application" %>
+				<%= include_quick_script_views 'app/assets/views' %>
+				<%= csrf_meta_tags %>
+			</head>
+			<body>
+				<%= include_view_box %>
+				<%= include_quick_script_init 'AppView' %>
+			</body>
+		</html>
 	
-	And update your routing rules in config/routes.rb
+%p
+	:markdown
+		And update your routing rules in `config/routes.rb`
 
-	%pre
-		:code
-			TodoList::Application.routes.draw do
-				scope "/api" do
-					# your api routes go here
-					match "todo_items" => "todo_items#index", :via => :get
-					match "todo_item" => "todo_items#save", :via => :post
-					match "todo_item" => "todo_items#delete", :via => :delete
-				end
-
-				# landing page route
-				root :to => "application#layout_only"
-
-				# all routes other than /api or /assets handled by client JS
-				match "*path" => "application#layout_only", :constraints => QuickScript::DEFAULT_ROUTING_RULE
+	:coderay
+		#!ruby
+		TodoList::Application.routes.draw do
+			scope "/api" do
+				# your api routes go here
+				match "todo_items" => "todo_items#index", :via => :get
+				match "todo_item" => "todo_items#save", :via => :post
+				match "todo_item" => "todo_items#delete", :via => :delete
 			end
 
+			# landing page route
+			root :to => "application#layout_only"
 
+			# all routes other than /api or /assets handled by client JS
+			match "*path" => "application#layout_only", :constraints => QuickScript::DEFAULT_ROUTING_RULE
+		end
+
+
+%p
 	Now you are ready to start building your application.
 
 

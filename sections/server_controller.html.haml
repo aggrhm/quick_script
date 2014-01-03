@@ -7,20 +7,19 @@
 	:markdown
 		To setup the server controller, you should first add a `before_filter` which will load your model automatically for each incoming request. This will save you a lot of time later.
 
-	%pre
-		:code
-			class TodoItemController < ApplicationController
+	:coderay
+		#!ruby
+		class TodoItemController < ApplicationController
+			before_filter :load_todo_item
 
-				before_filter :load_todo_item
+			...
 
-				...
+			private
 
-				private
-
-				def load_todo_item
-					@todo_item = TodoItem.find_by_id(params[:id]) || TodoItem.new
-				end
+			def load_todo_item
+				@todo_item = TodoItem.find_by_id(params[:id]) || TodoItem.new
 			end
+		end
 
 #ServerController-index
 	=subheader "index", "def index"
@@ -33,60 +32,60 @@
 
 		The `respond_to_scope` method automatically handles `offset` and `limit` params sent in the request, so in the scoping function, you need to just select the proper `ActiveRecord::Relation` using `where` clauses.
 
-	%pre
-		:code
-			def index
-				if params[:id]
-					render :json => json_resp(@todo_item.to_api)
-				else
-					@todo_items = respond_to_scope do |scope|
-						scope.all {
-							TodoItem
-						}
-					end
-					render :json => json_resp(@todo_items.collect{|t| t.to_api})
+	:coderay
+		#!ruby
+		def index
+			if params[:id]
+				render :json => json_resp(@todo_item.to_api)
+			else
+				@todo_items = respond_to_scope do |scope|
+					scope.all {
+						TodoItem
+					}
 				end
+				render :json => json_resp(@todo_items.collect{|t| t.to_api})
 			end
-			
+		end
+		
 	:markdown
 		Once you have fetched the proper records, you can use the `json_resp` helper to serve them. The methods simply JSON-ifies anything you give it, and builds the response object to send to the client, including the meta field for indicating the status of the response.
 
 		The `@scope` variable holds all the details about the request
 
-	%pre
-		:code
-			@scope.name = 'for_list'	# name of the scoping method requested
-			@scope.args = ['list_id_1234']	# array of arguments passed with scope
-			@scope.limit = 100	# maximum number of records requested
-			@scope.page = 1			# page of records requested, will automatically determine offset
-			@scope.offset				# automatically determined from page and limit
+	:coderay
+		#!ruby
+		@scope.name = 'for_list'	# name of the scoping method requested
+		@scope.args = ['list_id_1234']	# array of arguments passed with scope
+		@scope.limit = 100	# maximum number of records requested
+		@scope.page = 1			# page of records requested, will automatically determine offset
+		@scope.offset				# automatically determined from page and limit
 
 #ServerController-save
 	=subheader "save", "def save"
 	Handles saving the sent client data to storage.
 
-	%pre
-		:code
-			def save
-				@todo_item.description = params[:description] if params[:description]
-				@todo_item.done = params[:done] if params[:done]
-				@todo_item.notes = params[:notes] if params[:notes]
+	:coderay
+		#!ruby
+		def save
+			@todo_item.description = params[:description] if params[:description]
+			@todo_item.done = params[:done] if params[:done]
+			@todo_item.notes = params[:notes] if params[:notes]
 
-				@todo_item.done = false if @todo_item.done.nil?
-				@todo_item.save
-				render :json => json_resp(@todo_item.to_api)
-			end
-			
+			@todo_item.done = false if @todo_item.done.nil?
+			@todo_item.save
+			render :json => json_resp(@todo_item.to_api)
+		end
+		
 #ServerController-delete
 	=subheader "delete", "def delete"
 	Handles deleting the sent client data from storage.
 
-	%pre
-		:code
-			def delete
-				@todo_item.destroy
-				render :json => json_resp(@todo_item.to_api)
-			end
+	:coderay
+		#!ruby
+		def delete
+			@todo_item.destroy
+			render :json => json_resp(@todo_item.to_api)
+		end
 
 #ServerController-json_resp
 	=subheader "json_resp", "json_resp(data_hash, [meta])"
@@ -96,8 +95,8 @@
 		`data_hash` - a hash representation of the data you want to send  
 		`meta` - the value indicating the status of the response. Defaults to 200. Note that this does not correspond with the server HTTP response code. The HTTP code denotes whether or not the server was successfully contacted, the meta denotes the status of the response.
 	
-	%pre
-		:code
-			@todo_item = TodoItem.find_by_id(params[:id])
-			render :json => json_resp(@todo_item, 200)
+	:coderay
+		#!ruby
+		@todo_item = TodoItem.find_by_id(params[:id])
+		render :json => json_resp(@todo_item, 200)
 

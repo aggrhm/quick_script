@@ -10,6 +10,21 @@
       <a class='title' href='#Introduction'>Introduction</a>
       <a class='title' href='#Installation'>Installation</a>
       <div class='chapter'>Client</div>
+      <a class='title' href='#Application'>Application</a>
+      <ul class='section'>
+        <li><a href='#Application-defining'>defining</a></li>
+        <li><a href='#Application-handlePath'>handlePath</a></li>
+        <li><a href='#Application-path_parts'>path_parts</a></li>
+        <li><a href='#Application-redirectTo'>redirectTo</a></li>
+      </ul>
+      <a class='title' href='#View'>View</a>
+      <ul class='section'>
+        <li><a href='#View-defining'>defining</a></li>
+        <li><a href='#View-init'>init</a></li>
+        <li><a href='#View-load'>load</a></li>
+        <li><a href='#View-addView'>addView</a></li>
+        <li><a href='#View-selectView'>selectView</a></li>
+      </ul>
       <a class='title' href='#Model'>Model</a>
       <ul class='section'>
         <li><a href='#Model-defining'>defining</a></li>
@@ -21,6 +36,10 @@
         <li><a href='#Model-delete'>delete</a></li>
         <li><a href='#Model-reset'>reset</a></li>
       </ul>
+      <a class='title' href='#ModelAdapter'>ModelAdapter</a>
+      <ul class='section'>
+        <li><a href='#ModelAdapter-defining'>defining</a></li>
+      </ul>
       <a class='title' href='#Collection'>Collection</a>
       <ul class='section'>
         <li><a href='#Collection-defining'>defining</a></li>
@@ -29,25 +48,6 @@
         <li><a href='#Collection-addItem'>addItem</a></li>
         <li><a href='#Collection-removeItemById'>removeItemById</a></li>
         <li><a href='#Collection-setView'>setView</a></li>
-      </ul>
-      <a class='title' href='#View'>View</a>
-      <ul class='section'>
-        <li><a href='#View-defining'>defining</a></li>
-        <li><a href='#View-init'>init</a></li>
-        <li><a href='#View-load'>load</a></li>
-        <li><a href='#View-addView'>addView</a></li>
-        <li><a href='#View-selectView'>selectView</a></li>
-      </ul>
-      <a class='title' href='#Application'>Application</a>
-      <ul class='section'>
-        <li><a href='#Application-defining'>defining</a></li>
-        <li><a href='#Application-handlePath'>handlePath</a></li>
-        <li><a href='#Application-path_parts'>path_parts</a></li>
-        <li><a href='#Application-redirectTo'>redirectTo</a></li>
-      </ul>
-      <a class='title' href='#ModelAdapter'>ModelAdapter</a>
-      <ul class='section'>
-        <li><a href='#ModelAdapter-defining'>defining</a></li>
       </ul>
       <div class='chapter'>Server</div>
       <a class='title' href='#ServerModel'>Server Model</a>
@@ -92,113 +92,74 @@
       <h2 id='Installation'>Installation</h2>
       <p>
         QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. For Rails, first you need to add the gem to your Gemfile:
-        <pre>gem 'quick_script', :git =&gt; 'git@github.com:agquick/quick_script.git'&#x000A;#gem 'jquery-rails'		# comment this out</pre>
+      </p>
+      <div class="CodeRay">
+        <div class="code"><pre>gem <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">quick_script</span><span style="color:#710">'</span></span>, <span style="color:#A60">:git</span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">git@github.com:agquick/quick_script.git</span><span style="color:#710">'</span></span>&#x000A;<span style="color:#777">#gem 'jquery-rails'        # comment this out</span>&#x000A;</pre></div>
+      </div>
+      <p>
         Next, you need to add the helpers to your <b>ApplicationController</b>.
-        <pre>class ApplicationController&#x000A;	include QuickScript::Interaction&#x000A;	...&#x000A;end</pre>
+      </p>
+      <div class="CodeRay">
+        <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">ApplicationController</span>&#x000A;    include <span style="color:#036;font-weight:bold">QuickScript</span>::<span style="color:#036;font-weight:bold">Interaction</span>&#x000A;    ...&#x000A;<span style="color:#080;font-weight:bold">end</span>&#x000A;</pre></div>
+      </div>
+      <p>
         Next, setup your file hierarchy. This is how I set up mine for the TodoList example, but up to you. The javascript files should be added to your asset pipeline file.
-        <pre>app/&#x000A;    assets/&#x000A;        views/&#x000A;            todo_item/&#x000A;                row.html.haml                    # our partial template for a TodoItem row&#x000A;            home.html.haml                    # our root home view template (I use haml)&#x000A;        javascripts/&#x000A;            view.js.coffee                    # for our application js views&#x000A;            models.js.coffee                # for our application js models&#x000A;        stylesheets/&#x000A;            home.css.sass                        # for our home css&#x000A;</pre>
-        One good thing about QuickScript is all of your client-side files are found in the /assets folder of your rails app. The view names correspond to their file path, as we will see later. For example, the home.html.haml view template is given the id 'view-home', while the row.html.haml template has the id 'view-todo_item-row'. You will use this id to reference the view when building your application.
-        Now update your application layout in app/views/layouts/application.html.erb.
-        <pre>&lt;!DOCTYPE html&gt;&#x000A;&lt;html&gt;&#x000A;  &lt;head&gt;&#x000A;    &lt;title&gt;TodoListApp&lt;/title&gt;&#x000A;    &lt;%= stylesheet_link_tag    &quot;application&quot;, :media =&gt; &quot;all&quot; %&gt;&#x000A;    &lt;%= javascript_include_tag &quot;application&quot; %&gt;&#x000A;		&lt;%= include_quick_script_views 'app/assets/views' %&gt;&#x000A;    &lt;%= csrf_meta_tags %&gt;&#x000A;  &lt;/head&gt;&#x000A;  &lt;body&gt;&#x000A;    &lt;%= include_view_box %&gt;&#x000A;    &lt;%= include_quick_script_init 'AppView' %&gt;&#x000A;  &lt;/body&gt;&#x000A;&lt;/html&gt;</pre>
-        And update your routing rules in config/routes.rb
-        <pre>TodoList::Application.routes.draw do&#x000A;    scope &quot;/api&quot; do&#x000A;        # your api routes go here&#x000A;        match &quot;todo_items&quot; =&gt; &quot;todo_items#index&quot;, :via =&gt; :get&#x000A;        match &quot;todo_item&quot; =&gt; &quot;todo_items#save&quot;, :via =&gt; :post&#x000A;        match &quot;todo_item&quot; =&gt; &quot;todo_items#delete&quot;, :via =&gt; :delete&#x000A;    end&#x000A;&#x000A;    # landing page route&#x000A;    root :to =&gt; &quot;application#layout_only&quot;&#x000A;&#x000A;    # all routes other than /api or /assets handled by client JS&#x000A;    match &quot;*path&quot; =&gt; &quot;application#layout_only&quot;, :constraints =&gt; QuickScript::DEFAULT_ROUTING_RULE&#x000A;end&#x000A;&#x000A;</pre>
+      </p>
+      <div class="CodeRay">
+        <div class="code"><pre>app/&#x000A;    assets/&#x000A;        views/&#x000A;            todo_item/&#x000A;                row.html.haml                    # our partial template for a TodoItem row&#x000A;            home.html.haml                    # our root home view template (I use haml)&#x000A;        javascripts/&#x000A;            view.js.coffee                    # for our application js views&#x000A;            models.js.coffee                # for our application js models&#x000A;        stylesheets/&#x000A;            home.css.sass                        # for our home css&#x000A;</pre></div>
+      </div>
+      <p>
+        <p>One good thing about QuickScript is all of your client-side files are found in the <code>/assets</code> folder of your rails app. The view names correspond to their file path, as we will see later. For example, the <code>home.html.haml</code> view template is given the id &#39;view-home&#39;, while the <code>row.html.haml</code> template has the id &#39;view-todo_item-row&#39;. You will use this id to reference the view when building your application.</p>
+      </p>
+      <p>
+        <p>Now update your application layout in <code>app/views/layouts/application.html.erb</code>.</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#34b">&lt;!DOCTYPE html&gt;</span>&#x000A;<span style="color:#070;font-weight:bold">&lt;html&gt;</span>&#x000A;    <span style="color:#070;font-weight:bold">&lt;head&gt;</span>&#x000A;        <span style="color:#070;font-weight:bold">&lt;title&gt;</span>TodoListApp<span style="color:#070;font-weight:bold">&lt;/title&gt;</span>&#x000A;        <span style="background-color:hsla(0,0%,0%,0.07);color:black"><span style="font-weight:bold;color:#666">&lt;%=</span> stylesheet_link_tag <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">application</span><span style="color:#710">&quot;</span></span>, <span style="color:#A60">:media</span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">all</span><span style="color:#710">&quot;</span></span> <span style="font-weight:bold;color:#666">%&gt;</span></span>&#x000A;        <span style="background-color:hsla(0,0%,0%,0.07);color:black"><span style="font-weight:bold;color:#666">&lt;%=</span> javascript_include_tag <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">application</span><span style="color:#710">&quot;</span></span> <span style="font-weight:bold;color:#666">%&gt;</span></span>&#x000A;        <span style="background-color:hsla(0,0%,0%,0.07);color:black"><span style="font-weight:bold;color:#666">&lt;%=</span> include_quick_script_views <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">app/assets/views</span><span style="color:#710">'</span></span> <span style="font-weight:bold;color:#666">%&gt;</span></span>&#x000A;        <span style="background-color:hsla(0,0%,0%,0.07);color:black"><span style="font-weight:bold;color:#666">&lt;%=</span> csrf_meta_tags <span style="font-weight:bold;color:#666">%&gt;</span></span>&#x000A;    <span style="color:#070;font-weight:bold">&lt;/head&gt;</span>&#x000A;    <span style="color:#070;font-weight:bold">&lt;body&gt;</span>&#x000A;        <span style="background-color:hsla(0,0%,0%,0.07);color:black"><span style="font-weight:bold;color:#666">&lt;%=</span> include_view_box <span style="font-weight:bold;color:#666">%&gt;</span></span>&#x000A;        <span style="background-color:hsla(0,0%,0%,0.07);color:black"><span style="font-weight:bold;color:#666">&lt;%=</span> include_quick_script_init <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">AppView</span><span style="color:#710">'</span></span> <span style="font-weight:bold;color:#666">%&gt;</span></span>&#x000A;    <span style="color:#070;font-weight:bold">&lt;/body&gt;</span>&#x000A;<span style="color:#070;font-weight:bold">&lt;/html&gt;</span>&#x000A;</pre></div>
+        </div>
+      </p>
+      <p>
+        <p>And update your routing rules in <code>config/routes.rb</code></p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#036;font-weight:bold">TodoList</span>::<span style="color:#036;font-weight:bold">Application</span>.routes.draw <span style="color:#080;font-weight:bold">do</span>&#x000A;    scope <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/api</span><span style="color:#710">&quot;</span></span> <span style="color:#080;font-weight:bold">do</span>&#x000A;        <span style="color:#777"># your api routes go here</span>&#x000A;        match <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_items</span><span style="color:#710">&quot;</span></span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_items#index</span><span style="color:#710">&quot;</span></span>, <span style="color:#A60">:via</span> =&gt; <span style="color:#A60">:get</span>&#x000A;        match <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_item</span><span style="color:#710">&quot;</span></span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_items#save</span><span style="color:#710">&quot;</span></span>, <span style="color:#A60">:via</span> =&gt; <span style="color:#A60">:post</span>&#x000A;        match <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_item</span><span style="color:#710">&quot;</span></span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_items#delete</span><span style="color:#710">&quot;</span></span>, <span style="color:#A60">:via</span> =&gt; <span style="color:#A60">:delete</span>&#x000A;    <span style="color:#080;font-weight:bold">end</span>&#x000A;&#x000A;    <span style="color:#777"># landing page route</span>&#x000A;    root <span style="color:#A60">:to</span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">application#layout_only</span><span style="color:#710">&quot;</span></span>&#x000A;&#x000A;    <span style="color:#777"># all routes other than /api or /assets handled by client JS</span>&#x000A;    match <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">*path</span><span style="color:#710">&quot;</span></span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">application#layout_only</span><span style="color:#710">&quot;</span></span>, <span style="color:#A60">:constraints</span> =&gt; <span style="color:#036;font-weight:bold">QuickScript</span>::<span style="color:#036;font-weight:bold">DEFAULT_ROUTING_RULE</span>&#x000A;<span style="color:#080;font-weight:bold">end</span>&#x000A;&#x000A;</pre></div>
+        </div>
+      </p>
+      <p>
         Now you are ready to start building your application.
       </p>
-      <!-- MODEL -->
-      <h2 id='Model'>Model</h2>
+      <!-- APPVIEW -->
+      <h2 id='Application'>Application</h2>
       <p>
-        Models hold the data objects to be managed by your application. To create a model, simply extend the Model class using coffeescript. For more information, see the <b>defining</b> method.
+        The <b>Application</b> class is the heart of your web application views. You must extend it using the standard coffeescript call, and name it whatever you passed to 'include_quick_script_init'. Here you define the name of your application, initialize your application views, and handle routing. <b>Application</b> extends the <b>View</b> class, so you have all of the functionality available in a normal view. For more information, see the <b>defining</b> method.
       </p>
-      <div id='Model-defining'>
-        <b class='header'>defining</b><code class='header'>class @MyModel extends @Model</code><br/>
-        To create your own <b>Model</b> subclass, you must extend the Model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
-        <pre>class @TodoItem extends Model&#x000A;    init : =&gt;&#x000A;        @addFields ['description', 'notes'], ''&#x000A;        @addFields ['done'], false&#x000A;        @addFields ['created_at', 'updated_at'], 0&#x000A;        @addComputed 'created_at_date', -&gt;&#x000A;            Date.from_utc(@created_at())&#x000A;        @addComputed 'created_at_str', -&gt;&#x000A;            @created_at_date().format('longDate')&#x000A;    setDone : =&gt;&#x000A;        @done(true)&#x000A;</pre>
+      <div id='Application-defining'>
+        <b class='header'>defining</b><code class='header'>class @AppView extends @Application</code><br/>
+        To begin developing your application, you need to extend the <b>Application</b> class. This allows you to setup your application flow and settings.
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@AppView</span> extends <span style="color:#33B">@Application</span>&#x000A;    init : -&gt;&#x000A;        <span style="color:#33B">@name</span> = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">TodoApp</span><span style="color:#710">&quot;</span></span>&#x000A;        <span style="color:#33B">@addView</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">home</span><span style="color:#710">'</span></span>, <span style="color:#036;font-weight:bold">HomeView</span>, <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">view-home</span><span style="color:#710">'</span></span>&#x000A;    account_model : <span style="color:#036;font-weight:bold">User</span>&#x000A;</pre></div>
+        </div>
       </div>
-      <div id='Model-constructor'>
-        <b class='header'>constructor</b><code class='header'>new Model([attributes, [collection]])</code><br/>
-        When instantiating a model, you can pass a JS object to it containing attributes to initialize the object with. You can also pass a collection that the object is bound to. This is set by default for collection-build model objects.
-        <pre>@todo = new TodoItem(server_data)&#x000A;</pre>
+      <div id='Application-handlePath'>
+        <b class='header'>handlePath</b><code class='header'>handlePath : =></code><br/>
+        <p>The <code>handlePath</code> method can be overridden to control the routing of the application based on the browser URL. Specifically <code>@app.path_parts</code> contains an array of the, well, parts of the path, split by &#39;/&#39; (note that it starts at 1). Using a simple switch statement you can control the routing of your application.</p>
+        <div class="CodeRay">
+          <div class="code"><pre>handlePath : =&gt;&#x000A;    switch <span style="color:#33B">@app</span>.path_parts[<span style="color:#00D">1</span>]&#x000A;        <span style="color:#080;font-weight:bold">when</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">help</span><span style="color:#710">'</span></span>&#x000A;            <span style="color:#33B">@selectView</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">help</span><span style="color:#710">'</span></span>&#x000A;        <span style="color:#080;font-weight:bold">when</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">home</span><span style="color:#710">'</span></span>, <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#710">'</span></span>&#x000A;            <span style="color:#33B">@selectView</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">home</span><span style="color:#710">'</span></span>&#x000A;        <span style="color:#080;font-weight:bold">else</span>&#x000A;            <span style="color:#33B">@app</span>.redirectTo <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">/home</span><span style="color:#710">'</span></span>&#x000A;</pre></div>
+        </div>
       </div>
-      <div id='Model-addFields'>
-        <b class='header'>addFields</b><code class='header'>@addFields(fields, default)</code><br/>
-        <p>Adds a field to the Model. The field is an <strong>observable</strong> (see knockoutjs).</p>
-        <pre>class @TodoItem extends @Model&#x000A;    init : =&gt;&#x000A;        @addFields ['description', 'notes'], ''&#x000A;</pre>
+      <div id='Application-path_parts'>
+        <b class='header'>path_parts</b><code class='header'>@path_parts[idx]</code><br/>
+        An array that tracks the URL location of the website
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#777"># user is on page /todo_item/12345</span>&#x000A;root = <span style="color:#33B">@path_parts</span>[<span style="color:#00D">1</span>]&#x000A;<span style="color:#777"># root = &quot;todo_item&quot;</span>&#x000A;id = <span style="color:#33B">@path_parts</span>[<span style="color:#00D">2</span>]&#x000A;<span style="color:#777"># id = &quot;12345&quot;</span>&#x000A;</pre></div>
+        </div>
       </div>
-      <div id='Model-addComputed'>
-        <b class='header'>addComputed</b><code class='header'>@addComputed(field, function)</code><br/>
-        <p>Adds a computed field to the Model. The field is an <strong>dependent observable</strong> (see knockoutjs).</p>
-        <pre>class @TodoItem extends @Model&#x000A;    init : =&gt;&#x000A;        @addComputed 'created_at_date', -&gt;&#x000A;            Date.from_utc(@created_at())&#x000A;</pre>
-      </div>
-      <div id='Model-load'>
-        <b class='header'>load</b><code class='header'>model.load(opts, [callback])</code><br/>
-        <p>Loads data from persistent storage using the assigned <strong>ModelAdapter</strong>.<br>
-        The <code>opts</code> argument is a variable to be passed to the server indicating the record to fetch (typically an id).<br>
-        The <code>callback</code> is a function to call once the model has been loaded. The callback function is passed the response from the server.</p>
-        <pre>@todo_item = new TodoItem()&#x000A;@todo_item.load {id : 12345}, (resp)=&gt;&#x000A;    if resp.meta == 200&#x000A;        # we just loaded an item&#x000A;</pre>
-      </div>
-      <div id='Model-save'>
-        <b class='header'>save</b><code class='header'>model.save(fields, [callback])</code><br/>
-        <p>Saves data to persistent storage using the assigned <strong>ModelAdapter</strong>.<br>
-        The <code>fields</code> variable is an array that indicates the fields of the model that should be sent to the server. The <em>id</em> field is automatically included.<br>
-        The <code>callback</code> is a function to call once the model has been saved. The callback function is passed the response from the server.</p>
-        <pre>@todo_item = new TodoItem()&#x000A;@todo_item.save ['description', 'done'], (resp)=&gt;&#x000A;    if resp.meta == 200&#x000A;        # we just saved this item&#x000A;</pre>
-      </div>
-      <div id='Model-delete'>
-        <b class='header'>delete</b><code class='header'>model.delete(fields, [callback])</code><br/>
-        <p>Deletes the model from persistent storage using the assigned <strong>ModelAdapter</strong>.<br>
-        The <code>fields</code> variable is an array that indicates the fields of the model that should be sent to the server. The <em>id</em> field is automatically included.<br>
-        The <code>callback</code> is a function to call once the model has been deleted. The callback function is passed the response from the server.</p>
-        <pre>@todo_item.delete ['id'], (resp)=&gt;&#x000A;    if resp.meta == 200&#x000A;        # we just deleted this item&#x000A;</pre>
-      </div>
-      <div id='Model-reset'>
-        <b class='header'>reset</b><code class='header'>model.reset()</code><br/>
-        <p>Resets the model to its initialized state. The <em>id</em> of the model is also cleared.</p>
-        <pre>@todo_item.reset()&#x000A;# item is now brand new.</pre>
-      </div>
-      <!-- COLLECTION -->
-      <h2 id='Collection'>Collection</h2>
-      <p>
-        The <b>Collection</b> class allows you to maintain lists of Model instances. Because most of the functionality is the same despite the Model subclass, you can easily define a collection class for your Model, as seen below.
-      </p>
-      <div id='Collection-defining'>
-        <b class='header'>defining</b><code class='header'>Model.includeCollection(this)</code><br/>
-        To define a Collection for a Model, simply add the code as seen below. This will create a <b>Model.Collection</b> class.
-        <pre>class @TodoItem extends @Model&#x000A;	Model.includeCollection(this)&#x000A;	init : -&gt;&#x000A;		...&#x000A;&#x000A;# now you can use the TodoItem.Collection class</pre>
-      </div>
-      <div id='Collection-constructor'>
-        <b class='header'>constructor</b><code class='header'>collection = new Model.Collection()</code><br/>
-        To create an instance of a collection is easy. See below.
-        <pre>@todo_items = new TodoItem.Collection()&#x000A;</pre>
-      </div>
-      <div id='Collection-load'>
-        <b class='header'>load</b><code class='header'>collection.load(scope, [callback])</code><br/>
-        <p>Loads data from persistent storage using the ModelAdapter assigned to the Model.</p>
+      <div id='Application-redirectTo'>
+        <b class='header'>redirectTo</b><code class='header'>@redirectTo(path)</code><br/>
+        <p>Routes the user to a new path (local to the web application)</p>
         
-        <p><code>scope</code> - an array defining the scope of the items to be fetched from the storage. The first item in the array denotes the scope method, the following items are arguments to be passed to the scope method. The scope methods are defined at the server. More info about how this works can be found in the Server section of the documentation.<br>
-        <code>callback</code> - the function to call once the server returns. The function is passed the response from the server.</p>
-        <pre>@todo_items = new TodoItem.Collection()&#x000A;@todo_items.load ['all'], (resp)=&gt;&#x000A;    if resp.meta == 200&#x000A;        # collection loaded&#x000A;</pre>
-      </div>
-      <div id='Collection-addItem'>
-        <b class='header'>addItem</b><code class='header'>collection.addItem(model)</code><br/>
-        <p>Adds a model instance to the collection.</p>
-        
-        <p><code>model</code> - model to add to the collection</p>
-        <pre>@todo = new TodoItem()&#x000A;@todo_items = new TodoItem.Collection()&#x000A;@todo_items.addItem(@todo)&#x000A;</pre>
-      </div>
-      <div id='Collection-removeItemById'>
-        <b class='header'>removeItemById</b><code class='header'>collection.removeItemById(id)</code><br/>
-        <p>Removes a model with the corresponding <code>id</code> from the collection. This does not interact with the server or ModelAdapter. To remove an item from the server, you should call <code>delete</code> on the model instance, and call this method once the server returns that it succeeded. You can also call <code>removeFromCollection</code> on the model, which calls this method internally.</p>
-        
-        <p><code>id</code> - id of the model to remove</p>
-        <pre>@todo_items.removeItemById('12345')&#x000A;</pre>
-      </div>
-      <div id='Collection-setView'>
-        <b class='header'>setView</b><code class='header'>collection.setView(view_class, owner)</code><br/>
-        <p>Sets the <strong>View</strong> class that should be instantiated to be bound against each item of the collection when rendered. By default, each element is bound to a default <strong>View</strong> class object. Setting the view allows you to have more control over the functionality provided to each bound collection element when rendered.</p>
-        
-        <p><code>view_class</code> - class to be bound against collection element. When the view_class is instantiated for each element of the collection, the <code>@model</code> variable is set to the collection model for that element.<br>
-        <code>owner</code> - the instance that should be the owner of each element&#39;s view (usually just pass <code>this</code> unless you are doing something more complicated)</p>
-        <pre>class @TodoItemView extends @View&#x000A;    init : =&gt;&#x000A;        @todo_item = @model&#x000A;&#x000A;class @HomeView extends @View&#x000A;    init : =&gt;&#x000A;        @todo_items = new TodoItem.Collection()&#x000A;        @todo_items.setView(TodoItemView, this)</pre>
+        <p><code>path</code> - new path</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@redirectTo</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/todo_item/12345</span><span style="color:#710">&quot;</span></span>)</pre></div>
+        </div>
       </div>
       <!-- VIEW -->
       <h2 id='View'>View</h2>
@@ -212,7 +173,9 @@
         <p><strong>It is important that anything bound to view templates (in a data-bind tag) be defined in <code>init</code> only, and preferably defined as an observable</strong>. Otherwise weird things tend to happen.</p>
         
         <p>The <code>load</code> function can also be used to handle routing. This is especially important for embedded views. The format for this is identical to how <code>handlePath</code> in <strong>Application</strong> works.</p>
-        <pre>class @TodoListView extends @View&#x000A;    init : -&gt;&#x000A;        @todos = new TodoItem.Collection()&#x000A;    load : =&gt;&#x000A;        @todos.load ['my_todos']&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoListView</span> extends <span style="color:#33B">@View</span>&#x000A;    init : -&gt;&#x000A;        <span style="color:#33B">@todos</span> = new <span style="color:#036;font-weight:bold">TodoItem</span>.Collection()&#x000A;    load : =&gt;&#x000A;        <span style="color:#33B">@todos</span>.load [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">my_todos</span><span style="color:#710">'</span></span>]&#x000A;</pre></div>
+        </div>
         <p>Every <strong>View</strong> instance has access to a few variables that help it do its job:</p>
         
         <p><code>@app</code> - the <strong>Application</strong> context<br>
@@ -223,12 +186,16 @@
         <b class='header'>init</b><code class='header'>init : =></code><br/>
         <p>Initializes view by setting up observables.
         <strong>It is important that anything bound to view templates (in a data-bind tag) be defined in <code>init</code> only, and preferably defined as an observable</strong>. Otherwise weird things tend to happen.</p>
-        <pre>class @TodoListView extends @View&#x000A;    init : -&gt;&#x000A;        @todos = new TodoItem.Collection()&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoListView</span> extends <span style="color:#33B">@View</span>&#x000A;    init : -&gt;&#x000A;        <span style="color:#33B">@todos</span> = new <span style="color:#036;font-weight:bold">TodoItem</span>.Collection()&#x000A;</pre></div>
+        </div>
       </div>
       <div id='View-load'>
         <b class='header'>load</b><code class='header'>load : =></code><br/>
         <p>Refreshes view by loading data from server, etc. Called when the view is made visible using <code>selectView</code>, and can also be called manually.</p>
-        <pre>class @TodoListView extends @View&#x000A;    ... &#x000A;&#x000A;    load : =&gt;&#x000A;        @todos.load ['my_todos']&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoListView</span> extends <span style="color:#33B">@View</span>&#x000A;    ... &#x000A;&#x000A;    load : =&gt;&#x000A;        <span style="color:#33B">@todos</span>.load [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">my_todos</span><span style="color:#710">'</span></span>]&#x000A;</pre></div>
+        </div>
       </div>
       <div id='View-addView'>
         <b class='header'>addView</b><code class='header'>@addView(name, view_class, template_name)</code><br/>
@@ -237,7 +204,9 @@
         <p><code>name</code> - the name of the view. This is used with <code>selectView</code><br>
         <code>view_class</code> - the View-extending class that you want to render<br>
         <code>template_name</code> - the name of the view template that should be bound to the view</p>
-        <pre>class @HomeView extends @View&#x000A;    ...&#x000A;&#x000A;class @AppView extends @Application&#x000A;    init : =&gt;&#x000A;        @addView('home', HomeView, 'view-home')&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@HomeView</span> extends <span style="color:#33B">@View</span>&#x000A;    ...&#x000A;&#x000A;<span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@AppView</span> extends <span style="color:#33B">@Application</span>&#x000A;    init : =&gt;&#x000A;        <span style="color:#33B">@addView</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">home</span><span style="color:#710">'</span></span>, <span style="color:#036;font-weight:bold">HomeView</span>, <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">view-home</span><span style="color:#710">'</span></span>)&#x000A;</pre></div>
+        </div>
       </div>
       <div id='View-selectView'>
         <b class='header'>selectView</b><code class='header'>@selectView(name, [*args])</code><br/>
@@ -245,33 +214,76 @@
         
         <p><code>name</code> - the name of the view to display<br>
         <code>args</code> - arguments to pass to the <code>load</code> method of the view</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@selectView</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">item-view</span><span style="color:#710">'</span></span>, <span style="color:#33B">@item</span>)&#x000A;<span style="color:#777"># selects the 'todo-item' view, passing @item to the load function</span></pre></div>
+        </div>
       </div>
-      <!-- APPVIEW -->
-      <h2 id='Application'>Application</h2>
+      <!-- MODEL -->
+      <h2 id='Model'>Model</h2>
       <p>
-        The <b>Application</b> class is the heart of your web application views. You must extend it using the standard coffeescript call, and name it whatever you passed to 'include_quick_script_init'. Here you define the name of your application, initialize your application views, and handle routing. <b>Application</b> extends the <b>View</b> class, so you have all of the functionality available in a normal view. For more information, see the <b>defining</b> method.
+        Models hold the data objects to be managed by your application. To create a model, simply extend the Model class using coffeescript. For more information, see the <b>defining</b> method.
       </p>
-      <div id='Application-defining'>
-        <b class='header'>defining</b><code class='header'>class @AppView extends @Application</code><br/>
-        To begin developing your application, you need to extend the <b>Application</b> class. This allows you to setup your application flow and settings.
-        <pre>class @AppView extends @Application&#x000A;    init : -&gt;&#x000A;        @name = &quot;TodoApp&quot;&#x000A;        @addView 'home', HomeView, 'view-home'&#x000A;    account_model : User&#x000A;</pre>
+      <div id='Model-defining'>
+        <b class='header'>defining</b><code class='header'>class @MyModel extends @Model</code><br/>
+        To create your own <b>Model</b> subclass, you must extend the Model object using the standard coffeescript call. You can use <b>@addFields</b> to add attributes, which are stored as knockout <b>observables</b>. You can also use the standard Knockout <b>ko.computed</b> call to add computed observables to your models. You can add methods to the model as well.
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoItem</span> extends <span style="color:#036;font-weight:bold">Model</span>&#x000A;    init : =&gt;&#x000A;        <span style="color:#33B">@addFields</span> [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">description</span><span style="color:#710">'</span></span>, <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">notes</span><span style="color:#710">'</span></span>], <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#710">'</span></span>&#x000A;        <span style="color:#33B">@addFields</span> [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">done</span><span style="color:#710">'</span></span>], <span style="color:#069">false</span>&#x000A;        <span style="color:#33B">@addFields</span> [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">created_at</span><span style="color:#710">'</span></span>, <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">updated_at</span><span style="color:#710">'</span></span>], <span style="color:#00D">0</span>&#x000A;        <span style="color:#33B">@addComputed</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">created_at_date</span><span style="color:#710">'</span></span>, -&gt;&#x000A;            <span style="color:#036;font-weight:bold">Date</span>.from_utc(<span style="color:#33B">@created_at</span>())&#x000A;        <span style="color:#33B">@addComputed</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">created_at_str</span><span style="color:#710">'</span></span>, -&gt;&#x000A;            <span style="color:#33B">@created_at_date</span>().format(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">longDate</span><span style="color:#710">'</span></span>)&#x000A;    setDone : =&gt;&#x000A;        <span style="color:#33B">@done</span>(<span style="color:#069">true</span>)&#x000A;</pre></div>
+        </div>
       </div>
-      <div id='Application-handlePath'>
-        <b class='header'>handlePath</b><code class='header'>handlePath : =></code><br/>
-        <p>The <code>handlePath</code> method can be overridden to control the routing of the application based on the browser URL. Specifically <code>@app.path_parts</code> contains an array of the, well, parts of the path, split by &#39;/&#39; (note that it starts at 1). Using a simple switch statement you can control the routing of your application.</p>
-        <pre>handlePath : =&gt;&#x000A;    switch @app.path_parts[1]&#x000A;        when 'help'&#x000A;            @selectView 'help'&#x000A;        when 'home', ''&#x000A;            @selectView 'home'&#x000A;        else&#x000A;            @app.redirectTo '/home'&#x000A;</pre>
+      <div id='Model-constructor'>
+        <b class='header'>constructor</b><code class='header'>new Model([attributes, [collection]])</code><br/>
+        When instantiating a model, you can pass a JS object to it containing attributes to initialize the object with. You can also pass a collection that the object is bound to. This is set by default for collection-build model objects.
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo</span> = new TodoItem(server_data)&#x000A;</pre></div>
+        </div>
       </div>
-      <div id='Application-path_parts'>
-        <b class='header'>path_parts</b><code class='header'>@path_parts[idx]</code><br/>
-        An array that tracks the URL location of the website
-        <pre># user is on page /todo_item/12345&#x000A;root = @path_parts[1]&#x000A;# root = &quot;todo_item&quot;&#x000A;id = @path_parts[2]&#x000A;# id = &quot;12345&quot;&#x000A;</pre>
+      <div id='Model-addFields'>
+        <b class='header'>addFields</b><code class='header'>@addFields(fields, default)</code><br/>
+        <p>Adds a field to the Model. The field is an <strong>observable</strong> (see knockoutjs).</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoItem</span> extends <span style="color:#33B">@Model</span>&#x000A;    init : =&gt;&#x000A;        <span style="color:#33B">@addFields</span> [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">description</span><span style="color:#710">'</span></span>, <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">notes</span><span style="color:#710">'</span></span>], <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#710">'</span></span>&#x000A;</pre></div>
+        </div>
       </div>
-      <div id='Application-redirectTo'>
-        <b class='header'>redirectTo</b><code class='header'>@redirectTo(path)</code><br/>
-        <p>Routes the user to a new path (local to the web application)</p>
-        
-        <p><code>path</code> - new path</p>
-        <pre>@redirectTo(&quot;/todo_item/12345&quot;)</pre>
+      <div id='Model-addComputed'>
+        <b class='header'>addComputed</b><code class='header'>@addComputed(field, function)</code><br/>
+        <p>Adds a computed field to the Model. The field is an <strong>dependent observable</strong> (see knockoutjs).</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoItem</span> extends <span style="color:#33B">@Model</span>&#x000A;    init : =&gt;&#x000A;        <span style="color:#33B">@addComputed</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">created_at_date</span><span style="color:#710">'</span></span>, -&gt;&#x000A;            <span style="color:#036;font-weight:bold">Date</span>.from_utc(<span style="color:#33B">@created_at</span>())&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='Model-load'>
+        <b class='header'>load</b><code class='header'>model.load(opts, [callback])</code><br/>
+        <p>Loads data from persistent storage using the assigned <strong>ModelAdapter</strong>.<br>
+        The <code>opts</code> argument is a variable to be passed to the server indicating the record to fetch (typically an id).<br>
+        The <code>callback</code> is a function to call once the model has been loaded. The callback function is passed the response from the server.</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo_item</span> = new TodoItem()&#x000A;<span style="color:#33B">@todo_item</span>.load {id : <span style="color:#00D">12345</span>}, (resp)=&gt;&#x000A;    <span style="color:#080;font-weight:bold">if</span> resp.meta == <span style="color:#00D">200</span>&#x000A;        <span style="color:#777"># we just loaded an item</span>&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='Model-save'>
+        <b class='header'>save</b><code class='header'>model.save(fields, [callback])</code><br/>
+        <p>Saves data to persistent storage using the assigned <strong>ModelAdapter</strong>.<br>
+        The <code>fields</code> variable is an array that indicates the fields of the model that should be sent to the server. The <em>id</em> field is automatically included.<br>
+        The <code>callback</code> is a function to call once the model has been saved. The callback function is passed the response from the server.</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo_item</span> = new TodoItem()&#x000A;<span style="color:#33B">@todo_item</span>.save [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">description</span><span style="color:#710">'</span></span>, <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">done</span><span style="color:#710">'</span></span>], (resp)=&gt;&#x000A;    <span style="color:#080;font-weight:bold">if</span> resp.meta == <span style="color:#00D">200</span>&#x000A;        <span style="color:#777"># we just saved this item</span>&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='Model-delete'>
+        <b class='header'>delete</b><code class='header'>model.delete(fields, [callback])</code><br/>
+        <p>Deletes the model from persistent storage using the assigned <strong>ModelAdapter</strong>.<br>
+        The <code>fields</code> variable is an array that indicates the fields of the model that should be sent to the server. The <em>id</em> field is automatically included.<br>
+        The <code>callback</code> is a function to call once the model has been deleted. The callback function is passed the response from the server.</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo_item</span>.delete [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">id</span><span style="color:#710">'</span></span>], (resp)=&gt;&#x000A;    <span style="color:#080;font-weight:bold">if</span> resp.meta == <span style="color:#00D">200</span>&#x000A;        <span style="color:#777"># we just deleted this item</span>&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='Model-reset'>
+        <b class='header'>reset</b><code class='header'>model.reset()</code><br/>
+        <p>Resets the model to its initialized state. The <em>id</em> of the model is also cleared.</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo_item</span>.reset()&#x000A;<span style="color:#777"># item is now re-initialized</span></pre></div>
+        </div>
       </div>
       <!-- MODELADAPTER -->
       <h2 id='ModelAdapter'>ModelAdapter</h2>
@@ -280,7 +292,66 @@
       </p>
       <div id='ModelAdapter-defining'>
         <b class='header'>defining</b><code class='header'>Model.includeAdapter(adapter, this)</code><br/>
-        <pre>class @TodoItem extends @Model&#x000A;	Model.includeAdapter&#x000A;		type : ModelAdapter					# this is optional, type is ModelAdapter by default&#x000A;		load_url : '/api/todo_items',		# also used for index&#x000A;		save_url : '/api/todo_item'			# also used for delete&#x000A;	, this&#x000A;	init : -&gt;&#x000A;		...</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoItem</span> extends <span style="color:#33B">@Model</span>&#x000A;    <span style="color:#036;font-weight:bold">Model</span>.includeAdapter&#x000A;        type : <span style="color:#036;font-weight:bold">ModelAdapter</span>                    <span style="color:#777"># this is optional, type is ModelAdapter by default</span>&#x000A;        load_url : <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">/api/todo_items</span><span style="color:#710">'</span></span>,        <span style="color:#777"># also used for index</span>&#x000A;        save_url : <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">/api/todo_item</span><span style="color:#710">'</span></span>            <span style="color:#777"># also used for delete</span>&#x000A;    , this&#x000A;    init : -&gt;&#x000A;        ...</pre></div>
+        </div>
+      </div>
+      <!-- COLLECTION -->
+      <h2 id='Collection'>Collection</h2>
+      <p>
+        The <b>Collection</b> class allows you to maintain lists of Model instances. Because most of the functionality is the same despite the Model subclass, you can easily define a collection class for your Model, as seen below.
+      </p>
+      <div id='Collection-defining'>
+        <b class='header'>defining</b><code class='header'>Model.includeCollection(this)</code><br/>
+        To define a Collection for a Model, simply add the code as seen below. This will create a <b>Model.Collection</b> class.
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoItem</span> extends <span style="color:#33B">@Model</span>&#x000A;    <span style="color:#33B">@includeCollection</span>()&#x000A;    init : -&gt;&#x000A;        ...&#x000A;&#x000A;<span style="color:#777"># now you can use the TodoItem.Collection class</span>&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='Collection-constructor'>
+        <b class='header'>constructor</b><code class='header'>collection = new Model.Collection()</code><br/>
+        To create an instance of a collection is easy. See below.
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo_items</span> = new <span style="color:#036;font-weight:bold">TodoItem</span>.Collection()&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='Collection-load'>
+        <b class='header'>load</b><code class='header'>collection.load(scope, [callback])</code><br/>
+        <p>Loads data from persistent storage using the ModelAdapter assigned to the Model.</p>
+        
+        <p><code>scope</code> - an array defining the scope of the items to be fetched from the storage. The first item in the array denotes the scope method, the following items are arguments to be passed to the scope method. The scope methods are defined at the server. More info about how this works can be found in the Server section of the documentation.<br>
+        <code>callback</code> - the function to call once the server returns. The function is passed the response from the server.</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo_items</span> = new <span style="color:#036;font-weight:bold">TodoItem</span>.Collection()&#x000A;<span style="color:#33B">@todo_items</span>.load [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">all</span><span style="color:#710">'</span></span>], (resp)=&gt;&#x000A;    <span style="color:#080;font-weight:bold">if</span> resp.meta == <span style="color:#00D">200</span>&#x000A;        <span style="color:#777"># collection loaded</span>&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='Collection-addItem'>
+        <b class='header'>addItem</b><code class='header'>collection.addItem(model)</code><br/>
+        <p>Adds a model instance to the collection.</p>
+        
+        <p><code>model</code> - model to add to the collection</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo</span> = new TodoItem()&#x000A;<span style="color:#33B">@todo_items</span> = new <span style="color:#036;font-weight:bold">TodoItem</span>.Collection()&#x000A;<span style="color:#33B">@todo_items</span>.addItem(<span style="color:#33B">@todo</span>)&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='Collection-removeItemById'>
+        <b class='header'>removeItemById</b><code class='header'>collection.removeItemById(id)</code><br/>
+        <p>Removes a model with the corresponding <code>id</code> from the collection. This does not interact with the server or ModelAdapter. To remove an item from the server, you should call <code>delete</code> on the model instance, and call this method once the server returns that it succeeded. You can also call <code>removeFromCollection</code> on the model, which calls this method internally.</p>
+        
+        <p><code>id</code> - id of the model to remove</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo_items</span>.removeItemById(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">12345</span><span style="color:#710">'</span></span>)&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='Collection-setView'>
+        <b class='header'>setView</b><code class='header'>collection.setView(view_class, owner)</code><br/>
+        <p>Sets the <strong>View</strong> class that should be instantiated to be bound against each item of the collection when rendered. By default, each element is bound to a default <strong>View</strong> class object. Setting the view allows you to have more control over the functionality provided to each bound collection element when rendered.</p>
+        
+        <p><code>view_class</code> - class to be bound against collection element. When the view_class is instantiated for each element of the collection, the <code>@model</code> variable is set to the collection model for that element.<br>
+        <code>owner</code> - the instance that should be the owner of each element&#39;s view (usually just pass <code>this</code> unless you are doing something more complicated)</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoItemView</span> extends <span style="color:#33B">@View</span>&#x000A;    init : =&gt;&#x000A;        <span style="color:#33B">@todo_item</span> = <span style="color:#33B">@model</span>&#x000A;&#x000A;<span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@HomeView</span> extends <span style="color:#33B">@View</span>&#x000A;    init : =&gt;&#x000A;        <span style="color:#33B">@todo_items</span> = new <span style="color:#036;font-weight:bold">TodoItem</span>.Collection()&#x000A;        <span style="color:#33B">@todo_items</span>.setView(<span style="color:#036;font-weight:bold">TodoItemView</span>, this)</pre></div>
+        </div>
       </div>
       <h2 id='ServerModel'>Server Model</h2>
       <p>
@@ -289,12 +360,16 @@
       <div id='ServerModel-defining'>
         <b class='header'>defining</b><code class='header'>class Model < ActiveRecord::Base</code><br/>
         When defining the model, simply define it the way you would for a standard web application.
-        <pre>class TodoItem &lt; ActiveRecord::Base&#x000A;    attr_accessible :description, :done, :notes&#x000A;&#x000A;    ...&#x000A;end&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">TodoItem</span> &lt; <span style="color:#036;font-weight:bold">ActiveRecord</span>::<span style="color:#036;font-weight:bold">Base</span>&#x000A;    attr_accessible <span style="color:#A60">:description</span>, <span style="color:#A60">:done</span>, <span style="color:#A60">:notes</span>&#x000A;&#x000A;    ...&#x000A;<span style="color:#080;font-weight:bold">end</span>&#x000A;</pre></div>
+        </div>
       </div>
       <div id='ServerModel-to_api'>
         <b class='header'>to_api</b><code class='header'>to_api(format = :full)</code><br/>
         Builds the Ruby hash to be JSON-ified and sent to the client for a model. You may specify a format here, which allows you to build a different hash depending on the value of the format variable.
-        <pre>def to_api&#x000A;    ret = {}&#x000A;    ret[:id] = self.id&#x000A;    ret[:description] = self.description&#x000A;    ret[:done] = self.done&#x000A;    ret[:notes] = self.notes&#x000A;    ret[:created_at] = self.created_at.utc.to_i&#x000A;    ret[:updated_at] = self.updated_at.utc.to_i&#x000A;    return ret&#x000A;end</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">to_api</span>&#x000A;    ret = {}&#x000A;    ret[<span style="color:#A60">:id</span>] = <span style="color:#069">self</span>.id&#x000A;    ret[<span style="color:#A60">:description</span>] = <span style="color:#069">self</span>.description&#x000A;    ret[<span style="color:#A60">:done</span>] = <span style="color:#069">self</span>.done&#x000A;    ret[<span style="color:#A60">:notes</span>] = <span style="color:#069">self</span>.notes&#x000A;    ret[<span style="color:#A60">:created_at</span>] = <span style="color:#069">self</span>.created_at.utc.to_i&#x000A;    ret[<span style="color:#A60">:updated_at</span>] = <span style="color:#069">self</span>.updated_at.utc.to_i&#x000A;    <span style="color:#080;font-weight:bold">return</span> ret&#x000A;<span style="color:#080;font-weight:bold">end</span></pre></div>
+        </div>
       </div>
       <h2 id='ServerController'>Server Controller</h2>
       <p>
@@ -303,7 +378,9 @@
       <div id='ServerController-defining'>
         <b class='header'>defining</b><code class='header'>class Controller < ApplicationController</code><br/>
         <p>To setup the server controller, you should first add a <code>before_filter</code> which will load your model automatically for each incoming request. This will save you a lot of time later.</p>
-        <pre>class TodoItemController &lt; ApplicationController&#x000A;&#x000A;    before_filter :load_todo_item&#x000A;&#x000A;    ...&#x000A;&#x000A;    private&#x000A;&#x000A;    def load_todo_item&#x000A;        @todo_item = TodoItem.find_by_id(params[:id]) || TodoItem.new&#x000A;    end&#x000A;end&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">TodoItemController</span> &lt; <span style="color:#036;font-weight:bold">ApplicationController</span>&#x000A;    before_filter <span style="color:#A60">:load_todo_item</span>&#x000A;&#x000A;    ...&#x000A;&#x000A;    private&#x000A;&#x000A;    <span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">load_todo_item</span>&#x000A;        <span style="color:#33B">@todo_item</span> = <span style="color:#036;font-weight:bold">TodoItem</span>.find_by_id(params[<span style="color:#A60">:id</span>]) || <span style="color:#036;font-weight:bold">TodoItem</span>.new&#x000A;    <span style="color:#080;font-weight:bold">end</span>&#x000A;<span style="color:#080;font-weight:bold">end</span>&#x000A;</pre></div>
+        </div>
       </div>
       <div id='ServerController-index'>
         <b class='header'>index</b><code class='header'>def index</code><br/>
@@ -314,21 +391,29 @@
         <p>For handling a collection, you will need to use the <code>@scope</code> variable and <code>respond_to_scope</code> helper. <code>respond_to_scope</code> works similarly to <code>respond_to</code> with Rails, except you are responding to a scoping method (the first string in the <code>scope</code> array of the <code>load</code> method in a Collection (see client Collection). Within the <code>respond_to_scope</code> block, you write separate handlers for each scoping method.</p>
         
         <p>The <code>respond_to_scope</code> method automatically handles <code>offset</code> and <code>limit</code> params sent in the request, so in the scoping function, you need to just select the proper <code>ActiveRecord::Relation</code> using <code>where</code> clauses.</p>
-        <pre>def index&#x000A;    if params[:id]&#x000A;        render :json =&gt; json_resp(@todo_item.to_api)&#x000A;    else&#x000A;        @todo_items = respond_to_scope do |scope|&#x000A;            scope.all {&#x000A;                TodoItem&#x000A;            }&#x000A;        end&#x000A;        render :json =&gt; json_resp(@todo_items.collect{|t| t.to_api})&#x000A;    end&#x000A;end&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">index</span>&#x000A;    <span style="color:#080;font-weight:bold">if</span> params[<span style="color:#A60">:id</span>]&#x000A;        render <span style="color:#A60">:json</span> =&gt; json_resp(<span style="color:#33B">@todo_item</span>.to_api)&#x000A;    <span style="color:#080;font-weight:bold">else</span>&#x000A;        <span style="color:#33B">@todo_items</span> = respond_to_scope <span style="color:#080;font-weight:bold">do</span> |scope|&#x000A;            scope.all {&#x000A;                <span style="color:#036;font-weight:bold">TodoItem</span>&#x000A;            }&#x000A;        <span style="color:#080;font-weight:bold">end</span>&#x000A;        render <span style="color:#A60">:json</span> =&gt; json_resp(<span style="color:#33B">@todo_items</span>.collect{|t| t.to_api})&#x000A;    <span style="color:#080;font-weight:bold">end</span>&#x000A;<span style="color:#080;font-weight:bold">end</span>&#x000A;</pre></div>
+        </div>
         <p>Once you have fetched the proper records, you can use the <code>json_resp</code> helper to serve them. The methods simply JSON-ifies anything you give it, and builds the response object to send to the client, including the meta field for indicating the status of the response.</p>
         
         <p>The <code>@scope</code> variable holds all the details about the request</p>
-        <pre>@scope.name = 'for_list'    # name of the scoping method requested&#x000A;@scope.args = ['list_id_1234']    # array of arguments passed with scope&#x000A;@scope.limit = 100    # maximum number of records requested&#x000A;@scope.page = 1            # page of records requested, will automatically determine offset&#x000A;@scope.offset                # automatically determined from page and limit&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@scope</span>.name = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">for_list</span><span style="color:#710">'</span></span>    <span style="color:#777"># name of the scoping method requested</span>&#x000A;<span style="color:#33B">@scope</span>.args = [<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">list_id_1234</span><span style="color:#710">'</span></span>]    <span style="color:#777"># array of arguments passed with scope</span>&#x000A;<span style="color:#33B">@scope</span>.limit = <span style="color:#00D">100</span>    <span style="color:#777"># maximum number of records requested</span>&#x000A;<span style="color:#33B">@scope</span>.page = <span style="color:#00D">1</span>            <span style="color:#777"># page of records requested, will automatically determine offset</span>&#x000A;<span style="color:#33B">@scope</span>.offset                <span style="color:#777"># automatically determined from page and limit</span>&#x000A;</pre></div>
+        </div>
       </div>
       <div id='ServerController-save'>
         <b class='header'>save</b><code class='header'>def save</code><br/>
         Handles saving the sent client data to storage.
-        <pre>def save&#x000A;    @todo_item.description = params[:description] if params[:description]&#x000A;    @todo_item.done = params[:done] if params[:done]&#x000A;    @todo_item.notes = params[:notes] if params[:notes]&#x000A;&#x000A;    @todo_item.done = false if @todo_item.done.nil?&#x000A;    @todo_item.save&#x000A;    render :json =&gt; json_resp(@todo_item.to_api)&#x000A;end&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">save</span>&#x000A;    <span style="color:#33B">@todo_item</span>.description = params[<span style="color:#A60">:description</span>] <span style="color:#080;font-weight:bold">if</span> params[<span style="color:#A60">:description</span>]&#x000A;    <span style="color:#33B">@todo_item</span>.done = params[<span style="color:#A60">:done</span>] <span style="color:#080;font-weight:bold">if</span> params[<span style="color:#A60">:done</span>]&#x000A;    <span style="color:#33B">@todo_item</span>.notes = params[<span style="color:#A60">:notes</span>] <span style="color:#080;font-weight:bold">if</span> params[<span style="color:#A60">:notes</span>]&#x000A;&#x000A;    <span style="color:#33B">@todo_item</span>.done = <span style="color:#069">false</span> <span style="color:#080;font-weight:bold">if</span> <span style="color:#33B">@todo_item</span>.done.nil?&#x000A;    <span style="color:#33B">@todo_item</span>.save&#x000A;    render <span style="color:#A60">:json</span> =&gt; json_resp(<span style="color:#33B">@todo_item</span>.to_api)&#x000A;<span style="color:#080;font-weight:bold">end</span>&#x000A;</pre></div>
+        </div>
       </div>
       <div id='ServerController-delete'>
         <b class='header'>delete</b><code class='header'>def delete</code><br/>
         Handles deleting the sent client data from storage.
-        <pre>def delete&#x000A;    @todo_item.destroy&#x000A;    render :json =&gt; json_resp(@todo_item.to_api)&#x000A;end&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">def</span> <span style="color:#06B;font-weight:bold">delete</span>&#x000A;    <span style="color:#33B">@todo_item</span>.destroy&#x000A;    render <span style="color:#A60">:json</span> =&gt; json_resp(<span style="color:#33B">@todo_item</span>.to_api)&#x000A;<span style="color:#080;font-weight:bold">end</span>&#x000A;</pre></div>
+        </div>
       </div>
       <div id='ServerController-json_resp'>
         <b class='header'>json_resp</b><code class='header'>json_resp(data_hash, [meta])</code><br/>
@@ -336,7 +421,9 @@
         
         <p><code>data_hash</code> - a hash representation of the data you want to send<br>
         <code>meta</code> - the value indicating the status of the response. Defaults to 200. Note that this does not correspond with the server HTTP response code. The HTTP code denotes whether or not the server was successfully contacted, the meta denotes the status of the response.</p>
-        <pre>@todo_item = TodoItem.find_by_id(params[:id])&#x000A;render :json =&gt; json_resp(@todo_item, 200)</pre>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@todo_item</span> = <span style="color:#036;font-weight:bold">TodoItem</span>.find_by_id(params[<span style="color:#A60">:id</span>])&#x000A;render <span style="color:#A60">:json</span> =&gt; json_resp(<span style="color:#33B">@todo_item</span>, <span style="color:#00D">200</span>)</pre></div>
+        </div>
       </div>
       <h2 id='ServerRouting'>Server Routing</h2>
       <p>
@@ -345,9 +432,13 @@
       <div id='ServerRouting-defining'>
         <b class='header'>defining</b><code class='header'>scope '/api' do ... end</code><br/>
         <p>In the <code>scope</code> block, you can define the individual hooks available to the client for communicating with the server. Use the <code>match</code> method to handle each hook.</p>
-        <pre>scope &quot;/api&quot; do&#x000A;    match &quot;todo_items&quot; =&gt; &quot;todo_items#index&quot;, :via =&gt; :get&#x000A;    match &quot;todo_item&quot; =&gt; &quot;todo_items#save&quot;, :via =&gt; :post&#x000A;    match &quot;todo_item&quot; =&gt; &quot;todo_items#delete&quot;, :via =&gt; :delete&#x000A;end&#x000A;</pre>
+        <div class="CodeRay">
+          <div class="code"><pre>scope <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/api</span><span style="color:#710">&quot;</span></span> <span style="color:#080;font-weight:bold">do</span>&#x000A;    match <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_items</span><span style="color:#710">&quot;</span></span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_items#index</span><span style="color:#710">&quot;</span></span>, <span style="color:#A60">:via</span> =&gt; <span style="color:#A60">:get</span>&#x000A;    match <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_item</span><span style="color:#710">&quot;</span></span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_items#save</span><span style="color:#710">&quot;</span></span>, <span style="color:#A60">:via</span> =&gt; <span style="color:#A60">:post</span>&#x000A;    match <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_item</span><span style="color:#710">&quot;</span></span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">todo_items#delete</span><span style="color:#710">&quot;</span></span>, <span style="color:#A60">:via</span> =&gt; <span style="color:#A60">:delete</span>&#x000A;<span style="color:#080;font-weight:bold">end</span>&#x000A;</pre></div>
+        </div>
         Also be sure to have your default routes in place.
-        <pre>root :to =&gt; 'application#layout_only'&#x000A;match &quot;*path&quot; =&gt; &quot;application#layout_only&quot;, :constraints =&gt; QuickScript::DEFAULT_ROUTING_RULE</pre>
+        <div class="CodeRay">
+          <div class="code"><pre>root <span style="color:#A60">:to</span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">application#layout_only</span><span style="color:#710">'</span></span>&#x000A;match <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">*path</span><span style="color:#710">&quot;</span></span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">application#layout_only</span><span style="color:#710">&quot;</span></span>, <span style="color:#A60">:constraints</span> =&gt; <span style="color:#036;font-weight:bold">QuickScript</span>::<span style="color:#036;font-weight:bold">DEFAULT_ROUTING_RULE</span></pre></div>
+        </div>
       </div>
       <h2 id='Examples'>Examples</h2>
       <p>

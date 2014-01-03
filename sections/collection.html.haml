@@ -7,23 +7,22 @@
 	=subheader "defining", "Model.includeCollection(this)"
 	To define a Collection for a Model, simply add the code as seen below. This will create a <b>Model.Collection</b> class.
 
-	%pre
-		=preserve do
-			:escaped
-				class @TodoItem extends @Model
-					Model.includeCollection(this)
-					init : ->
-						...
+	:coderay
+		#!ruby
+		class @TodoItem extends @Model
+			@includeCollection()
+			init : ->
+				...
 
-				# now you can use the TodoItem.Collection class
+		# now you can use the TodoItem.Collection class
 
 #Collection-constructor
 	=subheader "constructor", "collection = new Model.Collection()"
 	To create an instance of a collection is easy. See below.
 
-	%pre
-		:code
-			@todo_items = new TodoItem.Collection()
+	:coderay
+		#!ruby
+		@todo_items = new TodoItem.Collection()
 
 #Collection-load
 	=subheader "load", "collection.load(scope, [callback])"
@@ -32,12 +31,13 @@
 
 		`scope` - an array defining the scope of the items to be fetched from the storage. The first item in the array denotes the scope method, the following items are arguments to be passed to the scope method. The scope methods are defined at the server. More info about how this works can be found in the Server section of the documentation.  
 		`callback` - the function to call once the server returns. The function is passed the response from the server.
-	%pre
-		:code
-			@todo_items = new TodoItem.Collection()
-			@todo_items.load ['all'], (resp)=>
-				if resp.meta == 200
-					# collection loaded
+
+	:coderay
+		#!ruby
+		@todo_items = new TodoItem.Collection()
+		@todo_items.load ['all'], (resp)=>
+			if resp.meta == 200
+				# collection loaded
 
 #Collection-addItem
 	=subheader "addItem", "collection.addItem(model)"
@@ -46,11 +46,11 @@
 
 		`model` - model to add to the collection
 
-	%pre
-		:code
-			@todo = new TodoItem()
-			@todo_items = new TodoItem.Collection()
-			@todo_items.addItem(@todo)
+	:coderay
+		#!ruby
+		@todo = new TodoItem()
+		@todo_items = new TodoItem.Collection()
+		@todo_items.addItem(@todo)
 
 #Collection-removeItemById
 	=subheader "removeItemById", "collection.removeItemById(id)"
@@ -59,9 +59,9 @@
 
 		`id` - id of the model to remove
 
-	%pre
-		:code
-			@todo_items.removeItemById('12345')
+	:coderay
+		#!ruby
+		@todo_items.removeItemById('12345')
 
 #Collection-setView
 	=subheader "setView", "collection.setView(view_class, owner)"
@@ -71,13 +71,13 @@
 		`view_class` - class to be bound against collection element. When the view_class is instantiated for each element of the collection, the `@model` variable is set to the collection model for that element.  
 		`owner` - the instance that should be the owner of each element's view (usually just pass `this` unless you are doing something more complicated)
 
-	%pre
-		:code
-			class @TodoItemView extends @View
-				init : =>
-					@todo_item = @model
+	:coderay
+		#!ruby
+		class @TodoItemView extends @View
+			init : =>
+				@todo_item = @model
 
-			class @HomeView extends @View
-				init : =>
-					@todo_items = new TodoItem.Collection()
-					@todo_items.setView(TodoItemView, this)
+		class @HomeView extends @View
+			init : =>
+				@todo_items = new TodoItem.Collection()
+				@todo_items.setView(TodoItemView, this)

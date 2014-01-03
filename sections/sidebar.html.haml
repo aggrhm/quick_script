@@ -5,25 +5,25 @@
 
 .chapter Client
 
-=link "Model", :title
+=link "Application", :title
 %ul.section
-	=ul_links "Model", ["defining", "constructor", "addFields", "addComputed", "load", "save", "delete", "reset"]
-
-=link "Collection", :title
-%ul.section
-	=ul_links "Collection", ["defining", "constructor", "load", "addItem", "removeItemById", "setView"]
+	=ul_links("Application", ["defining", "handlePath", "path_parts", "redirectTo"])
 
 =link "View", :title
 %ul.section
 	=ul_links "View", ["defining", "init", "load", "addView", "selectView"]
 
-=link "Application", :title
+=link "Model", :title
 %ul.section
-	=ul_links("Application", ["defining", "handlePath", "path_parts", "redirectTo"])
+	=ul_links "Model", ["defining", "constructor", "addFields", "addComputed", "load", "save", "delete", "reset"]
 
 =link "ModelAdapter", :title
 %ul.section
 	=ul_links "ModelAdapter", ["defining"]
+
+=link "Collection", :title
+%ul.section
+	=ul_links "Collection", ["defining", "constructor", "load", "addItem", "removeItemById", "setView"]
 
 .chapter Server
 

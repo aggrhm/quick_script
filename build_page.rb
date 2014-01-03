@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'haml'
+require 'haml-coderay'
 
 class PageBuilder
   include Haml::Helpers
@@ -46,10 +47,13 @@ module Haml::Filters::Code
   def render(text)
     text = Haml::Helpers.html_escape(text) 
     text = Haml::Helpers.preserve(text) 
+    text = "<pre>#{text}</pre>"
     text.gsub!(/\t/, '    ')
     text
   end
 end
+
+Haml::Filters::CodeRay.encoder_options = {:tab_width => 4}
 
 builder = PageBuilder.new
 builder.build('./index.html.haml', './index.html')

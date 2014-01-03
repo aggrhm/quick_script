@@ -12,14 +12,14 @@
 
 		The `load` function can also be used to handle routing. This is especially important for embedded views. The format for this is identical to how `handlePath` in **Application** works.
 
-	%pre
-		:code
-			class @TodoListView extends @View
-				init : ->
-					@todos = new TodoItem.Collection()
-				load : =>
-					@todos.load ['my_todos']
-	
+	:coderay
+		#!ruby
+		class @TodoListView extends @View
+			init : ->
+				@todos = new TodoItem.Collection()
+			load : =>
+				@todos.load ['my_todos']
+
 	:markdown
 		Every **View** instance has access to a few variables that help it do its job:
 
@@ -33,24 +33,24 @@
 		Initializes view by setting up observables.
 		**It is important that anything bound to view templates (in a data-bind tag) be defined in `init` only, and preferably defined as an observable**. Otherwise weird things tend to happen.
 
-	%pre
-		:code
-			class @TodoListView extends @View
-				init : ->
-					@todos = new TodoItem.Collection()
+	:coderay
+		#!ruby
+		class @TodoListView extends @View
+			init : ->
+				@todos = new TodoItem.Collection()
 
 #View-load
 	=subheader "load", "load : =>"
 	:markdown
 		Refreshes view by loading data from server, etc. Called when the view is made visible using `selectView`, and can also be called manually.
 
-	%pre
-		:code
-			class @TodoListView extends @View
-				... 
+	:coderay
+		#!ruby
+		class @TodoListView extends @View
+			... 
 
-				load : =>
-					@todos.load ['my_todos']
+			load : =>
+				@todos.load ['my_todos']
 
 #View-addView
 	=subheader "addView", "@addView(name, view_class, template_name)"
@@ -61,14 +61,14 @@
 		`view_class` - the View-extending class that you want to render  
 		`template_name` - the name of the view template that should be bound to the view
 
-	%pre
-		:code
-			class @HomeView extends @View
-				...
+	:coderay
+		#!ruby
+		class @HomeView extends @View
+			...
 
-			class @AppView extends @Application
-				init : =>
-					@addView('home', HomeView, 'view-home')
+		class @AppView extends @Application
+			init : =>
+				@addView('home', HomeView, 'view-home')
 
 #View-selectView
 	=subheader "selectView", "@selectView(name, [*args])"
@@ -77,3 +77,8 @@
 
 		`name` - the name of the view to display  
 		`args` - arguments to pass to the `load` method of the view
+	
+	:coderay
+		#!ruby
+		@selectView('item-view', @item)
+		# selects the 'todo-item' view, passing @item to the load function

@@ -6,14 +6,13 @@
 #ModelAdapter-defining
 	=subheader "defining", "Model.includeAdapter(adapter, this)"
 
-	%pre
-		=preserve do
-			:escaped
-				class @TodoItem extends @Model
-					Model.includeAdapter
-						type : ModelAdapter					# this is optional, type is ModelAdapter by default
-						load_url : '/api/todo_items',		# also used for index
-						save_url : '/api/todo_item'			# also used for delete
-					, this
-					init : ->
-						...
+	:coderay
+		#!ruby
+		class @TodoItem extends @Model
+			Model.includeAdapter
+				type : ModelAdapter					# this is optional, type is ModelAdapter by default
+				load_url : '/api/todo_items',		# also used for index
+				save_url : '/api/todo_item'			# also used for delete
+			, this
+			init : ->
+				...
