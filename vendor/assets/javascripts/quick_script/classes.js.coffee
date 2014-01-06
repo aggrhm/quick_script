@@ -217,15 +217,43 @@ Overlay.clearNotifications = ->
 
 Overlay.confirm = (msg, opts) ->
 		vm =
+			message : msg
 			yes : ->
+				$('#qs-overlay-confirm').modal('hide')
 				opts.yes() if opts.yes?
-				Overlay.remove('confirm')
 			no : ->
+				$('#qs-overlay-confirm').modal('hide')
 				opts.no() if opts.no?
-				Overlay.remove('confirm')
-		$('body').prepend("<div class='backdrop' id='backdrop-confirm' style='z-index:500'></div><div id='overlay-confirm' class='confirm' style='display: none;'><div class='msg'>" + msg + "</div><div class='opts'><button class='btn btn-success' data-bind='click : yes'>yes</button> <button class='btn btn-danger' data-bind='click : no'>no</button></div></div>")
-		$('#overlay-confirm').koBind(vm)
-		$('#overlay-confirm').slideDown 'fast'
+		tmp = "<div id='qs-overlay-confirm' class='modal hide fade'><div class='modal-header'><h4>Continue?</h4></div><div class='modal-body' style='font-size: 20px;' data-bind='text : message'></div><div class='modal-footer'><button class='btn btn-danger' data-bind='click : no'>No</button><button class='btn btn-success' data-bind='click : yes'>Yes</button></div></div>"
+		$modal = $('#qs-overlay-confirm')
+		if $modal.length == 0
+			$modal = $(tmp)
+			$modal.appendTo('body')
+		else
+			$modal.koClean()
+		$modal.koBind(vm)
+		$modal.modal
+			backdrop : 'static'
+			attentionAnimation : 'shake'
+
+Overlay.alert = (msg, opts) ->
+		opts ||= {}
+		vm =
+			message : msg
+			ok : ->
+				$('#qs-overlay-alert').modal('hide')
+				opts.ok() if opts.ok?
+		tmp = "<div id='qs-overlay-alert' class='modal hide fade'><div class='modal-header'><h4>Alert!</h4></div><div class='modal-body' style='font-size: 20px;' data-bind='text : message'></div><div class='modal-footer'><button class='btn btn-primary' data-bind='click : ok'>OK</button></div></div>"
+		$modal = $('#qs-overlay-alert')
+		if $modal.length == 0
+			$modal = $(tmp)
+			$modal.appendTo('body')
+		else
+			$modal.koClean()
+		$modal.koBind(vm)
+		$modal.modal
+			backdrop : 'static'
+			attentionAnimation : 'shake'
 
 Overlay.remove = (id) ->
 	Overlay.removeModal(id)

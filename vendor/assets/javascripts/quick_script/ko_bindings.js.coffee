@@ -44,10 +44,10 @@ QuickScript.initKO = ->
 
 	# labelStatus - [list, none_str, loading_str]
 	ko.bindingHandlers.listStatus =
-		init : (element, valueAccessor) ->
+		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			opts = ko.utils.unwrapObservable(valueAccessor())
 			opts = {list : opts[0], empty_str : opts[1], loading_str : opts[2]} if opts instanceof Array
-			fn = ->
+			ko.computed ->
 				if opts.list.is_loading()
 					if opts.loading_img?
 						$(element).html("<img src='#{opts.loading_img}'/>")
@@ -60,8 +60,9 @@ QuickScript.initKO = ->
 					else
 						$(element).show()
 						$(element).html(opts.empty_str)
+			, viewModel
 			#fn()
-			opts.list.is_loading.subscribe(fn)
+			#opts.list.is_loading.subscribe(fn)
 
 	# viewOptions - [views, view_string_fn, view_val_fn, default_str (optional)]
 	ko.bindingHandlers.viewOptions =
@@ -132,7 +133,6 @@ QuickScript.initKO = ->
 					background : 'url(' + ko.utils.unwrapObservable(opts[0]) + ')',
 					backgroundSize: 'cover',
 					'background-position': 'center',
-					backgroundColor: '#FFF',
 					width: opts[1],
 					height: opts[2],
 					display: 'inline-block'
@@ -145,7 +145,6 @@ QuickScript.initKO = ->
 					background : 'url(' + ko.utils.unwrapObservable(opts[0]) + ')',
 					backgroundSize: 'contain',
 					'background-position': 'center',
-					backgroundColor: '#FFF',
 					backgroundRepeat: 'no-repeat',
 					width: opts[1],
 					height: opts[2],
@@ -452,12 +451,32 @@ QuickScript.initKO = ->
 			text = ko.utils.unwrapObservable(valueAccessor())
 			$(element).html(QS.utils.linkify(text))
 	
+	# radioClick : [<observable>, <value>]
+	ko.bindingHandlers.radioClick =
+		init : (element, valueAccessor) ->
+			obs = valueAccessor()[0]
+			val = valueAccessor()[1]
+			$(element).click ->
+				obs(val)
+				return false
+		update : (element, valueAccessor) ->
+			obs = valueAccessor()[0]
+			val = valueAccessor()[1]
+			if obs() == val
+				$(element).attr('disabled', true)
+			else
+				$(element).removeAttr('disabled')
+	
 	ko.extenders.usd = (target) ->
 		target.usd = ko.computed
 			read : ->
 				target() / 100.0
 			write : (val)->
 				target(val * 100.0)
+		target.usd_str = ko.computed
+			read : ->
+				"$ #{target.usd().toFixed(2)}"
+			deferEvaluation : true
 		return target
 
 	ko.extenders.date = (target) ->

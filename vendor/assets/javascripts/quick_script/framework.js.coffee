@@ -27,6 +27,9 @@ QuickScript.utils =
 	linkify : (text)->
 		exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig
 		return text.replace(exp,"<a target='_blank' href='$1'>$1</a>")
+	toUSDString : (amt) ->
+		amt_usd = amt / 100.0
+		"$ #{amt_usd.toFixed(2)}"
 	getMouseCoords : (ev, type, opts)->
 		type ||= 'absolute'
 		coords = null
@@ -148,7 +151,7 @@ class @Model
 				err = err || 'unknown'
 				console.log("Save error encountered [" + err + "]")
 				@model_state(ko.modelStates.READY)
-				callback({meta : 500, data : {errors : ['An error occurred']}}) if callback?
+				callback({meta : 500, error : 'An error occurred', data : {errors : ['An error occurred']}}) if callback?
 		@model_state(ko.modelStates.SAVING)
 	reset : ->
 		#@model_state(ko.modelStates.LOADING)
@@ -173,7 +176,7 @@ class @Model
 			error : =>
 				console.log("Delete error encountered")
 				@model_state(ko.modelStates.READY)
-				callback({meta : 500, data : {errors : ['An error occurred']}}) if callback?
+				callback({meta : 500, error : 'An error occurred', data : {errors : ['An error occurred']}}) if callback?
 		@model_state(ko.modelStates.SAVING)
 	removeFromCollection : =>
 		@collection.removeItemById(@id()) if @collection?
@@ -563,7 +566,7 @@ Collection.UPDATE = 3
 class @View
 	QuickScript.includeEventable(this)
 	init : ->
-	constructor : (@name, @owner, @model)->
+	constructor : (@name, @owner, @model, @opts)->
 		@app = @owner.app if @owner?
 		@views = {}
 		@events = {}
@@ -716,7 +719,7 @@ class @ModelAdapter
 		@save_url = null
 		@load_url = null
 		@index_url = null
-		@host = ''
+		@host = ModelAdapter.host
 		@notifier = null
 		@event_scope = null
 		for prop,val of opts
@@ -764,7 +767,7 @@ class @ModelAdapter
 			
 ModelAdapter.send = (host, opts, self)->
 	def_err_fn = ->
-		opts.success({meta : 500, data : {errors : ['An error occurred.']}})
+		opts.success({meta : 500, error : 'An error occurred.', data : {errors : ['An error occurred.']}})
 	success_fn = opts.callback || opts.success
 	opts.type = 'POST' if !opts.type?
 	opts.url = host + opts.url
@@ -774,6 +777,7 @@ ModelAdapter.send = (host, opts, self)->
 		if self.notifier? && self.event_scope? && opts.event_name? && resp.meta == 200
 			self.notifier.trigger "#{self.event_scope}.#{opts.event_name}", resp.data
 	$.ajax_qs opts
+ModelAdapter.host = '/api/'
 
 class @AccountAdapter
 	constructor : (opts)->
@@ -787,7 +791,7 @@ class @AccountAdapter
 		@load_url = "/account"
 		@login_key = "email"
 		@password_key = "password"
-		@host = ""
+		@host = ModelAdapter.host
 		for prop,val of opts
 			@[prop] = val
 	login : (username, password, opts)->
@@ -874,12 +878,14 @@ class @Application extends @View
 					</div>
 				</div>
 			"""
+		@configure()
 		@account_model ||= Model
 		@current_user = new @account_model()
 		@is_logged_in = ko.computed ->
 				!@current_user.is_new()
 			, this
 		super('app', null)
+	configure : ->
 	route : (path) ->
 		console.log("Loading path '#{path}'")
 		@setTitle(@name, true)
