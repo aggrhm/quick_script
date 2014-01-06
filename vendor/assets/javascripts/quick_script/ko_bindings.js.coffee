@@ -1,4 +1,8 @@
 QuickScript.initKO = ->
+	# plugins
+	ko.punches.enableAll()
+
+	# binding handlers
 	ko.bindingHandlers.viewbox =
 		init : (element, valueAccessor, bindingsAccessor, viewModel, bindingContext) ->
 			ko.applyBindingsToNode(element, {template : 'viewbox'}, bindingContext)
