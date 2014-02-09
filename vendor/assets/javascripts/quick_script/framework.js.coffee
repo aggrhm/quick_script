@@ -82,7 +82,8 @@ class @Model
 		@adapter = if @initAdapter? then @initAdapter() else null
 		@collection = collection
 		@db_state = ko.observable({})
-		@errors = ko.observable([])
+		@errors = ko.observable({})
+		@errors.extend({errors: true})
 		@model_state = ko.observable(0)
 		@saveProgress = ko.observable(0)
 		if opts?
@@ -102,7 +103,7 @@ class @Model
 		@addComputed 'is_dirty', ->
 				JSON.stringify(@db_state()) != JSON.stringify(@toJS())
 		@addComputed 'has_errors', ->
-				@errors().length > 0
+				@errors.any()
 		@handleData(data || {})
 	addFields : (fields, def_val) ->
 		ko.addFields fields, def_val, this
@@ -794,18 +795,14 @@ class @AccountAdapter
 		@host = ModelAdapter.host
 		for prop,val of opts
 			@[prop] = val
-	login : (username, password, opts)->
-		opts.data = {} unless opts.data?
+	login : (opts)->
 		opts.url = @login_url
-		opts.data[@login_key] = username
-		opts.data[@password_key] = password
 		@send opts
 	logout : (opts)->
 		opts.data = {}
 		opts.url = @logout_url
 		@send opts
-	register : (data_opts, opts)->
-		opts.data = data_opts
+	register : (opts)->
 		opts.url = @register_url
 		@send opts
 	sendInviteCode : (code, opts)->

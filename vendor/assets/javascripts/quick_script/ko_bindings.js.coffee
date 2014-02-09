@@ -22,6 +22,12 @@ QuickScript.initKO = ->
 		update : (element, valueAccessor) ->
 			shouldDisplay = ko.utils.unwrapObservable(valueAccessor())
 			if shouldDisplay then $(element).slideDown('slow') else $(element).slideUp()
+	
+	ko.bindingHandlers.visibleWithText =
+		update : (element, valueAccessor) ->
+			text = ko.unwrap(valueAccessor())
+			$(element).text(text)
+			if (text? && text.length > 0) then $(element).show() else $(element).hide()
 
 	ko.bindingHandlers.dim =
 		init : (element, valueAccessor) ->
@@ -247,6 +253,18 @@ QuickScript.initKO = ->
 						, 600
 						opts.slide_index(idx)
 					, 0
+	
+	ko.bindingHandlers.formError =
+		update : (element, valueAccessor) ->
+			error = ko.unwrap(valueAccessor())
+			$el = $(element)
+			if error?
+				$el.addClass('has-error')
+				$el.append("<div class='help-block help-block-error'>#{error}</div>")
+			else
+				$el.removeClass('has-error')
+				$el.find('.help-block-error').remove()
+
 
 	ko.bindingHandlers.bindelem =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
@@ -497,6 +515,21 @@ QuickScript.initKO = ->
 				"#{(new TimeLength(target.date())).toString()} ago"
 			deferEvaluation : true
 		return target
+
+	ko.extenders.errors = (target) ->
+		target.has = (field)->
+			ko.computed ->
+				return target()[field]?
+			, target
+		target.for = (field)->
+			ko.computed ->
+				if target()[field]? then target()[field][0] else null
+			, target
+		target.any = ko.computed ->
+				jQuery.isEmptyObject(target())
+			, target
+		return target
+
 				
 	
 	ko.absorbModel = (data, self) ->
