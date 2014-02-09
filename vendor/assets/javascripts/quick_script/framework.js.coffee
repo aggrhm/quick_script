@@ -799,18 +799,15 @@ class @AccountAdapter
 		opts.url = @login_url
 		@send opts
 	logout : (opts)->
-		opts.data = {}
 		opts.url = @logout_url
 		@send opts
 	register : (opts)->
 		opts.url = @register_url
 		@send opts
-	sendInviteCode : (code, opts)->
-		opts.data = {code : code}
+	sendInviteCode : (opts)->
 		opts.url = @enter_code_url
 		@send opts
-	save : (data_opts, opts) ->
-		opts.data = data_opts
+	save : (opts) ->
 		opts.url = @save_url
 		@send opts
 	load : (opts) ->
