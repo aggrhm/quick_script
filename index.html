@@ -39,6 +39,13 @@
       <a class='title' href='#ModelAdapter'>ModelAdapter</a>
       <ul class='section'>
         <li><a href='#ModelAdapter-defining'>defining</a></li>
+        <li><a href='#ModelAdapter-actions'>actions</a></li>
+        <li><a href='#ModelAdapter-host'>host</a></li>
+        <li><a href='#ModelAdapter-route_method'>route_method</a></li>
+      </ul>
+      <a class='title' href='#AccountAdapter'>AccountAdapter</a>
+      <ul class='section'>
+        <li><a href='#AccountAdapter-defining'>defining</a></li>
       </ul>
       <a class='title' href='#Collection'>Collection</a>
       <ul class='section'>
@@ -292,8 +299,56 @@
       </p>
       <div id='ModelAdapter-defining'>
         <b class='header'>defining</b><code class='header'>Model.includeAdapter(adapter, this)</code><br/>
+        <p>Defining the a new ModelAdapter is easiest in the Model definition, as shown below. In the definition, you can define all the potential URLs for interacting with the API server (remember to exclude the host).</p>
+        
+        <p>The URLs that are definable are <code>load_url</code>, <code>save_url</code>, <code>index_url</code> (Delete also uses the <code>save_url</code> but uses the <code>DELETE</code> HTTP method).</p>
         <div class="CodeRay">
-          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoItem</span> extends <span style="color:#33B">@Model</span>&#x000A;    <span style="color:#036;font-weight:bold">Model</span>.includeAdapter&#x000A;        type : <span style="color:#036;font-weight:bold">ModelAdapter</span>                    <span style="color:#777"># this is optional, type is ModelAdapter by default</span>&#x000A;        load_url : <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">/api/todo_items</span><span style="color:#710">'</span></span>,        <span style="color:#777"># also used for index</span>&#x000A;        save_url : <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">/api/todo_item</span><span style="color:#710">'</span></span>            <span style="color:#777"># also used for delete</span>&#x000A;    , this&#x000A;    init : -&gt;&#x000A;        ...</pre></div>
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@TodoItem</span> extends <span style="color:#33B">@Model</span>&#x000A;    <span style="color:#036;font-weight:bold">Model</span>.includeAdapter&#x000A;        type : <span style="color:#036;font-weight:bold">ModelAdapter</span>                    <span style="color:#777"># this is optional, type is ModelAdapter by default</span>&#x000A;        load_url : <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">/api/todo_items</span><span style="color:#710">'</span></span>,        <span style="color:#777"># also used for index unless defined separately</span>&#x000A;        save_url : <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">/api/todo_item</span><span style="color:#710">'</span></span>            <span style="color:#777"># also used for delete</span>&#x000A;    , this&#x000A;    init : -&gt;&#x000A;        ...&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='ModelAdapter-actions'>
+        <b class='header'>actions</b><code class='header'>ModelAdapter.[save|load|index|delete] opts</code><br/>
+        <p>The ModelAdapter is essentially a wrapper that let&#39;s you access the server at predefined endpoints using a consistent format. A few actions are predefined for you automatically, such as <code>save</code>, <code>load</code>, <code>index</code>, and <code>delete</code>. These methods take a hash argument which should define the <code>data</code> and the <code>callback</code>.</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#080;font-weight:bold">class</span> <span style="color:#33B">@HomeView</span> extends <span style="color:#33B">@View</span>&#x000A;    init : -&gt;&#x000A;        <span style="color:#33B">@todo</span> = new TodoItem()&#x000A;        <span style="color:#33B">@adapter_is_saving</span> = ko.observable(<span style="color:#069">false</span>)&#x000A;    ...&#x000A;    saveTodoItem : -&gt;&#x000A;        <span style="color:#036;font-weight:bold">TodoList</span>.Adapter.save&#x000A;            data : {<span style="color:#606">id</span>: <span style="color:#33B">@todo</span>.id(), <span style="color:#606">description</span>: <span style="color:#33B">@todo</span>.description()}&#x000A;            loading : <span style="color:#33B">@adapter_is_saving</span>&#x000A;            progress : (ev, value)=&gt;&#x000A;                ... handle the progress here (this is optional) ...&#x000A;            callback : (response)=&gt;&#x000A;                ... handle the response here ...&#x000A;</pre></div>
+        </div>
+        <p>Note the <code>loading</code> field, which sets the passed observable to true while the request is pending, and false when done. The <code>loading</code> and <code>progress</code> parameters are optional.</p>
+        
+        <p>To define your own actions, use the <code>route_method</code> action.</p>
+      </div>
+      <div id='ModelAdapter-host'>
+        <b class='header'>host</b><code class='header'>ModelAdapter.host = '/api/'</code><br/>
+        By default, the host that all the ModelAdapter calls are directed to is "/api/". This obviously will not work for everyone. To override this, you need to set your ModelAdapter.host parameter (presently you must do this before any other ModelAdapters are defined, as they inherit this value upon instantiation).
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#036;font-weight:bold">ModelAdapter</span>.host = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">http://api.mycoolapp.com/v1/</span><span style="color:#710">&quot;</span></span>    <span style="color:#777"># default host for all adapters</span>&#x000A;<span style="color:#036;font-weight:bold">TodoItem</span>.Adapter.host = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">http://api.a-different-host.com/v2</span><span style="color:#710">&quot;</span></span> <span style="color:#777"># this adapter talks to a different host</span>&#x000A;</pre></div>
+        </div>
+      </div>
+      <div id='ModelAdapter-route_method'>
+        <b class='header'>route_method</b><code class='header'>TodoItem.Adapter.route_method method_name, url_path, [http_method]</code><br/>
+        Generally you will need more actions than `save` and `index`. This method lets you define an action and it's corresponding endpoint. It is callable in the same fashion as the default actions.
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#036;font-weight:bold">TodoItem</span>.Adapter.route_method <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">mark_completed</span><span style="color:#710">'</span></span>, <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">/todo_item/mark_completed</span><span style="color:#710">'</span></span> <span style="color:#777"># if third argument is ignored, it defaults to a 'POST'</span></pre></div>
+        </div>
+      </div>
+      <!-- ACCOUNTADAPTER -->
+      <h2 id='AccountAdapter'>AccountAdapter</h2>
+      <p>
+        <p>The <b>AccountAdapter</b> class is a separate type of Adapter that follows the same conventions as a <b>ModelAdapter</b> but has a different set of default actions and endpoints. It is tailored for handling account actions such as logging a user in or out of a simple API server.</p>
+        
+        <p>By default, the actions and endpoints defined are:</p>
+        
+        <p><code>login</code> - /account/login<br>
+        <code>register</code> - /account/register<br>
+        <code>save</code> - /account<br>
+        <code>logout</code> - /account/logout  </p>
+      </p>
+      <div id='AccountAdapter-defining'>
+        <b class='header'>defining</b><code class='header'>new AccountAdapter(opts)</code><br/>
+        <p>Defining an AccountAdapter is best done wherever you define your other models. The options you pass change the default URLs for the predefined methods.</p>
+        
+        <p>You can use <code>route_method</code> to define other actions and endpoints as well.</p>
+        <div class="CodeRay">
+          <div class="code"><pre><span style="color:#33B">@SiteAccountAdapter</span> = new AccountAdapter({<span style="color:#606">login_url</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">/account/sign_in</span><span style="color:#710">'</span></span>})</pre></div>
         </div>
       </div>
       <!-- COLLECTION -->
