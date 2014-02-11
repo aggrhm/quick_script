@@ -160,29 +160,30 @@ Overlay.add = (vm, tmp, opts) ->
 		template = tmp
 		#options['z-index'] = Overlay.instance.zindex + 10
 		$('#overlay-' + id).remove()
-		$('body').append("<div id='overlay-#{id}' class='modal hide fade'><button class='close' data-bind='click : hideOverlay'>x</button><div class='content #{template}' data-bind=\"template: '#{template}'\"></div></div>")
-		$('#overlay-' + id).css(css_opts)
-		$('#overlay-' + id).addClass(cls)
+		modal_tpl = "<div id='overlay-#{id}' class='modal fade'><div class='modal-dialog'><div class='modal-content'><button class='close' data-bind='click : hideOverlay'>x</button><div class='#{template}' data-bind=\"template: '#{template}'\"></div></div></div></div>"
+		$modal_el = $(modal_tpl).appendTo('body')
+		$modal_dialog = $modal_el.find('.modal-dialog')
+		$modal_dialog.css({width : opts.width + 'px'})
+		$modal_dialog.css(css_opts)
+		$modal_dialog.addClass(cls)
 		#$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
 		setTimeout ->
-			$('#overlay-' + id).koBind(vm)
-			#if opts.stretch == true
-				#$("#overlay-#{id} .modal-body").css({'max-height' : ($(window).height() - 200)})
-				#$('#overlay-' + id).css({'margin-top' : ($(window).height() - 100)/ -2})
-			$('#overlay-' + id).on 'hidden', (ev)->
+			$modal_el.koBind(vm)
+			$modal_el.on 'hidden.bs.modal', (ev)->
 				return if ev.target.id != "overlay-#{id}"
 				console.log 'Hiding overlay.'
 				setTimeout ->
-					$('#overlay-' + id).koClean()
-					$('#overlay-' + id).remove()
+					$modal_el.koClean()
+					$modal_el.remove()
 				, 100
 				vm.onHidden() if vm.onHidden?
 				opts.hidden() if opts.hidden
-			$('#overlay-' + id).on 'shown', (ev)->
+			$modal_el.on 'shown.bs.modal', (ev)->
 				return if ev.target.id != "overlay-#{id}"
 				vm.onShown(ev.target) if vm.onShown?
 				opts.shown if opts.shown?
-			$('#overlay-' + id).modal(opts)
+
+			$modal_el.modal(opts)
 		, 100
 		#Overlay.instance.zindex = Overlay.instance.zindex + 10
 
@@ -224,7 +225,7 @@ Overlay.confirm = (msg, opts) ->
 			no : ->
 				$('#qs-overlay-confirm').modal('hide')
 				opts.no() if opts.no?
-		tmp = "<div id='qs-overlay-confirm' class='modal hide fade'><div class='modal-header'><h4>Continue?</h4></div><div class='modal-body' style='font-size: 20px;' data-bind='text : message'></div><div class='modal-footer'><button class='btn btn-danger' data-bind='click : no'>No</button><button class='btn btn-success' data-bind='click : yes'>Yes</button></div></div>"
+		tmp = "<div id='qs-overlay-confirm' class='modal fade'><div class='modal-dialog'><div class='modal-content'><div class='modal-header'><h4>Continue?</h4></div><div class='modal-body' style='font-size: 20px;' data-bind='text : message'></div><div class='modal-footer'><button class='btn btn-danger' data-bind='click : no'>No</button><button class='btn btn-success' data-bind='click : yes'>Yes</button></div></div></div></div>"
 		$modal = $('#qs-overlay-confirm')
 		if $modal.length == 0
 			$modal = $(tmp)
@@ -243,7 +244,7 @@ Overlay.alert = (msg, opts) ->
 			ok : ->
 				$('#qs-overlay-alert').modal('hide')
 				opts.ok() if opts.ok?
-		tmp = "<div id='qs-overlay-alert' class='modal hide fade'><div class='modal-header'><h4>Alert!</h4></div><div class='modal-body' style='font-size: 20px;' data-bind='text : message'></div><div class='modal-footer'><button class='btn btn-primary' data-bind='click : ok'>OK</button></div></div>"
+		tmp = "<div id='qs-overlay-alert' class='modal fade'><div class='modal-header'><h4>Alert!</h4></div><div class='modal-body' style='font-size: 20px;' data-bind='text : message'></div><div class='modal-footer'><button class='btn btn-primary' data-bind='click : ok'>OK</button></div></div>"
 		$modal = $('#qs-overlay-alert')
 		if $modal.length == 0
 			$modal = $(tmp)

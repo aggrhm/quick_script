@@ -1,7 +1,9 @@
 /* QS_VERSION=0.0.52;
  *= require ./quick_script/bootstrap
+ * require ./quick_script/bootstrap-modal-bs3patch
  * require ./quick_script/bootstrap-modal
  *= require ./quick_script/basics
  *= require ./quick_script/elements
- *= require ./quick_script/fullcalendar
+ * require ./quick_script/fullcalendar
+ *= require ./quick_script/animate
  */
