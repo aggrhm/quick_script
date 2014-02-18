@@ -492,11 +492,13 @@ QuickScript.initKO = ->
 	ko.extenders.usd = (target) ->
 		target.usd = ko.computed
 			read : ->
+				return null if !target()?
 				target() / 100.0
 			write : (val)->
 				target(val * 100.0)
 		target.usd_str = ko.computed
 			read : ->
+				return "$ -" if !target()?
 				"$ #{target.usd().toFixed(2)}"
 			deferEvaluation : true
 		return target

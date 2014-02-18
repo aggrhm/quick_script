@@ -165,7 +165,7 @@ Overlay.add = (vm, tmp, opts) ->
 		$modal_dialog = $modal_el.find('.modal-dialog')
 		$modal_dialog.css({width : opts.width + 'px'})
 		$modal_dialog.css(css_opts)
-		$modal_dialog.addClass(cls)
+		$modal_el.addClass(cls)
 		#$('#overlay-' + id).css({'margin-left' : -1 * $('#overlay-' + id).width() / 2})
 		setTimeout ->
 			$modal_el.koBind(vm)
@@ -232,6 +232,7 @@ Overlay.confirm = (msg, opts) ->
 			$modal.appendTo('body')
 		else
 			$modal.koClean()
+			$modal.removeClass('animated shake')
 		$modal.koBind(vm)
 		$modal.modal
 			backdrop : 'static'
