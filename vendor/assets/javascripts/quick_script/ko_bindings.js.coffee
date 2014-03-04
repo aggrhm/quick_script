@@ -702,6 +702,7 @@ if SupportManager.hasFormData()
 				opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
 		req.open opts.type, url, opts.async
 		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
+		req.setRequestHeader 'API-Version', jQuery.API_VERSION
 		opts.loading(true) if opts.loading?
 		if opts.type == "GET" then req.send() else req.send(data)
 		return req
@@ -740,6 +741,7 @@ else
 		###
 		req.open opts.type, url, opts.async
 		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
+		req.setRequestHeader 'API-Version', jQuery.API_VERSION
 		req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
 		opts.loading(true) if opts.loading?
 		req.send(data_s)

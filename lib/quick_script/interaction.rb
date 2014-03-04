@@ -112,7 +112,8 @@ module QuickScript
 			@scope[:offset] = (@scope[:page] - 1) * @scope[:limit] if params[:page] && params[:limit]
 
 			# handle api_ver
-			@api_version = params[:api_ver] ? params[:api_ver].to_i : nil
+			@api_version = request.headers['API-Version'] || 0
+      ENV['API_VER'] = @api_version.to_s
 		end
 
 		def get_scoped_items(model, scope, limit, offset)
