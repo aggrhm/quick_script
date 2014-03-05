@@ -690,12 +690,12 @@ if SupportManager.hasFormData()
 				data.append key, val
 		req.onreadystatechange = (ev)->
 			if req.readyState == 4
+				opts.loading(false) if opts.loading?
 				if req.status == 200
 					resp = eval("(" + req.responseText + ")")
 					opts.success(resp)
 				else
 					opts.error(req.status) if opts.error?
-				opts.loading(false) if opts.loading?
 		req.upload.addEventListener('error', opts.error) if opts.error?
 		if opts.progress?
 			req.upload.addEventListener 'progress', (ev)->
@@ -703,6 +703,7 @@ if SupportManager.hasFormData()
 		req.open opts.type, url, opts.async
 		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
 		req.setRequestHeader 'API-Version', jQuery.API_VERSION
+		req.withCredentials = true
 		opts.loading(true) if opts.loading?
 		if opts.type == "GET" then req.send() else req.send(data)
 		return req
@@ -727,12 +728,12 @@ else
 			url = url + "?" + data_s
 		req.onreadystatechange = (ev)->
 			if req.readyState == 4
+				opts.loading(false) if opts.loading?
 				if req.status == 200
 					resp = eval("(" + req.responseText + ")")
 					opts.success(resp)
 				else
 					opts.error(req.status) if opts.error?
-				opts.loading(false) if opts.loading?
 		###
 		req.upload.addEventListener('error', opts.error) if opts.error?
 		if opts.progress?
@@ -743,6 +744,7 @@ else
 		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
 		req.setRequestHeader 'API-Version', jQuery.API_VERSION
 		req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
+		req.withCredentials = true
 		opts.loading(true) if opts.loading?
 		req.send(data_s)
 		return req

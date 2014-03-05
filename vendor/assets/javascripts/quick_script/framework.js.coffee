@@ -880,7 +880,8 @@ class @Application extends @View
 			, this
 		super('app', null)
 	configure : ->
-	route : (path) ->
+	route : ->
+		path = History.getRelativeUrl()
 		console.log("Loading path '#{path}'")
 		@setTitle(@name, true)
 		@previous_path(@path())
@@ -894,9 +895,10 @@ class @Application extends @View
 		@current_user.handleData(data) if data != null
 	loadUser : (adapter)->
 		adapter.load
-			async : false
+			loading : @is_loading
 			callback : (resp)=>
 				@setUser(resp.data) if resp.meta == 200
+				@route()
 	redirectTo : (path) ->
 		History.pushState(null, null, path)
 	loginTo : (path, user_data, opts)->
@@ -933,7 +935,7 @@ QuickScript.initialize = (opts)->
 
 	# navigation
 	History.Adapter.bind window, 'statechange', ->
-		app.route(History.getRelativeUrl())
+		app.route()
 
 	# layout bindings
 	$('body').koBind(app)
@@ -947,6 +949,6 @@ QuickScript.initialize = (opts)->
 		else
 			return true
 
-	app.route(History.getRelativeUrl())
+	app.route()
 	return app
 
