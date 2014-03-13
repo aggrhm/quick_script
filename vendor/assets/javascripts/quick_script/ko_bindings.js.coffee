@@ -428,7 +428,7 @@ QuickScript.initKO = ->
 
 	ko.bindingHandlers.tip =
 		init : (element, valueAccessor, bindingsAccessor, viewModel, bindingContext) ->
-			opts = valueAccessor()
+			opts = ko.unwrap(valueAccessor())
 			html = ko.bindingHandlers.tip.getContent(element, opts, viewModel)
 			$(element).tooltip
 				placement: opts.placement || 'bottom'
@@ -443,7 +443,7 @@ QuickScript.initKO = ->
 		update : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			opts = ko.utils.unwrapObservable(valueAccessor())
 			html = ko.bindingHandlers.tip.getContent(element, opts, viewModel)
-			$(element).data('tooltip').options.title = html
+			$(element).data('bs.tooltip').options.title = html
 		getContent : (element, opts, viewModel) ->
 			if opts.content?
 				return opts.content
@@ -452,7 +452,7 @@ QuickScript.initKO = ->
 				#return "<div data-bind=\"template : '#{opts.template}'\">loading...</div>"
 				#return ko.bindingHandlers.tip.tipContentElement(element)[0].innerHTML
 		tipContentElement : (element) ->
-				return $(element).data('tooltip').tip().find('.tooltip-inner')
+				return $(element).data('bs.tooltip').tip().find('.tooltip-inner')
 
 	# popover : {template : <tmp>, placement : <pos>}
 	ko.bindingHandlers.popover =
@@ -674,6 +674,7 @@ if SupportManager.hasFormData()
 		req = new XMLHttpRequest()
 		url = opts.url
 		opts.async = true unless opts.async?
+		opts.data ||= {}
 
 		if opts.type == "GET"
 			url = url + "?"
