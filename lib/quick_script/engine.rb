@@ -1,4 +1,4 @@
-require 'compass-rails'
+#require 'compass-rails'
 
 module QuickScript
   class Engine < ::Rails::Engine

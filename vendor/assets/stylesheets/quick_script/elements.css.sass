@@ -1,25 +1,5 @@
 @import 'mixins'
 
-.placefield 
-  +p-rel
-  +inline
-  input, textarea
-    +animate
-    +box-shadow(0 1px 1px rgba(0,0,0,0.2) inset)
-    outline: none
-  label
-    +animate
-    +p-abs
-    +no-select
-    top: 20px
-    left: 10px
-    z-index: 20
-    color: #D7D7D7
-  input:focus + label, textarea:focus + label
-    opacity: 0.5
-  input:focus, textarea:focus
-    +box-shadow(0 1px 1px rgba(0,0,0,0.2) inset,0 0 6px #8ed928)
-
 .backdrop
   +animate(0.5s)
   position: fixed
@@ -214,7 +194,7 @@
   overflow: hidden
   position: relative
   .slide-item
-    +transition(0.60s ease-in-out left)
+    transition: 0.60s ease-in-out left
     position: relative
     overflow-y: auto
     display: none

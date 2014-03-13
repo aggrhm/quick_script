@@ -591,9 +591,10 @@ class @View
 		@setupViewBox()
 	show : ->
 		@is_visible(true)
+		@onShown() if @onShown?
 	hide : ->
-		@events.before_hide() if @events.before_hide?
 		@is_visible(false)
+		@onHidden() if @onHidden?
 	setupViewBox : ->
 		if @transition.type == 'slide'
 			@task.subscribe (val)=>
