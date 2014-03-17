@@ -319,7 +319,7 @@ class @Collection
 			, this
 		@scope = ko.intercepter @scope, (obs, prev, curr) ->
 				obs(curr)
-				console.log("Scope changed from #{prev} to #{curr}")
+				#console.log("Scope changed from #{prev} to #{curr}")
 				#@load()
 			, this
 		@hasItems = ko.dependentObservable ->
@@ -374,7 +374,7 @@ class @Collection
 		@view_model(view_model)
 		@view_owner(view_owner)
 	_load : (scope, op, callback)->
-		console.log("Loading items for #{scope}")
+		#console.log("Loading items for #{scope}")
 		op ||= Collection.REPLACE
 		reqid = ++@_reqid
 		opts = @loadOptions()
