@@ -14,6 +14,10 @@ Array.prototype.pushOnce = (item) ->
 Array.prototype.remove = (item) ->
 	idx = this.indexOf(item)
 	this.splice(idx, 1) if idx > -1
+Array.prototype.first = ->
+	this[0]
+Array.prototype.last = ->
+	this[this.length-1]
 Date.from_utc = (utc) ->
 	new Date(utc * 1000)
 Date.from_now = ->

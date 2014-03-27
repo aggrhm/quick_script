@@ -52,20 +52,20 @@ QuickScript.initKO = ->
 				$(element).html(txt)
 				$(element).removeAttr('disabled')
 
-	# labelStatus - [list, none_str, loading_str]
+	# listStatus - [collection, none_str, loading_str, list]
 	ko.bindingHandlers.listStatus =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
 			opts = ko.utils.unwrapObservable(valueAccessor())
-			opts = {list : opts[0], empty_str : opts[1], loading_str : opts[2]} if opts instanceof Array
+			opts = {collection : opts[0], empty_str : opts[1], loading_str : opts[2], list : opts[3] || opts[0].views} if opts instanceof Array
 			ko.computed ->
-				if opts.list.is_loading()
+				if opts.collection.is_loading()
 					if opts.loading_img?
 						$(element).html("<img src='#{opts.loading_img}'/>")
 					else
 						$(element).html(opts.loading_str)
 					$(element).show('fast')
 				else
-					if opts.list.hasItems()
+					if opts.list().length > 0
 						$(element).hide('fast')
 					else
 						$(element).show()

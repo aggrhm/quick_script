@@ -593,6 +593,8 @@ class @View
 		@is_visible(true)
 		@onShown() if @onShown?
 	hide : ->
+		for name, view of @views
+			view.hide()
 		@is_visible(false)
 		@onHidden() if @onHidden?
 	setupViewBox : ->
@@ -655,11 +657,11 @@ class @View
 			@prev_task(@task())
 			@task(view.name)
 			last_view.hide() if last_view?
-			view.show()
 			view.load.apply(view, args[1..])
 			window.onbeforeunload = @view.events.before_unload
 		else
 			@view.reload.apply(@view, args[1..])
+		view.show()
 	isTask : (task) ->
 		@task() == task
 	getViewName : (view) ->
@@ -900,8 +902,11 @@ class @Application extends @View
 			callback : (resp)=>
 				@setUser(resp.data) if resp.meta == 200
 				@route()
-	redirectTo : (path) ->
-		History.pushState(null, null, path)
+	redirectTo : (path, replace) ->
+		if replace? && replace == true
+			History.replaceState(null, null, path)
+		else
+			History.pushState(null, null, path)
 	loginTo : (path, user_data, opts)->
 		@current_user.handleData(user_data)
 		if @redirectOnLogin() != null
