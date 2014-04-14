@@ -258,13 +258,13 @@ QuickScript.initKO = ->
 		update : (element, valueAccessor) ->
 			error = ko.unwrap(valueAccessor())
 			$el = $(element)
+			# reset element
+			$el.removeClass('has-error')
+			$el.find('.help-block-error').remove()
+
 			if error?
 				$el.addClass('has-error')
 				$el.append("<div class='help-block help-block-error'>#{error}</div>")
-			else
-				$el.removeClass('has-error')
-				$el.find('.help-block-error').remove()
-
 
 	ko.bindingHandlers.bindelem =
 		init : (element, valueAccessor, bindingsAccessor, viewModel) ->
@@ -702,8 +702,8 @@ if SupportManager.hasFormData()
 			req.upload.addEventListener 'progress', (ev)->
 				opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
 		req.open opts.type, url, opts.async
-		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
-		req.setRequestHeader 'API-Version', jQuery.API_VERSION
+		for key, val of QuickScript.request_headers
+			req.setRequestHeader key, val
 		req.withCredentials = true
 		opts.loading(true) if opts.loading?
 		if opts.type == "GET" then req.send() else req.send(data)
@@ -742,8 +742,8 @@ else
 				opts.progress(ev, Math.floor( ev.loaded / ev.total * 100 ))
 		###
 		req.open opts.type, url, opts.async
-		req.setRequestHeader 'X-CSRF-Token', jQuery.CSRF_TOKEN
-		req.setRequestHeader 'API-Version', jQuery.API_VERSION
+		for key, val of QuickScript.request_headers
+			req.setRequestHeader key, val
 		req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
 		req.withCredentials = true
 		opts.loading(true) if opts.loading?

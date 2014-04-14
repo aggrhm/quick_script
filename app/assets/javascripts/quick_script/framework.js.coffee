@@ -54,6 +54,7 @@ QuickScript.start_time = Date.now()
 QuickScript.time = ->
 	now = Date.now()
 	return (now - QS.start_time) / 1000.0
+QuickScript.request_headers = {}
 
 QuickScript.includeEventable = (self)->
 	self::handle = (ev, callback)->
@@ -862,7 +863,11 @@ class @Application extends @View
 		@previous_path = ko.observable(null)
 		@path_parts = []
 		@title = ko.observable('')
-		@redirectOnLogin = ko.observable(null)
+		@redirect_on_login = ko.observable(null)
+		LocalStore.get 'app.redirect_on_login', (val)=>
+			@redirect_on_login(val)
+			@redirect_on_login.subscribe (val)=>
+				LocalStore.save 'app.redirect_on_login', val
 		ko.addTemplate "viewbox", """
 				<div data-bind='foreach : viewList()'>
 					<div data-bind="fadeVisible : is_visible(), template : { name : getViewName, afterRender : afterRender, if : is_visible() }, attr : { id : templateID, 'class' : templateID }, bindelem : true"></div>
@@ -902,16 +907,18 @@ class @Application extends @View
 			callback : (resp)=>
 				@setUser(resp.data) if resp.meta == 200
 				@route()
-	redirectTo : (path, replace) ->
+	redirectTo : (path, replace, opts) ->
+		opts ||= {}
+		@redirect_on_login(opts.on_login) if opts.on_login?
 		if replace? && replace == true
 			History.replaceState(null, null, path)
 		else
 			History.pushState(null, null, path)
 	loginTo : (path, user_data, opts)->
 		@current_user.handleData(user_data)
-		if @redirectOnLogin() != null
-			@redirectTo(@redirectOnLogin())
-			@redirectOnLogin(null)
+		if @redirect_on_login() != null
+			@redirectTo(@redirect_on_login())
+			@redirect_on_login(null)
 		else
 			@redirectTo(path)
 	logoutTo : (path, opts)->

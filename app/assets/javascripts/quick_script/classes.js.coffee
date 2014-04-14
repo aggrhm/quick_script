@@ -280,9 +280,16 @@ Overlay.isVisible = (id) ->
 		$('#overlay-' + id).length > 0
 
 Overlay.show_loading = ->
-	$('body').modalmanager('loading')
+	$overlay = $("#qs-overlay-loading")
+	$overlay.remove()
+	tpl = "<div id='qs-overlay-loading' class='qs-overlay-loading'><div class='progress progress-striped active'><div class='progress-bar' style='width: 100%'></div></div></div>"
+	$overlay = $(tpl)
+	$overlay.appendTo("body").fadeIn()
 Overlay.hide_loading = ->
-	$('body').modalmanager('loading')
+	$overlay = $("#qs-overlay-loading")
+	$overlay.fadeOut
+		complete: ->
+			$overlay.remove()
 
 Overlay.popover = (el, vm, tmp, opts)->
 	id = vm.name
