@@ -98,10 +98,32 @@
       <!-- INSTALLATION -->
       <h2 id='Installation'>Installation</h2>
       <p>
-        QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. For Rails, first you need to add the gem to your Gemfile:
+        QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. This guide will outline setting up QuickScript with Rails.
+      </p>
+      <p>
+        <p>The easiest way to install QS is using Ramba (see <a href="http://github.com/agquick/ramba">github</a>). Ramba is a simple package manager for the Rails asset pipeline. </p>
+      </p>
+      <p>
+        For Rails, first you need to add the gem to your Gemfile:
       </p>
       <div class="CodeRay">
-        <div class="code"><pre>gem <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">quick_script</span><span style="color:#710">'</span></span>, <span style="color:#A60">:git</span> =&gt; <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">git@github.com:agquick/quick_script.git</span><span style="color:#710">'</span></span>&#x000A;<span style="color:#777">#gem 'jquery-rails'        # comment this out</span>&#x000A;</pre></div>
+        <div class="code"><pre><span style="color:#777">#gem 'jquery-rails'        # comment this out</span>&#x000A;gem <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">quick_script</span><span style="color:#710">'</span></span>, <span style="color:#606">github</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">agquick/quick_script</span><span style="color:#710">'</span></span>&#x000A;gem <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">ramba</span><span style="color:#710">'</span></span>, <span style="color:#606">github</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">'</span><span style="color:#D20">agquick/ramba</span><span style="color:#710">'</span></span>&#x000A;</pre></div>
+      </div>
+      <p>Now do a bundle install.</p>
+      <div class="CodeRay">
+        <div class="code"><pre>$ bundle install&#x000A;</pre></div>
+      </div>
+      <p>Now create your Assetfile for use with Ramba.</p>
+      <div class="CodeRay">
+        <div class="code"><pre>package <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">jquery</span><span style="color:#710">&quot;</span></span>, <span style="color:#606">github</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">jquery/jquery</span><span style="color:#710">&quot;</span></span>, <span style="color:#606">tag</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">2.1.0</span><span style="color:#710">&quot;</span></span>&#x000A;package <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">bootstrap</span><span style="color:#710">&quot;</span></span>, <span style="color:#606">github</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">twbs/bootstrap</span><span style="color:#710">&quot;</span></span>, <span style="color:#606">tag</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">v3.1.1</span><span style="color:#710">&quot;</span></span>&#x000A;package <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">quick_script</span><span style="color:#710">&quot;</span></span>, <span style="color:#606">github</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">agquick/quick_script.js</span><span style="color:#710">&quot;</span></span>, <span style="color:#606">branch</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">v2.0.1</span><span style="color:#710">&quot;</span></span>&#x000A;&#x000A;<span style="color:#777"># optional packages</span>&#x000A;package <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">animate</span><span style="color:#710">&quot;</span></span>, <span style="color:#606">github</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">daneden/animate.css</span><span style="color:#710">&quot;</span></span>, <span style="color:#606">branch</span>: <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">master</span><span style="color:#710">&quot;</span></span>&#x000A;</pre></div>
+      </div>
+      <p>Now run a ramba install. This will install all javascript packages.</p>
+      <div class="CodeRay">
+        <div class="code"><pre>$ bundle exec ramba install&#x000A;</pre></div>
+      </div>
+      <p>Now add Ramba to your javascript and stylesheet application manifests.</p>
+      <div class="CodeRay">
+        <div class="code"><pre><span style="color:#777">// ... application.js</span>&#x000A;<span style="color:#777">//= require ramba</span>&#x000A;...&#x000A;&#x000A;<span style="color:#777">/* ... application.css&#x000A; *= require ramba&#x000A; ...&#x000A;&#x000A;</span></pre></div>
       </div>
       <p>
         Next, you need to add the helpers to your <b>ApplicationController</b>.

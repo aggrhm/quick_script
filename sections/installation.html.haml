@@ -2,12 +2,55 @@
 %h2#Installation Installation
 
 %p
-	QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. For Rails, first you need to add the gem to your Gemfile:
+	QuickScript is optimized for Rails 3+. It's possible to use it without a Rails environment, it would just take a little bit more work. This guide will outline setting up QuickScript with Rails.
+
+%p
+	:markdown
+		The easiest way to install QS is using Ramba (see [github](http://github.com/agquick/ramba)). Ramba is a simple package manager for the Rails asset pipeline. 
+	
+%p
+	For Rails, first you need to add the gem to your Gemfile:
 
 :coderay
 	#!ruby
-	gem 'quick_script', :git => 'git@github.com:agquick/quick_script.git'
 	#gem 'jquery-rails'		# comment this out
+	gem 'quick_script', github: 'agquick/quick_script'
+	gem 'ramba', github: 'agquick/ramba'
+
+%p Now do a bundle install.
+
+:coderay
+	#!term
+	$ bundle install
+
+%p Now create your Assetfile for use with Ramba.
+
+:coderay
+	#!ruby
+	package "jquery", github: "jquery/jquery", tag: "2.1.0"
+	package "bootstrap", github: "twbs/bootstrap", tag: "v3.1.1"
+	package "quick_script", github: "agquick/quick_script.js", branch: "v2.0.1"
+
+	# optional packages
+	package "animate", github: "daneden/animate.css", branch: "master"
+
+%p Now run a ramba install. This will install all javascript packages.
+
+:coderay
+	#!term
+	$ bundle exec ramba install
+
+%p Now add Ramba to your javascript and stylesheet application manifests.
+
+:coderay
+	#!javascript
+	// ... application.js
+	//= require ramba
+	...
+
+	/* ... application.css
+	 *= require ramba
+	 ...
 
 %p
 	Next, you need to add the helpers to your <b>ApplicationController</b>.
