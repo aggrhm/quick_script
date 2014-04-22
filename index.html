@@ -89,7 +89,10 @@
       <!-- INTRODUCTION -->
       <h2 id='Introduction'>Introduction</h2>
       <p>
-        QuickScript is a client-side javascript framework which extends Knockout.js to provide model parsing and view routing (among other things...). It was written mainly because I wanted to use knockout, but wanted to make conventions on top of it to keep my code DRY. Keep in mind that these are simply conventions that I have made from project to project, however I'm a big believer that libraries are always more valuable frameworks so that you don't limit yourself in the long run. Essentially, this framework itself is just a combination of several libraries with some conventions on top. Thus, decide if this is the best fit for your project, or if you're better off just using Knockout.js.
+        QuickScript is a client-side javascript framework which extends Knockout.js to provide full application managment, including data models, view routing, and html templates. It was written mainly because I wanted to use Knockout, but wanted to make conventions on top of it to keep my code DRY.
+      </p>
+      <p>
+        <strong>QuickScript allows you to render your entire web application client-side.</strong>
       </p>
       <p>
         QuickScript is written in CoffeeScript, so get familiar with it <a href='http://coffeescript.org'>here</a>.<br/>
@@ -135,7 +138,7 @@
         Next, setup your file hierarchy. This is how I set up mine for the TodoList example, but up to you. The javascript files should be added to your asset pipeline file.
       </p>
       <div class="CodeRay">
-        <div class="code"><pre>app/&#x000A;    assets/&#x000A;        views/&#x000A;            todo_item/&#x000A;                row.html.haml                    # our partial template for a TodoItem row&#x000A;            home.html.haml                    # our root home view template (I use haml)&#x000A;        javascripts/&#x000A;            view.js.coffee                    # for our application js views&#x000A;            models.js.coffee                # for our application js models&#x000A;        stylesheets/&#x000A;            home.css.sass                        # for our home css&#x000A;</pre></div>
+        <div class="code"><pre>app/&#x000A;    assets/&#x000A;        views/&#x000A;            todo_item/&#x000A;                row.html.haml                    # our partial template for a TodoItem row&#x000A;            home.html.haml                    # our root home view template (I use haml)&#x000A;        javascripts/&#x000A;            views.js.coffee                    # for our application js views&#x000A;            models.js.coffee                # for our application js models&#x000A;        stylesheets/&#x000A;            home.css.sass                        # for our home css&#x000A;</pre></div>
       </div>
       <p>
         <p>One good thing about QuickScript is all of your client-side files are found in the <code>/assets</code> folder of your rails app. The view names correspond to their file path, as we will see later. For example, the <code>home.html.haml</code> view template is given the id &#39;view-home&#39;, while the <code>row.html.haml</code> template has the id &#39;view-todo_item-row&#39;. You will use this id to reference the view when building your application.</p>
