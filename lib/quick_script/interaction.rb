@@ -21,7 +21,7 @@ module QuickScript
 			def initialize
 				@names = {}
 			end
-			def respond(scope)
+			def criteria(scope)
 				crit = nil
 
 				if @names['before_filter']
@@ -35,13 +35,22 @@ module QuickScript
 						crit.merge!(@names[k].call(*v))
 					end
 				end
-
-				if crit.respond_to? :limit
-					crit = crit.limit(scope.limit).offset(scope.offset).to_a
-				else
-					crit = crit[scope.offset..(scope.offset + scope.limit)]
-				end
 				return crit
+			end
+
+			def items(scope)
+				crit = criteria(scope)
+				if crit.respond_to? :limit
+					items = crit.limit(scope.limit).offset(scope.offset).to_a
+				else
+					items = crit[scope.offset..(scope.offset + scope.limit)]
+				end
+				return items
+			end
+
+			def count(scope)
+				crit = criteria(scope)
+				crit.count
 			end
 			def method_missing(method_sym, *args, &block)
 				@names[method_sym.to_s] = block
@@ -113,7 +122,7 @@ module QuickScript
 
 			# handle api_ver
 			@api_version = request.headers['API-Version'] || 0
-      ENV['API_VER'] = @api_version.to_s
+			ENV['API_VER'] = @api_version.to_s
 		end
 
 		def get_scoped_items(model, scope, limit, offset)
@@ -132,10 +141,10 @@ module QuickScript
 				@items = @items.limit(limit).offset(offset)
 		end
 
-		def respond_to_scope(&block)
-			responder = ScopeResponder.new
-			block.call(responder)
-			responder.respond @scope
+		def respond_to_scope(resp_action=:items, responder=nil, &block)
+			responder ||= ScopeResponder.new
+			block.call(responder) if block
+			responder.send(resp_action, @scope)
 		end
 
 	end
