@@ -86,15 +86,21 @@ module QuickScript
 
 			resp = OpenStruct.new
 			resp.success = result[:success]
-			resp.meta = result[:meta] || (result[:success] ? 200 : 404)
-			resp.data = result[:data].to_api if result[:data] && result[:data].respond_to?(:to_api)
+			resp.meta = result[:meta] || (result[:success] ? 200 : 400)
+      if !((data = result[:data]).nil?)
+        if data.respond_to?(:to_api)
+          resp.data = data.to_api
+        else
+          resp.data = data
+        end
+      end
 			resp.error = result[:error]
 
 			block.call(resp) unless block.nil?
 
 			resp_h = resp.marshal_dump
 
-			render :json => resp_h.to_json
+			render :json => resp_h.to_json, :status => resp.meta
 		end
 
 		def handle_params
