@@ -2,19 +2,33 @@ require 'quick_script/base'
 require 'quick_script/helpers'
 require 'quick_script/interaction'
 require 'quick_script/engine'
+require 'quick_script/jst_haml_processor'
 
 module QuickScript
 
   DEFAULT_ROUTING_RULE = lambda{|req| !req.env['REQUEST_URI'].include?('/api/') && !req.env['REQUEST_URI'].include?('/assets/')}
 
-  # Your code goes here...
+  class Configuration
+
+    def initialize
+      self.jst_path_separator = "-"
+      self.jst_name_prefix = "view-"
+      self.jst_name_processor = lambda {|logical_path|
+        QuickScript.jst_path_to_name(logical_path)
+      }
+    end
+
+    attr_accessor :jst_path_separator
+    attr_accessor :jst_name_prefix
+    attr_accessor :jst_name_processor
+
+  end
+
   def self.initialize
     return if @intialized
     raise "ActionController is not available yet." unless defined?(ActionController)
     ActionController::Base.send(:include, QuickScript::Base)
     ActionController::Base.send(:helper, QuickScript::Helpers)
-    #QuickScript.install_or_update(:js)
-    #QuickScript.install_or_update(:css)
     @intialized = true
   end
 
@@ -67,12 +81,26 @@ module QuickScript
 
   end
 
+  def self.config
+    @config ||= QuickScript::Configuration.new
+  end
+
   def self.parse_bool(val)
     if val == true || val == "true" || val == 1
       return true
     else
       return false
     end
+  end
+
+  def self.convert_to_js_string(string)
+    string.gsub(/[\n\t]/, "").gsub(/\"/, "\\\"").strip
+  end
+
+  def self.jst_path_to_name(path, opts={})
+    prefix = opts[:prefix] || QuickScript.config.jst_name_prefix
+    sep = opts[:separator] || QuickScript.config.jst_path_separator
+    "#{prefix}#{path.gsub("/", sep)}"
   end
 	
 end

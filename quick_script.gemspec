@@ -24,4 +24,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'sprockets-sass'
   s.add_development_dependency 'coffee-script'
   s.add_development_dependency 'uglifier'
+  s.add_development_dependency 'tilt'
 end
