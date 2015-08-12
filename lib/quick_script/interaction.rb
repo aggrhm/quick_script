@@ -18,9 +18,13 @@ module QuickScript
 		end
 
 		class ScopeResponder
-			def initialize
+
+			def initialize(scope=nil, &block)
+				@scope = scope
 				@names = {}
+				block.call(self) if block
 			end
+
 			def criteria(scope)
 				crit = nil
 
@@ -38,7 +42,8 @@ module QuickScript
 				return crit
 			end
 
-			def items(scope)
+			def items(scope=nil)
+				scope ||= @scope
 				crit = criteria(scope)
 				if crit.respond_to? :limit
 					items = crit.limit(scope.limit).offset(scope.offset).to_a
@@ -48,7 +53,8 @@ module QuickScript
 				return items
 			end
 
-			def count(scope)
+			def count(scope=nil)
+				scope ||= @scope
 				crit = criteria(scope)
 				crit.count
 			end
@@ -87,13 +93,13 @@ module QuickScript
 			resp = OpenStruct.new
 			resp.success = result[:success]
 			resp.meta = result[:meta] || (result[:success] ? 200 : 400)
-      if !((data = result[:data]).nil?)
-        if data.respond_to?(:to_api)
-          resp.data = data.to_api
-        else
-          resp.data = data
-        end
-      end
+			if !((data = result[:data]).nil?)
+				if data.respond_to?(:to_api)
+					resp.data = data.to_api
+				else
+					resp.data = data
+				end
+			end
 			resp.error = result[:error]
 
 			block.call(resp) unless block.nil?
@@ -148,9 +154,8 @@ module QuickScript
 		end
 
 		def respond_to_scope(resp_action=:items, responder=nil, &block)
-			responder ||= ScopeResponder.new
-			block.call(responder) if block
-			responder.send(resp_action, @scope)
+			responder ||= ScopeResponder.new(@scope, &block)
+			responder.send(resp_action)
 		end
 
 	end
