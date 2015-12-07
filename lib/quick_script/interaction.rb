@@ -42,9 +42,9 @@ module QuickScript
 				return crit
 			end
 
-			def items(scope=nil)
+			def items(scope=nil, crit=nil)
 				scope ||= @scope
-				crit = criteria(scope)
+				crit ||= criteria(scope)
 				if crit.respond_to? :limit
 					items = crit.limit(scope.limit).offset(scope.offset).to_a
 				else
@@ -53,14 +53,33 @@ module QuickScript
 				return items
 			end
 
-			def count(scope=nil)
+			def count(scope=nil, crit=nil)
 				scope ||= @scope
-				crit = criteria(scope)
+				crit ||= criteria(scope)
 				crit.count
 			end
+
+      def result(scope=nil)
+        scope ||= @scope
+        crit = self.criteria(scope)
+        count = self.count(scope, crit)
+        if count > 0
+          data = self.items(scope, crit)
+        else
+          data = []
+        end
+        if scope.limit > 0
+          pages_count = (count / scope.limit.to_f).ceil
+        else
+          pages_count = 0
+        end
+        return {success: true, data: data, count: count, pages_count: pages_count, page: scope.page}
+      end
+
 			def method_missing(method_sym, *args, &block)
 				@names[method_sym.to_s] = block
 			end
+
 		end
 
 		def json_resp(data, meta=true, opts = {})
@@ -96,11 +115,18 @@ module QuickScript
 			if !((data = result[:data]).nil?)
 				if data.respond_to?(:to_api)
 					resp.data = data.to_api
-				else
-					resp.data = data
+        elsif data.is_a?(Array)
+					resp.data = data.collect{|d|
+            d.respond_to?(:to_api) ? d.to_api : d
+          }
+        else
+          resp.data = data
 				end
 			end
 			resp.error = result[:error]
+      resp.count = result[:count] if result.key?(:count)
+      resp.pages_count = result[:pages_count] if result.key?(:pages_count)
+      resp.page = result[:page] if result.key?(:page)
 
 			block.call(resp) unless block.nil?
 
