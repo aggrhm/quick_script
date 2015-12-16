@@ -107,32 +107,31 @@ module QuickScript
 			render :json => json_error([err])
 		end
 
-		def render_result(result, &block)
+		def render_result(result, include_all = true, &block)
 
 			resp = OpenStruct.new
+      # set required fields
 			resp.success = result[:success]
-			resp.meta = result[:meta] || (result[:success] ? 200 : 400)
+			resp.meta = result[:meta] || (result[:success] ? 200 : 500)
 			if !((data = result[:data]).nil?)
-				if data.respond_to?(:to_api)
-					resp.data = data.to_api
-        elsif data.is_a?(Array)
-					resp.data = data.collect{|d|
-            d.respond_to?(:to_api) ? d.to_api : d
-          }
-        else
-          resp.data = data
-				end
+        resp.data = QuickScript.prepare_api_param(data)
 			end
 			resp.error = result[:error]
-      resp.count = result[:count] if result.key?(:count)
-      resp.pages_count = result[:pages_count] if result.key?(:pages_count)
-      resp.page = result[:page] if result.key?(:page)
+
+      # set additional fields
+      if include_all
+        result.each do |key, val|
+          next if [:success, :meta, :data, :error].include?(key.to_sym)
+          resp[key] = QuickScript.prepare_api_param(val)
+        end
+      end
 
 			block.call(resp) unless block.nil?
 
 			resp_h = resp.marshal_dump
+      status = result[:success] == true ? 200 : 500
 
-			render :json => resp_h.to_json, :status => resp.meta
+			render :json => resp_h.to_json, :status => status
 		end
 
 		def handle_params
