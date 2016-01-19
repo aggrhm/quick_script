@@ -110,7 +110,7 @@ module QuickScript
     def render_result(result, opts = {}, &block)
 
       resp = OpenStruct.new
-      opts[:include_all] == true if opts[:include_all].nil?
+      opts[:include_all] = true if opts[:include_all].nil?
       # set required fields
       resp.success = result[:success]
       resp.meta = result[:meta] || (result[:success] ? 200 : 500)
