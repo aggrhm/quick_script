@@ -124,6 +124,15 @@ module QuickScript
     new_opts.with_indifferent_access
   end
 
+  def self.parse_template(name, vars, opts={})
+    opts[:path] ||= "mail"
+    fp = File.join Rails.root, 'app', 'views', opts[:path], name
+    fp += ".html.erb" unless fp.ends_with?(".html.erb")
+    tpl = File.read(fp)
+    html = QuickScript::DynamicErb.new(vars).render(tpl)
+    return html
+  end
+
   def self.prepare_api_param(val)
     if val.respond_to?(:to_api)
       val.to_api
@@ -144,6 +153,20 @@ module QuickScript
     prefix = opts[:prefix] || QuickScript.config.jst_name_prefix
     sep = opts[:separator] || QuickScript.config.jst_path_separator
     "#{prefix}#{path.gsub("/", sep)}"
+  end
+
+  class DynamicErb
+
+    def initialize(vars)
+      vars.each {|k,v|
+        self.instance_variable_set("@#{k}".to_sym, v)
+      }
+    end
+
+    def render(template)
+      ERB.new(template).result(binding)
+    end
+
   end
   
 end
