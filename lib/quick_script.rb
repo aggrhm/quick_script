@@ -121,7 +121,11 @@ module QuickScript
     if opts.is_a?(String)
       new_opts = JSON.parse(opts)
     end
-    new_opts.with_indifferent_access
+    if new_opts.is_a?(Hash)
+      return new_opts.with_indifferent_access
+    else
+      return new_opts
+    end
   end
 
   def self.parse_template(name, vars, opts={})
