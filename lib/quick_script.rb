@@ -1,6 +1,7 @@
 require 'quick_script/base'
 require 'quick_script/helpers'
 require 'quick_script/interaction'
+require 'quick_script/model_endpoints'
 require 'quick_script/engine'
 require 'quick_script/jst_haml_processor'
 
@@ -45,6 +46,29 @@ module QuickScript
         return @resp
       end
   end
+  class ResourceNotFoundError < APIError
+    def message
+      @message ||= "The resource you are trying to load or update could not be found."
+    end
+    def code
+      1003
+    end
+    def type
+      "ResourceNotFoundError"
+    end
+  end
+  class InvalidParamError < APIError
+    def message
+      @message ||= "A parameter you specified was invalid."
+    end
+    def code
+      1004
+    end
+    def type
+      "InvalidParamError"
+    end
+  end
+  
 
   def self.initialize
     return if @intialized

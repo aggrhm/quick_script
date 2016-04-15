@@ -1,4 +1,5 @@
 if defined?(Rails::Railtie)
+
   module QuickScript
     class Railtie < Rails::Railtie
 
@@ -17,4 +18,17 @@ if defined?(Rails::Railtie)
 
     end
   end
+
+  class ActionDispatch::Routing::Mapper
+    def api_resources(res, &block)
+      rp = res.to_s
+      rs = rp.singularize
+      #puts "Adding route for #{rp}"
+      match "#{rp}" => "#{rp}#index", :via => :get
+      match "#{rs}" => "#{rp}#save", :via => :post
+      match "#{rs}" => "#{rp}#delete", :via => :delete
+      block.call if block
+    end
+  end
+
 end

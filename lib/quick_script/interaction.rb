@@ -13,7 +13,27 @@ module QuickScript
 
     class << self
       def included(base)
+        base.extend(ClassMethods)
         base.send :before_filter, :handle_params if base.respond_to? :before_filter
+      end
+    end
+
+    module ClassMethods
+
+      def prepare_api_for(cls, tr)
+        api_object_transformers[cls] = tr
+      end
+
+      def api_object_transformers
+        @api_object_transformers ||= {
+          default: lambda {|m, opts|
+            if m.respond_to?(:to_api)
+              m.to_api
+            else
+              m
+            end
+          }
+        }
       end
     end
 
@@ -95,6 +115,25 @@ module QuickScript
       opts.to_json
     end
 
+    def params_with_actor
+      return params.merge(actor: self.current_user)
+    end
+
+    def requested_includes(sub=nil)
+      if params[:include].present?
+        rs = JSON.parse(params[:include]).collect(&:to_s)
+        if sub
+          sub = sub.to_s
+          sl = sub.length + 1
+          rs = rs.select{|r| r.start_with?(sub + ".")}.collect{|r| r[(sl..-1)]}
+        end
+        # only top level
+        return rs.select{|r| !r.include?(".")}.collect(&:to_sym)
+      else
+        return []
+      end
+    end
+
     def json_error(errors, meta = 404, opts = {})
       json_resp({:errors => errors}, meta, {error: errors[0]})
     end
@@ -107,19 +146,40 @@ module QuickScript
       render :json => json_error([err])
     end
 
+    def prepare_api_result(result, opts={})
+      ret = {}
+      result.each do |key, val|
+        if val.is_a?(Array)
+          ret[key] = val.collect {|v| prepare_api_object(v, opts)}
+        else
+          ret[key] = prepare_api_object(val, opts)
+        end
+      end
+      return ret
+    end
+
+    def prepare_api_object(model, opts)
+      trs = self.class.api_object_transformers
+      tr = trs[model.class.name] || trs[:default]
+      self.instance_exec(model, opts, &tr)
+    end
+
     def render_result(result, opts = {}, &block)
+      result = self.prepare_api_result(result, opts)
 
       resp = OpenStruct.new
       opts[:include_all] = true if opts[:include_all].nil?
       # set required fields
       resp.success = result[:success]
       resp.meta = result[:meta] || (result[:success] ? 200 : 500)
+      resp.error = result[:error]
+
+      # prepare data
       if !((data = result[:data]).nil?)
         resp.data = QuickScript.prepare_api_param(data)
       end
-      resp.error = result[:error]
 
-      # set additional fields
+      # prepare additional fields
       if opts[:include_all]
         result.each do |key, val|
           next if [:success, :meta, :data, :error].include?(key.to_sym)
