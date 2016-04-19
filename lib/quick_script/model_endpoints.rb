@@ -34,28 +34,39 @@ module QuickScript
       def configure_model_endpoints_for(name, opts)
         model_endpoints_settings[:model_class_name] = name
         model_endpoints_settings.merge!(opts)
-        build_endpoints
+        build_model_endpoints
       end
 
       def model_class
         model_endpoints_settings[:model_class_name].constantize
       end
 
-      def add_endpoint(method, model_method, opts)
-        model_endpoints_settings[:endpoints][method] = opts.merge(model_method: model_method)
+      def add_model_endpoint(method, model_method, opts={})
+        opts.merge!(name: method, model_method: model_method)
+        model_endpoints_settings[:endpoints][method] = opts
+        build_model_endpoint(opts)
       end
 
-      def build_endpoints
+      def build_model_endpoints
         model_endpoints_settings[:endpoints].each do |name, opts|
+          opts[:name] = name
           next if [:index].include?(name.to_sym)
           #puts "Defining method for #{name}"
-          define_method name do
-            if opts[:instantiate_if_nil]
-              model_instance = model_class.new if model_instance.nil?
-            end
-            res = model_instance.send opts[:model_method], params_with_actor
-            render_result(res)
+          build_model_endpoint(opts)
+        end
+      end
+
+      def build_model_endpoint(opts)
+        name = opts[:name]
+        define_method name do
+          if opts[:instantiate_if_nil]
+            model_instance = model_class.new if model_instance.nil?
           end
+          res = model_instance.send opts[:model_method], params_with_actor
+          if opts[:prepare_result]
+            self.instance_exec(res, &opts[:prepare_result])
+          end
+          render_result(res)
         end
       end
 
