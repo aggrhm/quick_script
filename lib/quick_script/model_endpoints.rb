@@ -59,12 +59,13 @@ module QuickScript
       def build_model_endpoint(opts)
         name = opts[:name]
         define_method name do
-          if opts[:instantiate_if_nil]
-            model_instance = model_class.new if model_instance.nil?
+          mopts = self.class.model_endpoints_settings[:endpoints][name]
+          if (mopts[:instantiate_if_nil] == true) && model_instance.nil?
+            self.model_instance = model_class.new
           end
-          res = model_instance.send opts[:model_method], params_with_actor
-          if opts[:prepare_result]
-            self.instance_exec(res, &opts[:prepare_result])
+          res = model_instance.send mopts[:model_method], params_with_actor
+          if mopts[:prepare_result]
+            self.instance_exec(res, &mopts[:prepare_result])
           end
           render_result(res)
         end
