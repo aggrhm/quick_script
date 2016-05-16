@@ -53,10 +53,12 @@ module QuickScript
         end
 
         scope.selectors.each do |k, v|
+          ds = @names[k]
+          next if ds.nil?
           if crit.nil?
-            crit = @names[k].call(*v)
+            crit = ds.call(*v)
           else
-            crit.merge!(@names[k].call(*v))
+            crit.merge!(ds.call(*v))
           end
         end
         return crit

@@ -1,6 +1,7 @@
 require 'quick_script/base'
 require 'quick_script/helpers'
 require 'quick_script/interaction'
+require 'quick_script/model'
 require 'quick_script/model_endpoints'
 require 'quick_script/engine'
 require 'quick_script/jst_haml_processor'
