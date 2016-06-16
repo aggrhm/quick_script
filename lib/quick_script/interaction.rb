@@ -118,7 +118,11 @@ module QuickScript
     end
 
     def params_with_actor
-      return params.merge(actor: self.current_user)
+      if self.respond_to?(:current_user)
+        return params.merge(actor: self.current_user)
+      else
+        return params
+      end
     end
 
     def requested_includes(sub=nil)
@@ -182,11 +186,10 @@ module QuickScript
       end
 
       # prepare additional fields
-      if opts[:include_all]
-        result.each do |key, val|
-          next if [:success, :meta, :data, :error].include?(key.to_sym)
-          resp[key] = QuickScript.prepare_api_param(val)
-        end
+      result.each do |key, val|
+        next if [:success, :meta, :data, :error].include?(key.to_sym)
+        next if opts[:include] && !opts[:include].include?(key.to_sym)
+        resp[key] = QuickScript.prepare_api_param(val)
       end
 
       block.call(resp) unless block.nil?

@@ -86,7 +86,7 @@ module QuickScript
     end
 
     def index
-      if params[:id]
+      if !params[:scope]  # handle if user finding by other than id
         update_model_cache(@model)
         render_result success: true, data: @model
       else
@@ -109,13 +109,13 @@ module QuickScript
     end
 
     def update_model_cache(models)
-      model_class.update_cache(models, model_includes)
+      model_class.update_cache(models, model_includes) if model_class.respond_to?(:update_cache)
     end
 
     def load_model
       if params[:id].present?
         @model = model_class.find(params[:id])
-        raise QuickScript::ResourceNotFoundError if @model.nil?
+        raise QuickScript::Errors::ResourceNotFoundError if @model.nil?
       end
     end
 
