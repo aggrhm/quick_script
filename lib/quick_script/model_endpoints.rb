@@ -7,7 +7,7 @@ module QuickScript
       base.before_filter :load_model
       class << base
         #private :scope_responder
-        #private :update_model_cache
+        #private :prepare_model
         #private :load_model
       end
     end
@@ -67,7 +67,7 @@ module QuickScript
           if mopts[:prepare_result]
             self.instance_exec(res, &mopts[:prepare_result])
           end
-          render_result(res)
+          render_result(res, mopts[:result_options])
         end
       end
 
@@ -87,12 +87,12 @@ module QuickScript
 
     def index
       if !params[:scope]  # handle if user finding by other than id
-        update_model_cache(@model)
+        prepare_model(@model)
         render_result success: true, data: @model
       else
         res = scope_responder.result(@scope)
         @models = res[:data]
-        update_model_cache(@models)
+        prepare_model(@models)
         render_result(res)
       end
     end
@@ -108,7 +108,7 @@ module QuickScript
       incls = requested_includes | self.class.model_endpoints_settings[:default_includes]
     end
 
-    def update_model_cache(models)
+    def prepare_model(models)
       model_class.update_cache(models, model_includes) if model_class.respond_to?(:update_cache)
     end
 
