@@ -118,7 +118,7 @@ module QuickScript
     end
 
     def params_with_actor
-      if self.respond_to?(:current_user)
+      if self.respond_to?(:current_user, true)
         return params.merge(actor: self.current_user)
       else
         return params

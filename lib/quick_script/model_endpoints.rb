@@ -67,7 +67,7 @@ module QuickScript
           if mopts[:prepare_result]
             self.instance_exec(res, &mopts[:prepare_result])
           end
-          render_result(res, mopts[:result_options])
+          render_result(res, (mopts[:result_options] || {}))
         end
       end
 
