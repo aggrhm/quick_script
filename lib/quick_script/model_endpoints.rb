@@ -17,6 +17,7 @@ module QuickScript
         @model_endpoints_settings ||= {
           model_class_name: nil,
           default_includes: [],
+          default_result_options: {},
           scope_responder: lambda {|scope| },
           endpoints: {
             index: {},
@@ -59,7 +60,8 @@ module QuickScript
       def build_model_endpoint(opts)
         name = opts[:name]
         define_method name do
-          mopts = self.class.model_endpoints_settings[:endpoints][name]
+          mes = self.class.model_endpoint_settings
+          mopts = mes[:endpoints][name]
           if (mopts[:instantiate_if_nil] == true) && model_instance.nil?
             self.model_instance = model_class.new
           end
@@ -67,7 +69,8 @@ module QuickScript
           if mopts[:prepare_result]
             self.instance_exec(res, &mopts[:prepare_result])
           end
-          render_result(res, (mopts[:result_options] || {}))
+          ropts = mes[:default_result_options].merge( (mopts[:result_options] || {}) )
+          render_result(res, ropts)
         end
       end
 
