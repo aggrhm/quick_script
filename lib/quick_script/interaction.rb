@@ -25,15 +25,21 @@ module QuickScript
       end
 
       def api_object_transformers
-        @api_object_transformers ||= {
-          default: lambda {|m, opts|
-            if m.respond_to?(:to_api)
-              m.to_api
-            else
-              m
-            end
-          }
-        }
+        @api_object_transformers ||= begin
+          if self.superclass.respond_to?(:api_object_transformers)
+            self.superclass.api_object_transformers
+          else
+            {
+              default: lambda {|m, opts|
+                if m.respond_to?(:to_api)
+                  m.to_api
+                else
+                  m
+                end
+              }
+            }
+          end
+        end
       end
     end
 

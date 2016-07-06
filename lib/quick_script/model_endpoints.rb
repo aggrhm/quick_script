@@ -60,7 +60,7 @@ module QuickScript
       def build_model_endpoint(opts)
         name = opts[:name]
         define_method name do
-          mes = self.class.model_endpoint_settings
+          mes = self.class.model_endpoints_settings
           mopts = mes[:endpoints][name]
           if (mopts[:instantiate_if_nil] == true) && model_instance.nil?
             self.model_instance = model_class.new
