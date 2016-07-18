@@ -23,10 +23,10 @@ module QuickScript
             index: {},
             save: {
               instantiate_if_nil: true,
-              model_method: :register!
+              model_method: QuickScript.config.default_model_save_method
             },
             delete: {
-              model_method: :mark_deleted!
+              model_method: QuickScript.config.default_model_delete_method
             },
           }
         }.with_indifferent_access
@@ -34,7 +34,7 @@ module QuickScript
 
       def configure_model_endpoints_for(name, opts)
         model_endpoints_settings[:model_class_name] = name
-        model_endpoints_settings.merge!(opts)
+        model_endpoints_settings.deep_merge!(opts)
         build_model_endpoints
       end
 

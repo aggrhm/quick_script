@@ -19,11 +19,16 @@ module QuickScript
       self.jst_name_processor = lambda {|logical_path|
         QuickScript.jst_path_to_name(logical_path)
       }
+      self.default_model_save_method = :update_as_action!
+      self.default_model_delete_method = :delete_as_action!
     end
 
     attr_accessor :jst_path_separator
     attr_accessor :jst_name_prefix
     attr_accessor :jst_name_processor
+
+    attr_accessor :default_model_save_method
+    attr_accessor :default_model_delete_method
 
   end
 
