@@ -75,6 +75,11 @@ module QuickScript
       end
     end
 
+    def add_range_filter(field, range)
+      @qbf[:and] = [] unless @qbf[:and].present?
+      @qbf[:and] << {:range => {field => range}}
+    end
+
     def add_match_filter(field, val)
       @qbf[:and] = [] unless @qbf[:and].present?
       @qbf[:and] << {:match => {field => val}}
