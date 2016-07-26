@@ -53,10 +53,12 @@ module QuickScript
       return (count / self.size.to_f).ceil
     end
 
-    def add_multimatch_query(fields, val)
+    def add_multimatch_query(fields, val, type=nil)
+      type ||= 'best_fields'
       @qbm << {:multi_match => {
         query: val,
-        fields: fields
+        fields: fields,
+        type: type
       }}
     end
 
