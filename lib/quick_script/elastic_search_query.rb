@@ -84,6 +84,10 @@ module QuickScript
       @qbf << {:match => {field => val}}
     end
 
+    def add_aggregation(name, aopts)
+      self.aggs[name] = aopts
+    end
+
     def aggs
       @q[:aggregations] ||= {}
       return @q[:aggregations]
