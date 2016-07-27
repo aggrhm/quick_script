@@ -3,7 +3,7 @@ module QuickScript
   class ElasticSearchQuery
 
     def initialize(opts={})
-      @q = {sort: [], query:{bool: {must: [], filter: {}}}, size: 50}
+      @q = {sort: [], query:{bool: {must: [], filter: []}}, size: 50}
       @qb = @q[:query][:bool]
       @qbm = @qb[:must]
       @qbf = @qb[:filter]
@@ -69,22 +69,19 @@ module QuickScript
     end
 
     def add_term_filter(field, val)
-      @qbf[:and] = [] unless @qbf[:and].present?
       if val.is_a?(Array)
-        @qbf[:and] << {:terms => {field => val}}
+        @qbf << {:terms => {field => val}}
       else
-        @qbf[:and] << {:term => {field => val}}
+        @qbf << {:term => {field => val}}
       end
     end
 
     def add_range_filter(field, range)
-      @qbf[:and] = [] unless @qbf[:and].present?
-      @qbf[:and] << {:range => {field => range}}
+      @qbf << {:range => {field => range}}
     end
 
     def add_match_filter(field, val)
-      @qbf[:and] = [] unless @qbf[:and].present?
-      @qbf[:and] << {:match => {field => val}}
+      @qbf << {:match => {field => val}}
     end
 
     def aggs
