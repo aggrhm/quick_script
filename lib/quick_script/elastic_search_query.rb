@@ -76,6 +76,19 @@ module QuickScript
       end
     end
 
+    def add_simple_query_string(fields, query, opts={})
+      analyzer = opts[:analyzer] || "english"
+      sqs = {
+        query: query,
+        fields: fields,
+        default_operator: "and"
+      }
+      sqs[:analyzer] = opts[:analyzer] if opts[:analyzer]
+      @qbm << {
+        simple_query_string: sqs
+      }
+    end
+
     def add_range_filter(field, range)
       @qbf << {:range => {field => range}}
     end
