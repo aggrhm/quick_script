@@ -13,7 +13,8 @@ module QuickScript
 
     class << self
       def included(base)
-        base.extend(ClassMethods)
+        base.send :extend, ClassMethods
+        base.send :include, Classes
         base.send :before_filter, :handle_params if base.respond_to? :before_filter
       end
     end
@@ -43,69 +44,138 @@ module QuickScript
       end
     end
 
-    class ScopeResponder
+    module Classes
 
-      def initialize(scope=nil, &block)
-        @scope = scope
-        @names = {}
-        block.call(self) if block
-      end
+      class SmartScope
 
-      def criteria(scope)
-        crit = nil
+        attr_accessor :selectors, :args, :limit, :page, :offset
+        attr_reader :params
 
-        if @names['before_filter']
-          crit = @names['before_filter'].call
-        end
-
-        scope.selectors.each do |k, v|
-          ds = @names[k]
-          next if ds.nil?
-          if crit.nil?
-            crit = ds.call(*v)
-          else
-            crit.merge!(ds.call(*v))
+        def initialize(params)
+          @params = params
+          @limit = 100
+          @page = 1
+          @offset = 0
+          if params[:scope]
+            if params[:scope].is_a? Array
+              @selectors = {params[:scope].first => params[:scope][1..-1]}
+              @args = params[:scope][1..-1]
+            else
+              # json selectors
+              @selectors = JSON.parse(params[:scope])
+            end
           end
+          @limit = params[:limit].to_i if params[:limit]
+          @page = params[:page].to_i if params[:page]
+          @offset = (@page - 1) * @limit if params[:page] && params[:limit]
         end
-        return crit
+
+        def actor
+          return @params[:actor]
+        end
+
+        def selector_names
+          @selectors.keys
+        end
+
       end
 
-      def items(scope=nil, crit=nil)
-        scope ||= @scope
-        crit ||= criteria(scope)
-        if crit.respond_to? :limit
-          items = crit.limit(scope.limit).offset(scope.offset).to_a
-        else
-          items = crit[scope.offset..(scope.offset + scope.limit)]
+      class ScopeResponder
+
+        def initialize(scope=nil, &block)
+          @scope = scope
+          @names = {}.with_indifferent_access
+          @before_filter = nil
+          block.call(self) if block
         end
-        return items
+
+        def scopes
+          @names
+        end
+
+        def scope_for_name(name)
+          @names[name]
+        end
+
+        def before_filter(&block)
+          @before_filter = block
+        end
+
+        def criteria(scope)
+          crit = nil
+
+          if @before_filter
+            crit = @before_filter.call
+          end
+
+          scope.selectors.each do |k, v|
+            ds = scope_for_name(k)
+            next if ds.nil?
+            if crit.nil?
+              crit = ds.call(*v)
+            else
+              crit.merge!(ds.call(*v))
+            end
+          end
+          return crit
+        end
+
+        def items(scope=nil, crit=nil)
+          scope ||= @scope
+          crit ||= criteria(scope)
+          if crit.respond_to? :limit
+            items = crit.limit(scope.limit).offset(scope.offset).to_a
+          else
+            items = crit[scope.offset..(scope.offset + scope.limit)]
+          end
+          return items
+        end
+
+        def count(scope=nil, crit=nil)
+          scope ||= @scope
+          crit ||= criteria(scope)
+          crit.count
+        end
+
+        def result(scope=nil, opts={})
+          scope = SmartScope.new(scope) if (scope && !scope.is_a?(SmartScope))
+          scope ||= @scope
+          crit = self.criteria(scope)
+          count = self.count(scope, crit)
+          if count > 0
+            data = self.items(scope, crit)
+          else
+            data = []
+          end
+          if scope.limit > 0
+            pages_count = (count / scope.limit.to_f).ceil
+          else
+            pages_count = 0
+          end
+          return {success: true, data: data, count: count, pages_count: pages_count, page: scope.page}
+        end
+
+        def method_missing(method_sym, *args, &block)
+          @names[method_sym.to_s] = block
+        end
+
       end
 
-      def count(scope=nil, crit=nil)
-        scope ||= @scope
-        crit ||= criteria(scope)
-        crit.count
-      end
+      class ModelScopeResponder < ScopeResponder
 
-      def result(scope=nil)
-        scope ||= @scope
-        crit = self.criteria(scope)
-        count = self.count(scope, crit)
-        if count > 0
-          data = self.items(scope, crit)
-        else
-          data = []
+        def initialize(model, opts={}, &block)
+          @model = model
+          @options = opts
+          @allowed_scope_names = opts[:allowed_scope_names] || @model.const_get("PUBLIC_SCOPES")
+          super(&block)
         end
-        if scope.limit > 0
-          pages_count = (count / scope.limit.to_f).ceil
-        else
-          pages_count = 0
-        end
-        return {success: true, data: data, count: count, pages_count: pages_count, page: scope.page}
-      end
 
-      def method_missing(method_sym, *args, &block)
-        @names[method_sym.to_s] = block
+        def scope_for_name(name)
+          return @names[name] if @names[name]
+          return @model.scopes[name.to_sym][:scope] if @model.scopes[name.to_sym]
+          return nil
+        end
+
       end
 
     end
@@ -208,26 +278,7 @@ module QuickScript
 
     def handle_params
       # handle scope
-      @scope = {}
-      class << @scope
-        def selectors; return self[:selectors]; end
-        def args; return self[:args]; end
-        def limit; return self[:limit] || 100; end
-        def page; return self[:page] || 1; end
-        def offset; return self[:offset] || 0; end
-      end
-      if params[:scope]
-        if params[:scope].is_a? Array
-          @scope[:selectors] = {params[:scope].first => params[:scope][1..-1]}
-          @scope[:args] = params[:scope][1..-1]
-        else
-          # json selectors
-          @scope[:selectors] = JSON.parse(params[:scope])
-        end
-      end
-      @scope[:limit] = params[:limit].to_i if params[:limit]
-      @scope[:page] = params[:page].to_i if params[:page]
-      @scope[:offset] = (@scope[:page] - 1) * @scope[:limit] if params[:page] && params[:limit]
+      @scope = QuickScript::SmartScope.new(params_with_actor)
 
       # handle api_ver
       @api_version = request.headers['API-Version'] || 0

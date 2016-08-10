@@ -104,7 +104,7 @@ module QuickScript
 
     def scope_responder
       sc = self.class.model_endpoints_settings[:scope_responder]
-      QuickScript::Interaction::ScopeResponder.new(@scope, &sc)
+      QuickScript::ScopeResponder.new(@scope, &sc)
     end
 
     def model_includes

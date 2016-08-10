@@ -87,6 +87,7 @@ module QuickScript
     end
   end
   include Errors
+  include Interaction::Classes
   
 
   def self.initialize
