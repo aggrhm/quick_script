@@ -2,10 +2,14 @@ require 'quick_script/base'
 require 'quick_script/helpers'
 require 'quick_script/interaction'
 require 'quick_script/model'
+require 'quick_script/stateable'
 require 'quick_script/model_endpoints'
 require 'quick_script/engine'
 require 'quick_script/jst_haml_processor'
 require 'quick_script/elastic_search_query'
+require "quick_script/oauth2/interaction"
+require "quick_script/oauth2/endpoints"
+
 
 module QuickScript
 
@@ -21,6 +25,7 @@ module QuickScript
       }
       self.default_model_save_method = :update_as_action!
       self.default_model_delete_method = :delete_as_action!
+      self.default_current_user_session_fields = ['id']
     end
 
     attr_accessor :jst_path_separator
@@ -29,6 +34,8 @@ module QuickScript
 
     attr_accessor :default_model_save_method
     attr_accessor :default_model_delete_method
+
+    attr_accessor :default_current_user_session_fields
 
   end
 
@@ -163,7 +170,11 @@ module QuickScript
     return nil if opts.nil?
     new_opts = opts
     if opts.is_a?(String) && !opts.blank?
-      new_opts = JSON.parse(opts)
+      begin
+        new_opts = JSON.parse(opts)
+      rescue => ex
+        new_opts = opts
+      end
     end
     if new_opts.is_a?(Hash)
       return new_opts.with_indifferent_access

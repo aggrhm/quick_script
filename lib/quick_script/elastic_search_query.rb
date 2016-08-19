@@ -53,6 +53,16 @@ module QuickScript
       return (count / self.size.to_f).ceil
     end
 
+    def bool_selector_for(sel)
+      if sel == :must
+        @qbm
+      elsif sel == :should
+        @qbs
+      else
+        @qbf
+      end
+    end
+
     def add_multimatch_query(fields, val, type=nil)
       type ||= 'best_fields'
       @qbm << {:multi_match => {
@@ -66,6 +76,12 @@ module QuickScript
       tq = {:match => {}}
       tq[:match][field] = val
       @qbm << tq
+    end
+
+    def add_match_filter(field, val, opts={})
+      tq = {:match => {}}
+      tq[:match][field] = opts.merge(query: val)
+      @qbf << tq
     end
 
     def add_term_filter(field, val)
@@ -91,10 +107,6 @@ module QuickScript
 
     def add_range_filter(field, range)
       @qbf << {:range => {field => range}}
-    end
-
-    def add_match_filter(field, val)
-      @qbf << {:match => {field => val}}
     end
 
     def add_aggregation(name, aopts)

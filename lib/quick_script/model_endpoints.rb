@@ -17,6 +17,7 @@ module QuickScript
         @model_endpoints_settings ||= {
           model_class_name: nil,
           default_includes: [],
+          use_orm_includes: false,
           default_result_options: {},
           scope_responder: lambda {|scope| },
           endpoints: {
@@ -32,14 +33,23 @@ module QuickScript
         }.with_indifferent_access
       end
 
-      def configure_model_endpoints_for(name, opts)
+      def configure_model_endpoints_for(name, opts={})
         model_endpoints_settings[:model_class_name] = name
+        model_endpoints_settings[:use_orm_includes] = true if model_class_orm == :active_record
         model_endpoints_settings.deep_merge!(opts)
         build_model_endpoints
       end
 
       def model_class
         model_endpoints_settings[:model_class_name].constantize
+      end
+
+      def model_class_orm
+        if model_class < ActiveRecord::Base
+          return :active_record
+        elsif model_class.respond_to?(:mongo_session)
+          return :mongoid
+        end
       end
 
       def add_model_endpoint(method, model_method, opts={})
@@ -76,6 +86,10 @@ module QuickScript
 
     end # END CLASS METHODS
 
+    def model_endpoints_settings
+      self.class.model_endpoints_settings
+    end
+
     def model_class
       self.class.model_class
     end
@@ -93,7 +107,11 @@ module QuickScript
         prepare_model(@model)
         render_result success: true, data: @model
       else
-        res = scope_responder.result(@scope)
+        if model_endpoints_settings[:use_orm_includes]
+          res = scope_responder.result(@scope, includes: model_includes)
+        else
+          res = scope_responder.result(@scope)
+        end
         @models = res[:data]
         prepare_model(@models)
         render_result(res)
@@ -103,8 +121,9 @@ module QuickScript
     ## PRIVATE METHODS
 
     def scope_responder
-      sc = self.class.model_endpoints_settings[:scope_responder]
-      QuickScript::ScopeResponder.new(@scope, &sc)
+      sts = self.class.model_endpoints_settings
+      sc = sts[:scope_responder]
+      QuickScript::ModelScopeResponder.new(self.model_class, {}, &sc)
     end
 
     def model_includes
@@ -117,7 +136,11 @@ module QuickScript
 
     def load_model
       if params[:id].present?
-        @model = model_class.find(params[:id])
+        if self.model_endpoints_settings[:use_orm_includes] && model_includes.present?
+          @model = model_class.includes(model_includes).find(params[:id])
+        else
+          @model = model_class.find(params[:id])
+        end
         raise QuickScript::Errors::ResourceNotFoundError if @model.nil?
       end
     end

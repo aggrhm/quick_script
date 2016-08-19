@@ -14,7 +14,6 @@ module QuickScript
     class << self
       def included(base)
         base.send :extend, ClassMethods
-        base.send :include, Classes
         base.send :before_filter, :handle_params if base.respond_to? :before_filter
       end
     end
@@ -48,7 +47,7 @@ module QuickScript
 
       class SmartScope
 
-        attr_accessor :selectors, :args, :limit, :page, :offset
+        attr_accessor :selectors, :args, :limit, :page, :offset, :includes, :sort
         attr_reader :params
 
         def initialize(params)
@@ -57,17 +56,16 @@ module QuickScript
           @page = 1
           @offset = 0
           if params[:scope]
-            if params[:scope].is_a? Array
-              @selectors = {params[:scope].first => params[:scope][1..-1]}
-              @args = params[:scope][1..-1]
-            else
-              # json selectors
-              @selectors = JSON.parse(params[:scope])
-            end
+            @selectors = JSON.parse(params[:scope])
           end
           @limit = params[:limit].to_i if params[:limit]
           @page = params[:page].to_i if params[:page]
           @offset = (@page - 1) * @limit if params[:page] && params[:limit]
+          @includes = QuickScript.parse_opts(params[:includes]) if params[:includes]
+          @sort = QuickScript.parse_opts(params[:sort]) if params[:sort]
+        rescue => ex
+          Rails.logger.info ex.message
+          Rails.logger.info ex.backtrace.join("\n\t")
         end
 
         def actor
@@ -101,8 +99,10 @@ module QuickScript
           @before_filter = block
         end
 
-        def criteria(scope)
+        def criteria(scope, opts={})
           crit = nil
+          incls = opts[:includes] || scope.includes
+          sort = opts[:sort] || scope.sort
 
           if @before_filter
             crit = @before_filter.call
@@ -115,6 +115,16 @@ module QuickScript
               crit = ds.call(*v)
             else
               crit.merge!(ds.call(*v))
+            end
+          end
+          if crit && incls
+            crit = crit.includes(incls)
+          end
+          if crit && sort
+            if sort_scope = scope_for_name('sort')
+              crit.merge!(sort_scope.call(sort))
+            else
+              crit = crit.order(sort)
             end
           end
           return crit
@@ -140,7 +150,7 @@ module QuickScript
         def result(scope=nil, opts={})
           scope = SmartScope.new(scope) if (scope && !scope.is_a?(SmartScope))
           scope ||= @scope
-          crit = self.criteria(scope)
+          crit = self.criteria(scope, opts)
           count = self.count(scope, crit)
           if count > 0
             data = self.items(scope, crit)
@@ -166,19 +176,30 @@ module QuickScript
         def initialize(model, opts={}, &block)
           @model = model
           @options = opts
-          @allowed_scope_names = opts[:allowed_scope_names] || @model.const_get("PUBLIC_SCOPES")
+
+          if opts[:allowed_scope_names]
+            @allowed_scope_names = opts[:allowed_scope_names].collect(&:to_s)
+          elsif @model.const_defined?("PUBLIC_SCOPES")
+            @allowed_scope_names = @model.const_get("PUBLIC_SCOPES").collect(&:to_s)
+          else
+            @allowed_scope_names = nil
+          end
           super(&block)
         end
 
         def scope_for_name(name)
+          if @allowed_scope_names && !@allowed_scope_names.include?(name.to_s)
+            return nil
+          end
           return @names[name] if @names[name]
-          return @model.scopes[name.to_sym][:scope] if @model.scopes[name.to_sym]
+          return @model.method(name.to_sym) if @model.respond_to?(name.to_sym)
           return nil
         end
 
       end
 
     end
+    include Classes
 
     def json_resp(data, meta=true, opts = {})
       meta = 200 if meta == true 
@@ -202,8 +223,9 @@ module QuickScript
     end
 
     def requested_includes(sub=nil)
-      if params[:include].present?
-        rs = JSON.parse(params[:include]).collect(&:to_s)
+      incs = params[:include] || params[:includes]
+      if incs
+        rs = JSON.parse(incs).collect(&:to_s)
         if sub
           sub = sub.to_s
           sl = sub.length + 1

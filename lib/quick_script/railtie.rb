@@ -12,8 +12,13 @@ if defined?(Rails::Railtie)
       initializer :quick_script, after: 'sprockets.environment' do |app|
 				QuickScript.initialize
 
-        Sprockets.register_mime_type 'text/html', '.html'
-        Sprockets.register_engine '.jhaml', QuickScript::JstHamlProcessor
+        if Sprockets.respond_to?(:register_transformer)
+          Sprockets.register_mime_type 'text/jhaml', extensions: ['.jhaml']
+          Sprockets.register_transformer 'text/jhaml', 'application/javascript', QuickScript::JstHamlTransformer
+        else
+          Sprockets.register_mime_type 'text/html', '.html'
+          Sprockets.register_engine '.jhaml', QuickScript::JstHamlProcessor
+        end
       end
 
     end
