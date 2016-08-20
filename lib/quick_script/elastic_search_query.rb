@@ -50,6 +50,7 @@ module QuickScript
     end
 
     def page_count(count)
+      return 0 if self.size == 0
       return (count / self.size.to_f).ceil
     end
 
@@ -84,12 +85,23 @@ module QuickScript
       @qbf << tq
     end
 
-    def add_term_filter(field, val)
+    def add_term(bq, field, val)
       if val.is_a?(Array)
-        @qbf << {:terms => {field => val}}
+        bq << {:terms => {field => val}}
       else
-        @qbf << {:term => {field => val}}
+        bq << {:term => {field => val}}
       end
+    end
+
+    def add_term_filter(field, val)
+      self.add_term(@qbf, field, val)
+    end
+
+    def add_nested_filter(path, opts={})
+      q = {nested: {path: path, query: {bool: {must: []}}}}
+      fq = q[:nested][:query][:bool][:must]
+      yield fq
+      @qbf << q
     end
 
     def add_simple_query_string(fields, query, opts={})
