@@ -45,7 +45,7 @@ module QuickScript
       end
 
       def model_class_orm
-        if model_class < ActiveRecord::Base
+        if defined?(ActiveRecord) && model_class < ActiveRecord::Base
           return :active_record
         elsif model_class.respond_to?(:mongo_session)
           return :mongoid
