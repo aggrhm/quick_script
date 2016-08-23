@@ -117,10 +117,10 @@ module QuickScript
               crit.merge!(ds.call(*v))
             end
           end
-          if crit && incls
+          if crit && incls.present?
             crit = crit.includes(incls)
           end
-          if crit && sort
+          if crit && sort.present?
             if sort_scope = scope_for_name('sort')
               crit.merge!(sort_scope.call(sort))
             else
