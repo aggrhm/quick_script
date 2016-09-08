@@ -212,6 +212,11 @@ module QuickScript
     "#{prefix}#{path.gsub("/", sep)}"
   end
 
+  def self.log_exception(ex)
+    Rails.logger.info ex.message
+    Rails.logger.info ex.backtrace.join("\n\t")
+  end
+
   class DynamicErb
 
     def initialize(vars)
