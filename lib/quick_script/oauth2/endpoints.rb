@@ -50,6 +50,11 @@ module QuickScript
         end
       end
 
+      def logout
+        reset_session
+        redirect_to "/"
+      end
+
     end
 
   end

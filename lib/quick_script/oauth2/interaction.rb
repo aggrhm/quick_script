@@ -78,14 +78,13 @@ module QuickScript
       end
 
       def get_current_user_data(opts={})
+        return nil if !is_logged_in?
         fields = opts[:fields] || QuickScript.config.default_current_user_session_fields
         resp = api_request(:get, "/account")
         if resp.status == 200
           rd = JSON.parse(resp.body)
           user = rd["data"]
-          Rails.logger.info "CURRENT_USER: #{user.inspect}"
           session[:current_user_data] = user.slice(*fields)
-          Rails.logger.info "CURRENT_USER (in session): #{session[:current_user_data].inspect}"
           return user
         else
           return nil
