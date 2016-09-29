@@ -80,7 +80,8 @@ module QuickScript
 
       class ScopeResponder
 
-        def initialize(scope=nil, &block)
+        def initialize(scope=nil, opts={}, &block)
+          @options = opts
           @scope = scope
           @names = {}.with_indifferent_access
           @before_filter = nil
@@ -117,13 +118,13 @@ module QuickScript
               crit.merge!(ds.call(*v))
             end
           end
-          if crit && incls.present?
+          if crit && incls.present? && (@options[:use_orm_includes] == true)
             crit = crit.includes(incls)
           end
           if crit && sort.present?
             if sort_scope = scope_for_name('sort')
               crit.merge!(sort_scope.call(sort))
-            else
+            elsif crit.respond_to?(:order)
               crit = crit.order(sort)
             end
           end
@@ -175,7 +176,6 @@ module QuickScript
 
         def initialize(model, opts={}, &block)
           @model = model
-          @options = opts
 
           if opts[:allowed_scope_names]
             @allowed_scope_names = opts[:allowed_scope_names].collect(&:to_s)
