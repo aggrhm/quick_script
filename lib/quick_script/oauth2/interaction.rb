@@ -117,9 +117,10 @@ module QuickScript
       end
 
       def api_connection
-        @api_connection ||= Faraday.new(url: APP_CONFIG[:api_host_url], params: {client_id: APP_CONFIG[:client_id], client_secret: APP_CONFIG[:client_secret]}) do |f|
+        @api_connection ||= Faraday.new(url: APP_CONFIG[:api_host_url]) do |f|
           f.request :multipart
           f.request :url_encoded
+          f.basic_auth(APP_CONFIG[:client_id], APP_CONFIG[:client_secret])
           f.adapter Faraday.default_adapter
         end
       end

@@ -250,7 +250,7 @@ module QuickScript
       render :json => json_error([err])
     end
 
-    def prepare_api_result(result, opts={})
+    def prepare_result(result, opts={})
       ret = {}
       result.each do |key, val|
         if val.is_a?(Array)
@@ -269,7 +269,7 @@ module QuickScript
     end
 
     def render_result(result, opts = {}, &block)
-      result = self.prepare_api_result(result, opts)
+      result = self.prepare_result(result, opts)
 
       resp = OpenStruct.new
       opts[:include_all] = true if opts[:include_all].nil?

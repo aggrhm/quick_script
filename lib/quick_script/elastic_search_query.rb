@@ -121,6 +121,19 @@ module QuickScript
       @qbf << {:range => {field => range}}
     end
 
+    def add_parsed_scope(key, val)
+      if key.start_with?("with_")
+        self.add_term_filter(key[5..-1], val)
+      elsif key.start_with?("search_")
+        self.add_match_filter(key[7..-1], val)
+      elsif key.start_with?("has_")
+        self.add_term_filter(key, val)
+      elsif key == "sort"
+        fld,ord = val.split(" ")
+        self.add_sort(fld, ord)
+      end
+    end
+
     def add_aggregation(name, aopts)
       self.aggs[name] = aopts
     end

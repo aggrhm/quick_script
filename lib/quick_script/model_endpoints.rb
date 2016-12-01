@@ -80,7 +80,7 @@ module QuickScript
             self.instance_exec(res, &mopts[:prepare_result])
           end
           ropts = mes[:default_result_options].merge( (mopts[:result_options] || {}) )
-          render_result(res, ropts)
+          render_result(res, ropts.merge(action: name.to_sym))
         end
       end
 
@@ -105,7 +105,7 @@ module QuickScript
     def index
       if !params[:scope]  # handle if user finding by other than id
         prepare_model(@model)
-        render_result success: true, data: @model
+        render_result({success: true, data: @model}, {action: :index})
       else
         if model_endpoints_settings[:use_orm_includes]
           res = scope_responder.result(@scope, includes: model_includes)
@@ -114,7 +114,7 @@ module QuickScript
         end
         @models = res[:data]
         prepare_model(@models)
-        render_result(res)
+        render_result(res, action: :index)
       end
     end
 
