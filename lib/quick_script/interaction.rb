@@ -299,12 +299,13 @@ module QuickScript
     end
 
     def handle_params
-      # handle scope
-      @scope = QuickScript::SmartScope.new(params_with_actor)
-
       # handle api_ver
       @api_version = request.headers['API-Version'] || 0
       ENV['API_VER'] = @api_version.to_s
+    end
+
+    def request_scope
+      QuickScript::SmartScope.new(params_with_actor)
     end
 
     def get_scoped_items(model, scope, limit, offset)
@@ -324,7 +325,7 @@ module QuickScript
     end
 
     def respond_to_scope(resp_action=:items, responder=nil, &block)
-      responder ||= ScopeResponder.new(@scope, &block)
+      responder ||= ScopeResponder.new(request_scope, &block)
       responder.send(resp_action)
     end
 

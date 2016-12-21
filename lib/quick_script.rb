@@ -4,6 +4,7 @@ require 'quick_script/helpers'
 require 'quick_script/interaction'
 require 'quick_script/model'
 require 'quick_script/stateable'
+require 'quick_script/associations_cache'
 require 'quick_script/model_endpoints'
 require 'quick_script/engine'
 require 'quick_script/jst_haml_processor'
@@ -182,6 +183,10 @@ module QuickScript
     else
       return new_opts
     end
+  end
+
+  def self.parse_data(opts)
+    self.parse_opts(opts)
   end
 
   def self.parse_template(name, vars, opts={})

@@ -7,10 +7,6 @@ module QuickScript
     end
 
     module ClassMethods
-      def attr_alias(new_attr, old_attr)
-        alias_method(new_attr, old_attr)
-        alias_method("#{new_attr}=", "#{old_attr}=")
-      end
 
       def enum_methods!(enum, opts)
         enum = enum.to_s
@@ -30,9 +26,51 @@ module QuickScript
         end
       end
 
+      def embeds_one(name, opts)
+        define_method name do
+          src = self[name]
+          cls = opts[:class_name].constantize
+          if src
+            return cls.from_parent(self, src)
+          else
+            if opts[:autobuild]
+              src = self[name] = {}
+              return cls.from_parent(self, src)
+            else
+              nil
+            end
+          end
+        end
+
+        define_method "#{name}=" do |val|
+          if val == nil
+            self[name] = nil
+          else
+            if val.is_a?(Hash)
+              self[name] = val
+            else
+              self[name] = val.parent_source
+              val.set_parent(self, self[name])
+            end
+          end
+          return val
+        end
+      end
+
+
     end
 
     # INSTANCE METHODS
+
+    def update_fields_from(data, fields, options)
+      fields.each do |field|
+        if data.key?(field)
+          val = data[field]
+          val = val.strip if options[:strip]
+          self.send "#{field.to_s}=", val
+        end
+      end
+    end
 
     def error_message
       self.error_messages.first

@@ -108,9 +108,9 @@ module QuickScript
         render_result({success: true, data: @model}, {action: :index})
       else
         if model_endpoints_settings[:use_orm_includes]
-          res = scope_responder.result(@scope, includes: model_includes)
+          res = scope_responder.result(request_scope, includes: model_includes)
         else
-          res = scope_responder.result(@scope)
+          res = scope_responder.result(request_scope)
         end
         @models = res[:data]
         prepare_model(@models)
