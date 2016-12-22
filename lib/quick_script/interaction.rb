@@ -184,7 +184,7 @@ module QuickScript
           else
             @allowed_scope_names = nil
           end
-          super(&block)
+          super(nil, opts, &block)
         end
 
         def scope_for_name(name)
