@@ -131,7 +131,9 @@ module QuickScript
     end
 
     def prepare_model(models)
-      model_class.update_cache(models, model_includes) if model_class.respond_to?(:update_cache)
+      if model_endpoints_settings[:use_orm_includes] == false
+        model_class.update_cache(models, model_includes) if model_class.respond_to?(:update_cache)
+      end
     end
 
     def load_model

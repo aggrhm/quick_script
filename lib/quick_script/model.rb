@@ -27,6 +27,10 @@ module QuickScript
       end
 
       def embeds_one(name, opts)
+        if defined?(SchemaSync) && self.included_modules.include?(SchemaSync::Model)
+          field name.to_sym, type: Hash
+        end
+
         define_method name do
           src = self[name]
           cls = opts[:class_name].constantize
@@ -49,7 +53,7 @@ module QuickScript
             if val.is_a?(Hash)
               self[name] = val
             else
-              self[name] = val.parent_source
+              self[name] = val.attributes
               val.set_parent(self, self[name])
             end
           end

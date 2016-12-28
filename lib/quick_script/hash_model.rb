@@ -1,9 +1,10 @@
 module QuickScript
 
-  class HashModel
+  module HashModel
 
     def self.included(base)
       base.extend ClassMethods
+      base.send :include, QuickScript::Model
     end
 
     module ClassMethods
@@ -12,20 +13,27 @@ module QuickScript
         fields[name] = opts.merge(name: name)
 
         define_method name do
-          fopts = fields[name]
+          fopts = self.class.fields[name]
           ft = fopts[:type]
-          val = self.parent_source[name.to_s]
+          val = self.attributes[name.to_s]
           case ft
           when Time
             rv = Time.at(val)
           else
-            rv = ret
+            rv = val
+          end
+          if rv.nil? && (df = fopts[:default])
+            if df.is_a?(Proc)
+              rv = self.instance_exec(&df)
+            else
+              rv = df
+            end
           end
           return rv
         end
 
         define_method "#{name}=" do |val|
-          fopts = fields[name]
+          fopts = self.class.fields[name]
           ft = fopts[:type]
 
           case ft
@@ -38,7 +46,7 @@ module QuickScript
           else
             sv = val
           end
-          self.parent_source[name.to_s] = sv
+          self.attributes[name.to_s] = sv
         end
       end
 
@@ -55,24 +63,24 @@ module QuickScript
     end
 
     def id
-      ret = parent_source['id']
+      ret = attributes['id']
       if ret.blank?
-        ret = parent_source['id'] = SecureRandom.uuid.gsub("-", "")
+        ret = attributes['id'] = SecureRandom.uuid.gsub("-", "")
       end
       return ret
     end
 
     def set_parent(parent, hash)
       @parent_model = parent
-      @parent_source = hash
+      @attributes = hash
     end
 
     def parent_model
       @parent_model
     end
 
-    def parent_source
-      @parent_source ||= {}
+    def attributes
+      @attributes ||= {}
     end
 
     def new_record?
@@ -80,8 +88,28 @@ module QuickScript
       return parent_model.new_record?
     end
 
+    def persisted?
+      !new_record?
+    end
+
     def valid?
       true
+    end
+
+    def errors
+      @errors ||= ActiveModel::Errors.new(self)
+    end
+
+    def save
+      if parent_model
+        if parent_model.persisted?
+          parent_model.save
+        else
+          valid?
+        end
+      else
+        return false
+      end
     end
 
   end

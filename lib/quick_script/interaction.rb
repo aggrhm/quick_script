@@ -222,7 +222,7 @@ module QuickScript
       end
     end
 
-    def requested_includes(sub=nil)
+    def request_includes(sub=nil)
       incs = params[:include] || params[:includes]
       if incs
         rs = JSON.parse(incs).collect(&:to_s)
@@ -236,6 +236,9 @@ module QuickScript
       else
         return []
       end
+    end
+    def requested_includes(sub=nil)
+      request_includes(sub)
     end
 
     def json_error(errors, meta = 404, opts = {})
