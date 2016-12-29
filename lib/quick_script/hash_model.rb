@@ -92,8 +92,13 @@ module QuickScript
       !new_record?
     end
 
+    def validate!
+
+    end
+
     def valid?
-      true
+      self.validate!
+      return errors.none?
     end
 
     def errors
@@ -101,6 +106,7 @@ module QuickScript
     end
 
     def save
+      return false if !valid?
       if parent_model
         if parent_model.persisted?
           parent_model.save
