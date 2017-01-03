@@ -70,7 +70,7 @@ module QuickScript
       fields.each do |field|
         if data.key?(field)
           val = data[field]
-          val = val.strip if options[:strip]
+          val = val.strip if options[:strip] && val.respond_to?(:strip)
           self.send "#{field.to_s}=", val
         end
       end

@@ -43,6 +43,8 @@ module QuickScript
             sv = val.to_f
           when Time
             sv = val.to_i
+          when :boolean
+            sv = QuickScript.parse_bool(val)
           else
             sv = val
           end
