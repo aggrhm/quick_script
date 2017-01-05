@@ -95,7 +95,7 @@ module QuickScript
               v
             end
           }
-          where(state: state)
+          where(state: ar)
         }
         scope :has_state, lambda {|st|
           with_state(st)
