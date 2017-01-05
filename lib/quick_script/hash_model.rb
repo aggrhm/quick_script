@@ -28,6 +28,7 @@ module QuickScript
             else
               rv = df
             end
+            self.attributes[name.to_s] = rv
           end
           return rv
         end
