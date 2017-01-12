@@ -28,7 +28,11 @@ module QuickScript
         end
         # get current user and set in session
         user = get_current_user_data
-        render_result success: true, data: user
+        if user.nil?
+          render_result success: false, error: "The user information could not be loaded."
+        else
+          render_result success: true, data: user
+        end
       end
 
       def account_register

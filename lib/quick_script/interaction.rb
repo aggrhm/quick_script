@@ -32,7 +32,11 @@ module QuickScript
             {
               default: lambda {|m, opts|
                 if m.respond_to?(:to_api)
-                  m.to_api
+                  if opts[:in_array] == true
+                    m.to_api(:default)
+                  else
+                    m.to_api
+                  end
                 else
                   m
                 end
@@ -257,7 +261,7 @@ module QuickScript
       ret = {}
       result.each do |key, val|
         if val.is_a?(Array)
-          ret[key] = val.collect {|v| prepare_api_object(v, opts)}
+          ret[key] = val.collect {|v| prepare_api_object(v, opts.merge(in_array: true))}
         else
           ret[key] = prepare_api_object(val, opts)
         end

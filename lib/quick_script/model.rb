@@ -66,11 +66,13 @@ module QuickScript
 
     # INSTANCE METHODS
 
-    def update_fields_from(data, fields, options)
+    def update_fields_from(data, fields, options={})
       fields.each do |field|
         if data.key?(field)
           val = data[field]
-          val = val.strip if options[:strip] && val.respond_to?(:strip)
+          if options[:strip] != false
+            val = val.strip if val.respond_to?(:strip)
+          end
           self.send "#{field.to_s}=", val
         end
       end
