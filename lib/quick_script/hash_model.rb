@@ -121,6 +121,20 @@ module QuickScript
       end
     end
 
+    def update_from_hash(data)
+      data = QuickScript.parse_opts(data)
+      update_fields_from(data, self.class.fields.keys)
+    end
+
+    def to_api(lvl=:full, opts={})
+      ret = {}
+      ret[:id] = self.id
+      self.class.fields.keys.each do |name|
+        ret[name.to_sym] = self.send(name)
+      end
+      return ret
+    end
+
   end
 
 end
