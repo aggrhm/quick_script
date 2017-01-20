@@ -38,8 +38,8 @@ module QuickScript
             return cls.from_parent(self, src)
           else
             if opts[:autobuild]
-              src = self[name] = {}
-              return cls.from_parent(self, src)
+              self[name] = {}
+              return cls.from_parent(self, self[name])
             else
               nil
             end

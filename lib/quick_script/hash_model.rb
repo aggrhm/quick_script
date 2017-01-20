@@ -84,6 +84,7 @@ module QuickScript
 
     def attributes
       @attributes ||= {}
+      return @attributes
     end
 
     def new_record?
@@ -105,7 +106,14 @@ module QuickScript
     end
 
     def errors
-      @errors ||= ActiveModel::Errors.new(self)
+      if !attributes.respond_to?(:hash_model_errors)
+        class << attributes
+          def hash_model_errors
+            @errors ||= ActiveModel::Errors.new(self)
+          end
+        end
+      end
+      attributes.hash_model_errors
     end
 
     def save
@@ -123,15 +131,16 @@ module QuickScript
 
     def update_from_hash(data)
       data = QuickScript.parse_opts(data)
-      update_fields_from(data, self.class.fields.keys)
+      self.update_fields_from(data, self.class.fields.keys)
     end
 
     def to_api(lvl=:full, opts={})
       ret = {}
-      ret[:id] = self.id
+      ret[:id] = self.id.to_s
       self.class.fields.keys.each do |name|
         ret[name.to_sym] = self.send(name)
       end
+      ret[:errors] = self.errors.to_hash
       return ret
     end
 

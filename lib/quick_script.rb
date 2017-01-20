@@ -5,6 +5,7 @@ require 'quick_script/interaction'
 require 'quick_script/model'
 require 'quick_script/hash_model'
 require 'quick_script/stateable'
+require 'quick_script/short_keyable'
 require 'quick_script/associations_cache'
 require 'quick_script/model_endpoints'
 require 'quick_script/engine'
@@ -17,6 +18,7 @@ require "quick_script/oauth2/endpoints"
 module QuickScript
 
   DEFAULT_ROUTING_RULE = lambda{|req| !req.env['REQUEST_URI'].include?('/api/') && !req.env['REQUEST_URI'].include?('/assets/')}
+  HAS_LETTERS_REGEX = /[a-z]/i
 
   class Configuration
 
