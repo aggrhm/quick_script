@@ -109,7 +109,7 @@ module QuickScript
       if !attributes.respond_to?(:hash_model_errors)
         class << attributes
           def hash_model_errors
-            @errors ||= ActiveModel::Errors.new(self)
+            @hash_model_errors ||= ActiveModel::Errors.new(self)
           end
         end
       end

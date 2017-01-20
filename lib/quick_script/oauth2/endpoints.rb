@@ -5,10 +5,23 @@ module QuickScript
     module Endpoints
 
       def route_api_request
-        path = params[:path]
-
-        resp = api_request(request.method, path, request.query_parameters.merge(request.request_parameters))
+        cfg = build_api_request
+        resp = api_request(
+          cfg[:method],
+          cfg[:path],
+          cfg[:params],
+          {headers: cfg[:headers]}
+        )
         render json: resp.body, status: resp.status
+      end
+
+      def build_api_request
+        {
+          method: request.method,
+          path: params[:path],
+          params: request.query_parameters.merge(request.request_parameters),
+          headers: {}
+        }
       end
 
       def account 
@@ -39,7 +52,8 @@ module QuickScript
         # create new account
         email = params[:email]
         pw = params[:password]
-        resp = api_request(:post, "/account/register", params)
+        acct_path = oauth2_interaction_options[:account_path]
+        resp = api_request(:post, "#{acct_path}/register", params)
         if resp.status != 200
           render json: resp.body, status: resp.status
           return

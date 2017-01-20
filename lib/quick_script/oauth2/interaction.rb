@@ -11,6 +11,12 @@ module QuickScript
         end
       end
 
+      def oauth2_interaction_options
+        @oauth2_interaction_options ||= {
+          account_path: "/v1/account"
+        }
+      end
+
       def is_logged_in?
         session[:token_data] != nil
       end
@@ -27,8 +33,7 @@ module QuickScript
           access_token = current_user_access_token
           hdrs['Authorization'] = "Bearer " + access_token
         end
-        hdrs['API-Version'] = "2"
-        url = "/api/#{path}"
+        url = "#{path}"
         puts "URL: #{url}"
         puts "PARAMS: #{params}"
         # parse params
@@ -80,11 +85,13 @@ module QuickScript
       def get_current_user_data(opts={})
         return nil if !is_logged_in?
         fields = opts[:fields] || QuickScript.config.default_current_user_session_fields
-        resp = api_request(:get, "/account")
+        acct_path = oauth2_interaction_options[:account_path]
+        resp = api_request(:get, acct_path)
         if resp.status == 200
           rd = JSON.parse(resp.body)
           user = rd["data"]
           session[:current_user_data] = user.slice(*fields)
+          @current_user_data = user
           return user
         else
           return nil
@@ -93,7 +100,7 @@ module QuickScript
 
       def current_user_id
         if is_logged_in?
-          current_user_data['id']
+          session[:current_user_data]['id']
         else
           return nil
         end
@@ -101,7 +108,8 @@ module QuickScript
 
       def current_user_data
         if is_logged_in?
-          session[:current_user_data]
+          return @current_user_data if @current_user_data
+          return get_current_user_data
         else
           return nil
         end
