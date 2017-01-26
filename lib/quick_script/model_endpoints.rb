@@ -37,6 +37,13 @@ module QuickScript
         model_endpoints_settings[:model_class_name] = name
         model_endpoints_settings[:use_orm_includes] = true if model_class_orm == :active_record
         model_endpoints_settings.deep_merge!(opts)
+        # clean endpoints
+        model_endpoints_settings[:endpoints].keys.each do |name|
+          opts = model_endpoints_settings[:endpoints][name]
+          if !opts.is_a?(Hash)
+            model_endpoints_settings[:endpoints][name] = {model_method: opts.to_sym}
+          end
+        end
         build_model_endpoints
       end
 
