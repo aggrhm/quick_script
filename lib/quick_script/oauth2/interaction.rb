@@ -125,7 +125,7 @@ module QuickScript
       end
 
       def api_connection
-        @api_connection ||= Faraday.new(url: APP_CONFIG[:api_host_url]) do |f|
+        @api_connection ||= Faraday.new(url: APP_CONFIG[:api_host_url], ssl: {verify: false}) do |f|
           f.options[:timeout] = 600
           f.request :multipart
           f.request :url_encoded
