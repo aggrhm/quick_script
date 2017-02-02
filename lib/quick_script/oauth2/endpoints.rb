@@ -12,7 +12,7 @@ module QuickScript
           cfg[:params],
           {headers: cfg[:headers]}
         )
-        render json: resp.body, status: resp.status
+        render_api_response(resp)
       end
 
       def build_api_request
@@ -22,6 +22,10 @@ module QuickScript
           params: request.query_parameters.merge(request.request_parameters),
           headers: {}
         }
+      end
+
+      def render_api_response(resp)
+        render json: resp.body, status: resp.status
       end
 
       def account 
