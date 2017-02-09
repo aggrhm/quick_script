@@ -16,8 +16,8 @@ module QuickScript
           fopts = self.class.fields[name]
           ft = fopts[:type]
           val = self.attributes[name.to_s]
-          case ft
-          when Time
+          case ft.to_s
+          when "Time"
             rv = Time.at(val)
           else
             rv = val
@@ -37,14 +37,14 @@ module QuickScript
           fopts = self.class.fields[name]
           ft = fopts[:type]
 
-          case ft
-          when Integer
+          case ft.to_s
+          when "Integer"
             sv = val.to_i
-          when Float
+          when "Float"
             sv = val.to_f
-          when Time
+          when "Time"
             sv = val.to_i
-          when :boolean
+          when "boolean"
             sv = QuickScript.parse_bool(val)
           else
             sv = val

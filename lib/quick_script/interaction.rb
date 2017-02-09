@@ -138,6 +138,7 @@ module QuickScript
         def items(scope=nil, crit=nil)
           scope ||= @scope
           crit ||= criteria(scope)
+          return [] if crit.nil?
           if crit.respond_to? :limit
             items = crit.limit(scope.limit).offset(scope.offset).to_a
           else
@@ -149,6 +150,7 @@ module QuickScript
         def count(scope=nil, crit=nil)
           scope ||= @scope
           crit ||= criteria(scope)
+          return 0 if crit.nil?
           crit.count
         end
 

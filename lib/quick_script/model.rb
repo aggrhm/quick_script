@@ -4,6 +4,9 @@ module QuickScript
 
     def self.included(base)
       base.send :extend, ClassMethods
+      if defined?(ActiveRecord) && base < ActiveRecord::Base
+        base.send :extend, ActiveRecordClassMethods
+      end
     end
 
     module ClassMethods
@@ -25,6 +28,10 @@ module QuickScript
           end
         end
       end
+
+    end
+
+    module ActiveRecordClassMethods
 
       def embeds_one(name, opts)
         if defined?(SchemaSync) && self.included_modules.include?(SchemaSync::Model)
@@ -61,8 +68,8 @@ module QuickScript
         end
       end
 
-
     end
+
 
     # INSTANCE METHODS
 
