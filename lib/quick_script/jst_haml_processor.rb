@@ -37,7 +37,11 @@ module QuickScript
 
   class JstHamlTransformer
 
-    def self.call(input)
+    def initialize(opts={})
+      @html = opts[:html] || false
+    end
+
+    def call(input)
       @namespace = "this.JST"
       lp = input[:name]
       res = QuickScript.config.jst_name_processor.call(lp)
@@ -50,7 +54,11 @@ module QuickScript
       end
 
       # convert haml to html
-      content = Haml::Engine.new(input[:data]).render
+      if !@html
+        content = Haml::Engine.new(input[:data]).render
+      else
+        content = input[:data]
+      end
 
       alias_s = p_alias ? "#{@namespace}['#{p_alias}'] = #{@namespace}['#{name}'];" : ""
 

@@ -14,7 +14,9 @@ if defined?(Rails::Railtie)
 
         if Sprockets.respond_to?(:register_transformer)
           Sprockets.register_mime_type 'text/jhaml', extensions: ['.jhaml']
-          Sprockets.register_transformer 'text/jhaml', 'application/javascript', QuickScript::JstHamlTransformer
+          Sprockets.register_mime_type 'text/jhtml', extensions: ['.jhtml']
+          Sprockets.register_transformer 'text/jhaml', 'application/javascript', QuickScript::JstHamlTransformer.new
+          Sprockets.register_transformer 'text/jhtml', 'application/javascript', QuickScript::JstHamlTransformer.new(html: true)
         else
           Sprockets.register_mime_type 'text/html', '.html'
           Sprockets.register_engine '.jhaml', QuickScript::JstHamlProcessor
