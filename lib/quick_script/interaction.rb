@@ -259,9 +259,20 @@ module QuickScript
       render :json => json_error([err])
     end
 
+    # Called as part of render_result. Serializes the individual
+    # fields of the result to prepare it for transmission to the
+    # client.
+    #
+    # Per field manipulations can be inserted by overriding
+    # prepare_api_field in your controller.
+    #
+    # @param [Hash] result to serialize
+    # @param [Hash] parameters that will be provided to object transformers (typically your model's to_api method)
+    # @return [Hash] json compatible serialized result
     def prepare_result(result, opts={})
       ret = {}
       result.each do |key, val|
+        val = prepare_api_field(key, val)
         if val.is_a?(Array)
           ret[key] = val.collect {|v| prepare_api_object(v, opts.merge(in_array: true))}
         else
@@ -269,6 +280,21 @@ module QuickScript
         end
       end
       return ret
+    end
+
+    # Prepare an individual field in the result object for
+    # serialization. This is an appropriate place to insert
+    # transformations over the entire contents of a field whereas
+    # api_object_transformers is more appropriate for transforming
+    # each member of the field individually.
+    #
+    # By default this method performs no transformation and exists
+    # only to be overridden.
+    #
+    # @param [String] name of the field
+    # @param [Hash, Model, String, ...] 
+    def prepare_api_field(key, val)
+      val
     end
 
     def prepare_api_object(model, opts)
