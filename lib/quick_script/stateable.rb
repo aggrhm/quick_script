@@ -113,7 +113,6 @@ module QuickScript
     def set_state!(state)
       self.state! state
       self.save(validate: false)
-      return self.state
     end
 
   end

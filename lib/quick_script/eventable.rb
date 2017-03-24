@@ -14,11 +14,13 @@ module QuickScript
       def handle_event(ev, method, eopts={})
         event_handlers << eopts.merge({event: ev, method: method})
       end
+      alias_method :after_event, :handle_event
 
       def handle_event_as_callback(ev, method, eopts={})
         eopts[:callback] = true
         handle_event(ev, method, eopts)
       end
+      alias_method :during_event, :handle_event_as_callback
     end
 
     def report_event(ev, opts={})
