@@ -53,7 +53,7 @@ module QuickScript
         ret = "QS.utils.registerStyle(#{td[:processed_content].inspect})\n"
       end
       # parse coffeescript
-      puts text
+      #puts text
       text = CoffeeScript.compile(text)
       return {data: text}
     end
