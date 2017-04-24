@@ -5,16 +5,23 @@ module QuickScript
     module Interaction
 
       def self.included(base)
+        base.extend ClassMethods
         if base.respond_to?(:helper_method)
           base.helper_method :is_logged_in? 
           base.helper_method :current_user_data
         end
       end
 
+      module ClassMethods
+        def oauth2_interaction_options
+          @oauth2_interaction_options ||= {
+            account_path: "/v1/account"
+          }
+        end
+      end
+
       def oauth2_interaction_options
-        @oauth2_interaction_options ||= {
-          account_path: "/v1/account"
-        }
+        self.class.oauth2_interaction_options
       end
 
       def is_logged_in?
