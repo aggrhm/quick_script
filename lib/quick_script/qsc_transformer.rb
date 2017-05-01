@@ -38,24 +38,48 @@ module QuickScript
       else
         raise "This template language is unknown."
       end
-      return {tag_name: name, lang: lang, name: name, processed_content: pc}
+      return {tag_name: tname, lang: lang, name: name, processed_content: pc}
     end
 
     def call(input)
+      output = ""
+      buffer = ""
+      ib = false
       # parse template
       text = input[:data]
-      text = text.gsub(/<template\s.*lang=.*>.*<\/template>/m) do |match|
-        td = parse_tag(match)
-        ret = "QS.utils.registerTemplate(\"#{td[:name]}\", #{td[:processed_content].inspect})\n"
-      end
-      text = text.gsub(/<style\s.*lang=.*>.*<\/style>/m) do |match|
-        td = parse_tag(match)
-        ret = "QS.utils.registerStyle(#{td[:processed_content].inspect})\n"
+      text.each_line do |line|
+        if line.start_with?("<") && !ib
+          buffer = line
+          ib = true
+        elsif line.start_with?("</") && ib
+          buffer << line
+          # process buffer
+          td = parse_tag(buffer)
+          puts td.inspect
+          if td[:tag_name] == "template"
+            pb = "QS.utils.registerTemplate(\"#{td[:name]}\", #{td[:processed_content].inspect})\n"
+          elsif td[:tag_name] == "style"
+            pb = "QS.utils.registerStyle(#{td[:processed_content].inspect})\n"
+          else
+            raise "This tag is unknown: #{td.inspect}"
+          end
+          output << pb
+          ib = false
+        else
+          if ib
+            buffer << line
+          else
+            output << line
+          end
+        end
       end
       # parse coffeescript
-      #puts text
-      text = CoffeeScript.compile(text)
-      return {data: text}
+      #puts output
+      output = CoffeeScript.compile(output)
+      return {data: output}
+    rescue => ex
+      puts "QSC Transformer Error: Error processing file #{input[:name]}"
+      raise ex
     end
 
   end
