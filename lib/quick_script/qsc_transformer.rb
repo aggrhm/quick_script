@@ -55,7 +55,7 @@ module QuickScript
           buffer << line
           # process buffer
           td = parse_tag(buffer)
-          puts td.inspect
+          #puts td.inspect
           if td[:tag_name] == "template"
             pb = "QS.utils.registerTemplate(\"#{td[:name]}\", #{td[:processed_content].inspect})\n"
           elsif td[:tag_name] == "style"
