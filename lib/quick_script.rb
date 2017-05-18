@@ -44,6 +44,10 @@ module QuickScript
 
     attr_accessor :default_current_user_session_fields
 
+    # defer setting the default because we load before Rails
+    def sass_import_paths
+      @sass_import_paths ||= [Rails.root.join("app/assets/stylesheets")]
+    end
   end
 
   module Errors
