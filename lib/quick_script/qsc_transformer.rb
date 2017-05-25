@@ -1,7 +1,3 @@
-require 'haml'
-require 'sass'
-require 'coffee_script'
-
 module QuickScript
 
   class QscTransformer
@@ -30,8 +26,10 @@ module QuickScript
       end
       content = lines[1..-2].join("\n")
       if lang == "haml"
+        require 'haml'
         pc = Haml::Engine.new(content).render
       elsif lang == "sass" || lang == "scss"
+        require 'sass'
         puts QuickScript.config.sass_import_paths
         pc = Sass::Engine.new(content, syntax: lang,
                               load_paths: QuickScript.config.sass_import_paths).render
@@ -44,6 +42,7 @@ module QuickScript
     end
 
     def call(input)
+      require 'coffee_script'
       output = ""
       buffer = ""
       ib = false
