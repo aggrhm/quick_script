@@ -15,6 +15,7 @@ module QuickScript
       module ClassMethods
         def oauth2_interaction_options
           @oauth2_interaction_options ||= {
+            path_prefix: "",
             account_path: "/v1/account"
           }
         end
@@ -35,12 +36,13 @@ module QuickScript
       end
 
       def api_request(method, path, params={}, opts={})
+        prefix = self.oauth2_interaction_options[:path_prefix] || ""
         hdrs = opts[:headers] || {}
         if is_logged_in?
           access_token = current_user_access_token
           hdrs['Authorization'] = "Bearer " + access_token
         end
-        url = "#{path}"
+        url = "#{prefix}#{path}"
         puts "URL: #{url}"
         puts "PARAMS: #{params}"
         # parse params

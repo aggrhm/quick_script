@@ -93,6 +93,10 @@ module QuickScript
       self.errors.messages.values.flatten
     end
 
+    def has_present_association?(assoc)
+      self.association(assoc).loaded? && self.send(assoc).present?
+    end
+
   end
 
 end
