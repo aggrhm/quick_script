@@ -133,6 +133,12 @@ module QuickScript
       QuickScript::ModelScopeResponder.new(self.model_class, {use_orm_includes: sts[:use_orm_includes]}, &sc)
     end
 
+    def request_scope
+      scope = super
+      scope.includes += self.model_endpoints_settings[:default_includes]
+      return scope
+    end
+
     def model_includes
       incls = requested_includes | self.class.model_endpoints_settings[:default_includes]
     end

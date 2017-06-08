@@ -30,7 +30,7 @@ module QuickScript
         pc = Haml::Engine.new(content).render
       elsif lang == "sass" || lang == "scss"
         require 'sass'
-        puts QuickScript.config.sass_import_paths
+        #puts QuickScript.config.sass_import_paths
         pc = Sass::Engine.new(content, syntax: lang,
                               load_paths: QuickScript.config.sass_import_paths).render
       elsif lang == "html" || lang == "css"
