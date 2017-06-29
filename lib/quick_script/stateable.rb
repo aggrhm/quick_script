@@ -46,7 +46,7 @@ module QuickScript
           ar = st.is_a?(Array) ? st : [st]
           ar = ar.collect {|v|
             if v.is_a?(String)
-              if states.keys?(v.to_sym)
+              if states.key?(v.to_sym)
                 states[v.to_sym]
               else
                 v.to_i
@@ -88,7 +88,7 @@ module QuickScript
           ar = st.is_a?(Array) ? st : [st]
           ar = ar.collect {|v|
             if v.is_a?(String)
-              states.keys?(v.to_sym) ? states[v.to_sym] : v.to_i
+              states.key?(v.to_sym) ? states[v.to_sym] : v.to_i
             elsif v.is_a?(Symbol)
               states[v]
             else
