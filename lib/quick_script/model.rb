@@ -22,7 +22,7 @@ module QuickScript
           end
         end
         define_method "#{enum}!" do |opt|
-          send("#{enum}=", opts[opt])
+          send("#{enum}=", opts.fetch(opt))
           if self.respond_to? "#{enum}_changed_at"
             send("#{enum}_changed_at=", Time.now)
           end
