@@ -14,7 +14,6 @@ module QuickScript
     class << self
       def included(base)
         base.send :extend, ClassMethods
-        base.send :before_filter, :handle_params if base.respond_to? :before_filter
       end
     end
 
@@ -83,12 +82,13 @@ module QuickScript
       end
 
       class ScopeResponder
+        attr_reader :scope
 
-        def initialize(scope=nil, opts={}, &block)
+        def initialize(request_scope, opts={}, &block)
           @options = opts
-          @scope = scope
+          @scope = request_scope
           @names = {}.with_indifferent_access
-          @before_filter = nil
+          @required_scope = nil
           block.call(self) if block
         end
 
@@ -100,17 +100,21 @@ module QuickScript
           @names[name]
         end
 
-        def before_filter(&block)
-          @before_filter = block
+        def required_scope(&block)
+          @required_scope = block
         end
 
-        def criteria(scope, opts={})
+        def actor
+          scope.actor
+        end
+
+        def criteria(opts={})
           crit = nil
           incls = opts[:includes] || scope.includes
           sort = opts[:sort] || scope.sort
 
-          if @before_filter
-            crit = @before_filter.call
+          if @required_scope
+            crit = @required_scope.call
           end
 
           scope.selectors.each do |k, v|
@@ -135,8 +139,7 @@ module QuickScript
           return crit
         end
 
-        def items(scope=nil, crit=nil)
-          scope ||= @scope
+        def items(crit=nil)
           crit ||= criteria(scope)
           return [] if crit.nil?
           if crit.respond_to? :limit
@@ -147,20 +150,17 @@ module QuickScript
           return items
         end
 
-        def count(scope=nil, crit=nil)
-          scope ||= @scope
+        def count(crit=nil)
           crit ||= criteria(scope)
           return 0 if crit.nil?
           crit.count
         end
 
-        def result(scope=nil, opts={})
-          scope = SmartScope.new(scope) if (scope && !scope.is_a?(SmartScope))
-          scope ||= @scope
-          crit = self.criteria(scope, opts)
-          count = self.count(scope, crit)
+        def result(opts={})
+          crit = self.criteria(opts)
+          count = self.count(crit)
           if count > 0
-            data = self.items(scope, crit)
+            data = self.items(crit)
           else
             data = []
           end
@@ -180,7 +180,7 @@ module QuickScript
 
       class ModelScopeResponder < ScopeResponder
 
-        def initialize(model, opts={}, &block)
+        def initialize(request_scope, model, opts={}, &block)
           @model = model
 
           if opts[:allowed_scope_names]
@@ -190,7 +190,7 @@ module QuickScript
           else
             @allowed_scope_names = nil
           end
-          super(nil, opts, &block)
+          super(request_scope, opts, &block)
         end
 
         def scope_for_name(name)

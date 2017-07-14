@@ -118,7 +118,7 @@ module QuickScript
         prepare_model(@model)
         render_result({success: true, data: @model}, {action: :index})
       else
-        res = scope_responder.result(request_scope)
+        res = scope_responder.result
         @models = res[:data]
         prepare_model(@models)
         render_result(res, action: :index)
@@ -130,7 +130,7 @@ module QuickScript
     def scope_responder
       sts = self.class.model_endpoints_settings
       sc = sts[:scope_responder]
-      QuickScript::ModelScopeResponder.new(self.model_class, {use_orm_includes: sts[:use_orm_includes]}, &sc)
+      QuickScript::ModelScopeResponder.new(request_scope, self.model_class, {use_orm_includes: sts[:use_orm_includes]}, &sc)
     end
 
     def request_scope
