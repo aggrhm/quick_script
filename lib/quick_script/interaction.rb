@@ -119,7 +119,12 @@ module QuickScript
 
           scope.selectors.each do |k, v|
             ds = scope_for_name(k)
+
+            if ds.nil? and @options[:strict_scopes]
+              raise QuickScript::Errors::APIError, "#{k} is not a valid scope"
+            end
             next if ds.nil?
+
             if crit.nil?
               crit = ds.call(*v)
             else

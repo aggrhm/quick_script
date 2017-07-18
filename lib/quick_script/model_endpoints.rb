@@ -130,7 +130,9 @@ module QuickScript
     def scope_responder
       sts = self.class.model_endpoints_settings
       sc = sts[:scope_responder]
-      QuickScript::ModelScopeResponder.new(request_scope, self.model_class, {use_orm_includes: sts[:use_orm_includes]}, &sc)
+      opts = (sts[:scope_responder_settings] or {})
+      opts = opts.merge({use_orm_includes: sts[:use_orm_includes]})
+      QuickScript::ModelScopeResponder.new(request_scope, self.model_class, opts, &sc)
     end
 
     def request_scope
