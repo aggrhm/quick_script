@@ -13,6 +13,7 @@ require 'quick_script/engine'
 require 'quick_script/jst_haml_processor'
 require 'quick_script/qsc_transformer'
 require 'quick_script/elastic_search_query'
+require 'quick_script/pundit_model'
 require "quick_script/oauth2/interaction"
 require "quick_script/oauth2/endpoints"
 

@@ -50,7 +50,7 @@ module QuickScript
 
       class SmartScope
 
-        attr_accessor :selectors, :args, :limit, :page, :offset, :includes, :sort
+        attr_accessor :selectors, :args, :limit, :page, :offset, :includes, :enhances, :sort
         attr_reader :params
 
         def initialize(params)
@@ -58,6 +58,8 @@ module QuickScript
           @limit = 100
           @page = 1
           @offset = 0
+          @includes = []
+          @enhances = []
           if params[:scope]
             @selectors = JSON.parse(params[:scope])
           end
@@ -65,6 +67,7 @@ module QuickScript
           @page = params[:page].to_i if params[:page]
           @offset = (@page - 1) * @limit if params[:page] && params[:limit]
           @includes = QuickScript.parse_opts(params[:includes]) if params[:includes]
+          @enhances = QuickScript.parse_opts(params[:enhances]) if params[:enhances]
           @sort = QuickScript.parse_opts(params[:sort]) if params[:sort]
         rescue => ex
           Rails.logger.info ex.message
@@ -88,7 +91,6 @@ module QuickScript
           @options = opts
           @scope = request_scope
           @names = {}.with_indifferent_access
-          @required_scope = nil
           block.call(self) if block
         end
 
@@ -96,12 +98,16 @@ module QuickScript
           @names
         end
 
+        def request_scope
+          scope
+        end
+
         def scope_for_name(name)
           @names[name]
         end
 
-        def required_scope(&block)
-          @required_scope = block
+        def base_scope
+          nil
         end
 
         def actor
@@ -113,8 +119,9 @@ module QuickScript
           incls = opts[:includes] || scope.includes
           sort = opts[:sort] || scope.sort
 
-          if @required_scope
-            crit = @required_scope.call
+          bs = base_scope
+          if bs
+            crit = bs
           end
 
           scope.selectors.each do |k, v|
@@ -185,6 +192,8 @@ module QuickScript
 
       class ModelScopeResponder < ScopeResponder
 
+        attr_reader :model
+
         def initialize(request_scope, model, opts={}, &block)
           @model = model
 
@@ -198,12 +207,16 @@ module QuickScript
           super(request_scope, opts, &block)
         end
 
+        def base_scope
+          self.model.all
+        end
+
         def scope_for_name(name)
           if @allowed_scope_names && !@allowed_scope_names.include?(name.to_s)
             return nil
           end
           return @names[name] if @names[name]
-          return @model.method(name.to_sym) if @model.respond_to?(name.to_sym)
+          return model.method(name.to_sym) if model.respond_to?(name.to_sym)
           return nil
         end
 
@@ -345,7 +358,7 @@ module QuickScript
     end
 
     def request_scope
-      QuickScript::SmartScope.new(params_with_actor)
+      @request_scope ||= QuickScript::SmartScope.new(params_with_actor)
     end
 
     def get_scoped_items(model, scope, limit, offset)
