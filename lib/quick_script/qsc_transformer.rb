@@ -3,7 +3,7 @@ module QuickScript
   class QscTransformer
 
     def initialize(opts={})
-
+      @lang = opts[:lang] || 'coffee'
     end
 
     def parse_tag_attr(tag, attr)
@@ -41,8 +41,20 @@ module QuickScript
       return {tag_name: tname, lang: lang, name: name, processed_content: pc}
     end
 
+    def formatLine(line)
+      if @lang == 'coffee'
+        return line
+      else
+        return "#{line};"
+      end
+    end
+
     def call(input)
-      require 'coffee_script'
+      if @lang == 'coffee'
+        require 'coffee_script'
+      else
+        require 'babel/transpiler'
+      end
       output = ""
       buffer = ""
       ib = false
@@ -64,7 +76,7 @@ module QuickScript
           else
             raise "This tag is unknown: #{td.inspect}"
           end
-          output << pb
+          output << formatLine(pb)
           ib = false
         else
           if ib
@@ -76,7 +88,11 @@ module QuickScript
       end
       # parse coffeescript
       #puts output
-      output = CoffeeScript.compile(output)
+      if @lang == 'coffee'
+        output = CoffeeScript.compile(output)
+      else
+        output = Babel::Transpiler.transform(output)["code"]
+      end
       return {data: output}
     rescue => ex
       puts "QSC Transformer Error: Error processing file #{input[:name]}"
