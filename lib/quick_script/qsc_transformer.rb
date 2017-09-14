@@ -31,7 +31,7 @@ module QuickScript
       elsif lang == "sass" || lang == "scss"
         require 'sass'
         #puts QuickScript.config.sass_import_paths
-        pc = Sass::Engine.new(content, syntax: lang,
+        pc = Sass::Engine.new(content, syntax: lang.to_sym,
                               load_paths: QuickScript.config.sass_import_paths).render
       elsif lang == "html" || lang == "css"
         pc = content
