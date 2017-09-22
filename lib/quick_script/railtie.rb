@@ -16,9 +16,11 @@ if defined?(Rails::Railtie)
           Sprockets.register_mime_type 'text/jhaml', extensions: ['.jhaml']
           Sprockets.register_mime_type 'text/jhtml', extensions: ['.jhtml']
           Sprockets.register_mime_type 'text/qsc', extensions: ['.qsc']
+          Sprockets.register_mime_type 'text/qsj', extensions: ['.qsj']
           Sprockets.register_transformer 'text/jhaml', 'application/javascript', QuickScript::JstHamlTransformer.new
           Sprockets.register_transformer 'text/jhtml', 'application/javascript', QuickScript::JstHamlTransformer.new(html: true)
-          Sprockets.register_transformer 'text/qsc', 'application/javascript', QuickScript::QscTransformer.new
+          Sprockets.register_transformer 'text/qsc', 'application/javascript', QuickScript::QscTransformer.new({lang: 'coffee'})
+          Sprockets.register_transformer 'text/qsj', 'application/javascript', QuickScript::QscTransformer.new({lang: 'es6'})
         else
           Sprockets.register_mime_type 'text/html', '.html'
           Sprockets.register_engine '.jhaml', QuickScript::JstHamlProcessor
