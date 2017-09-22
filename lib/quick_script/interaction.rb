@@ -18,13 +18,14 @@ module QuickScript
     end
 
     module ClassMethods
+    end
 
     module Classes
 
       class RequestContext
 
         attr_accessor :selectors, :args, :limit, :page, :offset, :includes, :enhances, :sort
-        attr_reader :params
+        attr_reader :params, :includes_tree, :enhances_tree
 
         def initialize(params)
           @params = params
@@ -145,6 +146,7 @@ module QuickScript
         end
 
         def result(opts={})
+          ctx = request_context
           count = self.count
           if count > 0
             data = self.items
@@ -326,15 +328,15 @@ module QuickScript
     # @param [Hash, Model, String, ...] 
     def prepare_api_field(key, val)
       if val.is_a?(Array)
-        return val.collect {|v| prepare_api_object(v, in_array: true)}
+        return val.collect {|v| prepare_api_object(v, embedded: true)}
       else
-        return prepare_api_object(val, opts)
+        return prepare_api_object(val)
       end
     end
 
     def prepare_api_object(model, opts={})
       if model.respond_to?(:to_api)
-        model.to_api(opts.merge(includes: request_context.includes_tree, actor: actor, request_context: request_context))
+        model.to_api(opts.merge(includes: request_context.includes_tree, actor: request_context.actor, request_context: request_context))
       else
         model
       end
@@ -377,7 +379,7 @@ module QuickScript
     end
 
     def request_context
-      @request_context ||= QuickScript::RequestScope.new(params_with_actor)
+      @request_context ||= QuickScript::RequestContext.new(params_with_actor)
     end
 
     def get_scoped_items(model, scope, limit, offset)
