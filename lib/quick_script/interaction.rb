@@ -19,36 +19,9 @@ module QuickScript
 
     module ClassMethods
 
-      def prepare_api_for(cls, tr)
-        api_object_transformers[cls] = tr
-      end
-
-      def api_object_transformers
-        @api_object_transformers ||= begin
-          if self.superclass.respond_to?(:api_object_transformers)
-            self.superclass.api_object_transformers
-          else
-            {
-              default: lambda {|m, opts|
-                if m.respond_to?(:to_api)
-                  if opts[:in_array] == true
-                    m.to_api(:default)
-                  else
-                    m.to_api
-                  end
-                else
-                  m
-                end
-              }
-            }
-          end
-        end
-      end
-    end
-
     module Classes
 
-      class SmartScope
+      class RequestContext
 
         attr_accessor :selectors, :args, :limit, :page, :offset, :includes, :enhances, :sort
         attr_reader :params
@@ -60,14 +33,17 @@ module QuickScript
           @offset = 0
           @includes = []
           @enhances = []
+          @includes_tree = {}
+          @enhances_tree = {}
+          @enhances = []
           if params[:scope]
             @selectors = JSON.parse(params[:scope])
           end
           @limit = params[:limit].to_i if params[:limit]
           @page = params[:page].to_i if params[:page]
           @offset = (@page - 1) * @limit if params[:page] && params[:limit]
-          @includes = QuickScript.parse_opts(params[:includes]) if params[:includes]
-          @enhances = QuickScript.parse_opts(params[:enhances]) if params[:enhances]
+          self.includes = QuickScript.parse_opts(params[:includes]) if params[:includes]
+          self.enhances = QuickScript.parse_opts(params[:enhances]) if params[:enhances]
           @sort = QuickScript.parse_opts(params[:sort]) if params[:sort]
         rescue => ex
           Rails.logger.info ex.message
@@ -82,24 +58,30 @@ module QuickScript
           @selectors.keys
         end
 
+        def includes=(val)
+          @includes = val || []
+          @includes_tree = QuickScript.bool_tree(@includes)
+        end
+        def enhances=(val)
+          @enhances = val || []
+          @enhances_tree = QuickScript.bool_tree(@enhances)
+        end
+
       end
 
       class ScopeResponder
-        attr_reader :scope
+        attr_reader :request_context, :criteria
 
-        def initialize(request_scope, opts={}, &block)
+        def initialize(request_context, opts={}, &block)
           @options = opts
-          @scope = request_scope
+          @request_context = request_context
           @names = {}.with_indifferent_access
           block.call(self) if block
+          update_criteria
         end
 
         def scopes
           @names
-        end
-
-        def request_scope
-          scope
         end
 
         def scope_for_name(name)
@@ -107,24 +89,21 @@ module QuickScript
         end
 
         def base_scope
-          nil
+          @options[:base_scope]
+        end
+
+        def base_criteria
+          crit = base_scope
         end
 
         def actor
-          scope.actor
+          request_context.actor
         end
 
-        def criteria(opts={})
-          crit = nil
-          incls = opts[:includes] || scope.includes
-          sort = opts[:sort] || scope.sort
+        def update_criteria(opts={})
+          crit = base_criteria
 
-          bs = base_scope
-          if bs
-            crit = bs
-          end
-
-          scope.selectors.each do |k, v|
+          request_context.selectors.each do |k, v|
             ds = scope_for_name(k)
 
             if ds.nil? and @options[:strict_scopes]
@@ -138,50 +117,46 @@ module QuickScript
               crit.merge!(ds.call(*v))
             end
           end
-          if crit && incls.present? && (@options[:use_orm_includes] == true)
-            crit = crit.includes(incls)
-          end
-          if crit && sort.present?
-            if sort_scope = scope_for_name('sort')
-              crit.merge!(sort_scope.call(sort))
-            elsif crit.respond_to?(:order)
-              crit = crit.order(sort)
-            end
-          end
-          return crit
+          @criteria = crit
         end
 
-        def items(crit=nil)
-          crit ||= criteria
+        def item
+          ctx = request_context
+          itm = criteria.find(ctx.params[:id])
+          return itm
+        end
+
+        def items
+          ctx = request_context
+          crit = criteria
           return [] if crit.nil?
           if crit.respond_to? :limit
-            items = crit.limit(scope.limit).offset(scope.offset).to_a
+            items = crit.limit(ctx.limit).offset(ctx.offset).to_a
           else
-            items = crit[scope.offset..(scope.offset + scope.limit)]
+            items = crit[ctx.offset..(ctx.offset + ctx.limit)]
           end
           return items
         end
 
-        def count(crit=nil)
-          crit ||= criteria
+        def count
+          crit = criteria
           return 0 if crit.nil?
           crit.count
         end
 
         def result(opts={})
-          crit = self.criteria(opts)
-          count = self.count(crit)
+          count = self.count
           if count > 0
-            data = self.items(crit)
+            data = self.items
           else
             data = []
           end
-          if scope.limit > 0
-            pages_count = (count / scope.limit.to_f).ceil
+          if ctx.limit > 0
+            pages_count = (count / ctx.limit.to_f).ceil
           else
             pages_count = 0
           end
-          return {success: true, data: data, count: count, pages_count: pages_count, page: scope.page}
+          return {success: true, data: data, count: count, pages_count: pages_count, page: ctx.page}
         end
 
         def method_missing(method_sym, *args, &block)
@@ -194,7 +169,7 @@ module QuickScript
 
         attr_reader :model
 
-        def initialize(request_scope, model, opts={}, &block)
+        def initialize(request_context, model, opts={}, &block)
           @model = model
 
           if opts[:allowed_scope_names]
@@ -204,11 +179,54 @@ module QuickScript
           else
             @allowed_scope_names = nil
           end
-          super(request_scope, opts, &block)
+          super(request_context, opts, &block)
         end
 
         def base_scope
           self.model.all
+        end
+
+        def base_criteria
+          crit = base_scope
+          incls = query_includes
+          sort = query_sort
+          # add includes
+          if incls.present?
+            crit = crit.includes(incls)
+          end
+          # add sort
+          if sort.present?
+            if crit.respond_to?(:order)
+              crit = crit.order(sort)
+            end
+          end
+          return crit
+        end
+
+        def allowed_query_includes
+          # try to detect from relational model
+          if model.respond_to?(:reflections)
+            model.reflections.keys
+          else
+            []
+          end
+        end
+
+        def allowed_query_sort_fields
+          nil
+        end
+
+        def query_includes
+          # go through allowed ones and see which are specified
+          ta = QuickScript.bool_tree(allowed_query_includes || [])
+          ti = QuickScript.bool_tree(request_context.includes || [])
+          inter = QuickScript.bool_tree_intersection(ta, ti)
+          return QuickScript.bool_tree_to_array(inter)
+        end
+
+        def query_sort
+          # eventually use allowed_query_sort_fields
+          request_context.sort
         end
 
         def scope_for_name(name)
@@ -290,12 +308,7 @@ module QuickScript
     def prepare_result(result, opts={})
       ret = {}
       result.each do |key, val|
-        val = prepare_api_field(key, val)
-        if val.is_a?(Array)
-          ret[key] = val.collect {|v| prepare_api_object(v, opts.merge(in_array: true))}
-        else
-          ret[key] = prepare_api_object(val, opts)
-        end
+        ret[key] = prepare_api_field(key, val)
       end
       return ret
     end
@@ -312,13 +325,19 @@ module QuickScript
     # @param [String] name of the field
     # @param [Hash, Model, String, ...] 
     def prepare_api_field(key, val)
-      val
+      if val.is_a?(Array)
+        return val.collect {|v| prepare_api_object(v, in_array: true)}
+      else
+        return prepare_api_object(val, opts)
+      end
     end
 
-    def prepare_api_object(model, opts)
-      trs = self.class.api_object_transformers
-      tr = trs[model.class.name] || trs[:default]
-      self.instance_exec(model, opts, &tr)
+    def prepare_api_object(model, opts={})
+      if model.respond_to?(:to_api)
+        model.to_api(opts.merge(includes: request_context.includes_tree, actor: actor, request_context: request_context))
+      else
+        model
+      end
     end
 
     def render_result(result, opts = {}, &block)
@@ -357,8 +376,8 @@ module QuickScript
       ENV['API_VER'] = @api_version.to_s
     end
 
-    def request_scope
-      @request_scope ||= QuickScript::SmartScope.new(params_with_actor)
+    def request_context
+      @request_context ||= QuickScript::RequestScope.new(params_with_actor)
     end
 
     def get_scoped_items(model, scope, limit, offset)
@@ -378,7 +397,7 @@ module QuickScript
     end
 
     def respond_to_scope(resp_action=:items, responder=nil, &block)
-      responder ||= ScopeResponder.new(request_scope, &block)
+      responder ||= ScopeResponder.new(request_context, &block)
       responder.send(resp_action)
     end
 

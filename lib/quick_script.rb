@@ -233,6 +233,47 @@ module QuickScript
     Rails.logger.info ex.backtrace.join("\n\t")
   end
 
+  def self.bool_tree(arr)
+    ret = {}
+    return nil if arr.nil?
+    return arr if arr.is_a?(Hash)
+    arr.each do |val|
+      if val.is_a?(Hash)
+        val.each do |hk, hv|
+          ret[hk] = self.bool_tree(hv)
+        end
+      else
+        ret[val] = true
+      end
+    end
+    return ret
+  end
+
+  def self.bool_tree_intersection(tree1, tree2)
+    ret = {}
+    return nil if tree1.nil? || tree2.nil?
+    tree1.each do |k, v|
+      if v.is_a?(Hash)
+        ret[k] = self.bool_tree_intersection(v, tree2[k])
+      else
+        ret[k] = v if tree2[k] == v
+      end
+    end
+    return ret
+  end
+
+  def self.bool_tree_to_array(tree)
+    ret = []
+    tree.each do |k, v|
+      if v.is_a?(Hash)
+        ret << {k => self.bool_tree_to_array(v)}
+      else
+        ret << k if v == true
+      end
+    end
+    return ret
+  end
+
   class DynamicErb
 
     def initialize(vars)

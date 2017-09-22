@@ -4,7 +4,7 @@ module QuickScript
 
     def self.included(base)
       base.extend ClassMethods
-      base.before_filter :prepare_request_scope, :load_model
+      base.before_filter :prepare_request_context, :load_model
       class << base
         #private :scope_responder
         #private :prepare_model
@@ -137,15 +137,15 @@ module QuickScript
       else
         cls = QuickScript::ModelScopeResponder
       end
-      cls.new(request_scope, self.model_class, opts, &sc)
+      cls.new(request_context, self.model_class, opts, &sc)
     end
 
     def model_includes
       incls = requested_includes | self.class.model_endpoints_settings[:default_includes]
     end
 
-    def prepare_request_scope
-      request_scope.includes += self.model_endpoints_settings[:default_includes]
+    def prepare_request_context
+      request_context.includes = request_context.includes | (self.model_endpoints_settings[:default_includes] || [])
     end
 
     def prepare_model(models)
@@ -156,12 +156,7 @@ module QuickScript
 
     def load_model
       if params[:id].present?
-        base_scope = scope_responder.base_scope
-        if self.model_endpoints_settings[:use_orm_includes] && model_includes.present?
-          @model = base_scope.includes(model_includes).find(params[:id])
-        else
-          @model = base_scope.find(params[:id])
-        end
+        @model = scope_responder.item
         raise QuickScript::Errors::ResourceNotFoundError if @model.nil?
       end
     end
