@@ -25,10 +25,11 @@ module QuickScript
       class RequestContext
 
         attr_accessor :selectors, :args, :limit, :page, :offset, :includes, :enhances, :sort
-        attr_reader :params, :includes_tree, :enhances_tree
+        attr_reader :params, :actor, :includes_tree, :enhances_tree
 
-        def initialize(params)
-          @params = params
+        def initialize(opts)
+          @params = opts[:params] || {}
+          @actor = opts[:actor]
           @limit = 100
           @page = 1
           @offset = 0
@@ -51,10 +52,6 @@ module QuickScript
           Rails.logger.info ex.backtrace.join("\n\t")
         end
 
-        def actor
-          return @params[:actor]
-        end
-
         def selector_names
           @selectors.keys
         end
@@ -66,6 +63,14 @@ module QuickScript
         def enhances=(val)
           @enhances = val || []
           @enhances_tree = QuickScript.bool_tree(@enhances)
+        end
+
+        # use this when need a subcontext hash
+        def to_extended_params(opts=nil)
+          opts ||= params
+          ret = opts.merge(request_actor: actor, request_context: self)
+          ret[:actor] ||= actor
+          return ret
         end
 
       end
@@ -266,6 +271,10 @@ module QuickScript
       end
     end
 
+    def params_with_context
+      request_context.to_extended_params
+    end
+
     def request_includes(sub=nil)
       incs = params[:include] || params[:includes]
       if incs
@@ -327,16 +336,18 @@ module QuickScript
     # @param [String] name of the field
     # @param [Hash, Model, String, ...] 
     def prepare_api_field(key, val)
+      opts = {includes: request_context.includes_tree, actor: request_context.actor, request_actor: request_context.actor, request_context: request_context}
       if val.is_a?(Array)
-        return val.collect {|v| prepare_api_object(v, embedded: true)}
+        opts = opts.merge(embedded: true)
+        return val.collect {|v| prepare_api_object(v, opts)}
       else
-        return prepare_api_object(val)
+        return prepare_api_object(val, opts)
       end
     end
 
     def prepare_api_object(model, opts={})
       if model.respond_to?(:to_api)
-        model.to_api(opts.merge(includes: request_context.includes_tree, actor: request_context.actor, request_context: request_context))
+        model.to_api(opts)
       else
         model
       end
@@ -379,7 +390,7 @@ module QuickScript
     end
 
     def request_context
-      @request_context ||= QuickScript::RequestContext.new(params_with_actor)
+      @request_context ||= QuickScript::RequestContext.new(params: params, actor: current_user)
     end
 
     def get_scoped_items(model, scope, limit, offset)

@@ -80,12 +80,12 @@ module QuickScript
           mes = self.class.model_endpoints_settings
           mopts = mes[:endpoints][name]
           if mopts[:model_class_method].present?
-            res = model_class.send mopts[:model_class_method], params_with_actor
+            res = model_class.send mopts[:model_class_method], request_context.to_extended_params
           else
             if (mopts[:instantiate_if_nil] == true) && model_instance.nil?
               self.model_instance = model_class.new
             end
-            res = model_instance.send mopts[:model_method], params_with_actor
+            res = model_instance.send mopts[:model_method], request_context.to_extended_params
           end
           if mopts[:prepare_result]
             self.instance_exec(res, &mopts[:prepare_result])
