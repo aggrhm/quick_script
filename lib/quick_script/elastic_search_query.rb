@@ -121,6 +121,10 @@ module QuickScript
       @qbf << {:range => {field => range}}
     end
 
+    def add_filter(type, opts)
+      @qbf << {type => opts}
+    end
+
     def add_parsed_scope(key, val)
       if key.start_with?("with_")
         self.add_term_filter(key[5..-1], val)

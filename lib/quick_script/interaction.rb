@@ -38,6 +38,7 @@ module QuickScript
           @includes_tree = {}
           @enhances_tree = {}
           @enhances = []
+          @selectors = {}
           if params[:scope]
             @selectors = JSON.parse(params[:scope])
           end
@@ -83,7 +84,6 @@ module QuickScript
           @request_context = request_context
           @names = {}.with_indifferent_access
           block.call(self) if block
-          update_criteria
         end
 
         def scopes
@@ -98,6 +98,14 @@ module QuickScript
           @options[:base_scope]
         end
 
+        def base_selectors
+          {}
+        end
+
+        def query_selectors
+          base_selectors.merge(request_context.selectors)
+        end
+
         def base_criteria
           crit = base_scope
         end
@@ -106,10 +114,10 @@ module QuickScript
           request_context.actor
         end
 
-        def update_criteria(opts={})
+        def update_criteria_from_context(opts={})
           crit = base_criteria
 
-          request_context.selectors.each do |k, v|
+          query_selectors.each do |k, v|
             ds = scope_for_name(k)
 
             if ds.nil? and @options[:strict_scopes]
@@ -124,6 +132,11 @@ module QuickScript
             end
           end
           @criteria = crit
+        end
+
+        def criteria
+          update_criteria_from_context if @criteria.nil?
+          return @criteria
         end
 
         def item
