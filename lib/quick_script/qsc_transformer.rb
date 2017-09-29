@@ -11,14 +11,24 @@ module QuickScript
       return tag.split("#{attr}=\"").last.split("\"").first
     end
 
+    SENTINAL_STARTS = {
+      '<template' => 'template',
+      '<style' => 'style'
+    }
+
+    def recognized_tag_type(tl)
+      for k, v in SENTINAL_STARTS
+        if tl.start_with?(k)
+          return v
+        end
+      end
+      return nil
+    end
+
     def parse_tag(str)
       lines = str.lines
       tl = lines[0]
-      tname = if tl.start_with?("<template")
-               "template"
-             elsif tl.start_with?("<style")
-               "style"
-             end
+      tname = recognized_tag_type(tl)
       lang = tl.split("lang=\"").last.split("\"").first
       name = nil
       if tname == "template"
@@ -49,10 +59,10 @@ module QuickScript
       # parse template
       text = input[:data]
       text.each_line do |line|
-        if line.start_with?("<") && !ib
+        if !ib && recognized_tag_type(line) != nil
           buffer = line
           ib = true
-        elsif line.start_with?("</") && ib
+        elsif ib && line.start_with?("</")
           buffer << line
           # process buffer
           td = parse_tag(buffer)
