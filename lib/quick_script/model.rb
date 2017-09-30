@@ -29,6 +29,22 @@ module QuickScript
         end
       end
 
+      def scope_responder(ctx, opts={})
+        opts[:model] ||= self
+        if defined?(self::ScopeResponder)
+          cls = self::ScopeResponder
+        else
+          cls = QuickScript::ModelScopeResponder
+        end
+        cls.new(ctx, opts)
+      end
+
+      def index_as_action!(opts)
+        ctx = opts[:request_context] || QuickScript::RequestContext.new(opts)
+        res = scope_responder(ctx).result
+        return res
+      end
+
     end
 
     module ActiveRecordClassMethods

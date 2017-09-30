@@ -3,10 +3,11 @@ module QuickScript
   class ElasticSearchQuery
 
     def initialize(opts={})
-      @q = {sort: [], query:{bool: {must: [], filter: []}}, size: 50}
+      @q = {sort: [], query:{bool: {must: [], should: [], filter: []}}, size: 50}
       @qb = @q[:query][:bool]
       @qbm = @qb[:must]
       @qbf = @qb[:filter]
+      @qbs = @qb[:should]
       @qs = @q[:sort]
       @page = 1
     end
@@ -96,6 +97,9 @@ module QuickScript
     def add_term_filter(field, val)
       self.add_term(@qbf, field, val)
     end
+    def add_term_should(field, val)
+      self.add_term(@qbs, field, val)
+    end
 
     def add_nested_filter(path, opts={})
       q = {nested: {path: path, query: {bool: {must: []}}}}
@@ -150,6 +154,9 @@ module QuickScript
     def add_sort(field, order=nil)
       if order
         @qs << {field => order}
+      elsif field.is_a?(String)
+        fld, ord = field.split(" ")
+        @qs << {fld => ord}
       else
         @qs << field
       end

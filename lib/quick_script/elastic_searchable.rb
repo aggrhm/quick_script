@@ -26,7 +26,6 @@ module QuickScript
         # setup query
         qc = QuickScript::ElasticSearchable::SearchContext.new
         q = qc.query = QuickScript::ElasticSearchQuery.new
-        block.call(qc) if block
         page = opts[:page].present? ? opts[:page].to_i : 1
         limit = opts[:limit].present? ? opts[:limit].to_i : 50
         offset = (page-1) * limit
@@ -71,7 +70,8 @@ module QuickScript
         end
         
         # process context before query callback
-        qc.before_query_callback.call if qc.before_query_callback
+        #qc.before_query_callback.call if qc.before_query_callback
+        block.call(qc) if block
 
         # do search
         puts q.raw_query

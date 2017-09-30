@@ -4,7 +4,7 @@ module QuickScript
 
     def self.included(base)
       base.extend ClassMethods
-      base.before_filter :prepare_request_context, :load_model
+      base.before_filter :prepare_request_context
       class << base
         #private :scope_responder
         #private :prepare_model
@@ -21,7 +21,6 @@ module QuickScript
           default_result_options: {},
           scope_responder: lambda {|scope| },
           endpoints: {
-            index: {},
             save: {
               instantiate_if_nil: true,
               model_method: QuickScript.config.default_model_save_method
@@ -82,6 +81,8 @@ module QuickScript
           if mopts[:model_class_method].present?
             res = model_class.send mopts[:model_class_method], request_context.to_extended_params
           else
+            # load model
+            load_model_instance
             if (mopts[:instantiate_if_nil] == true) && model_instance.nil?
               self.model_instance = model_class.new
             end
@@ -114,30 +115,27 @@ module QuickScript
     end
 
     def index
-      if !params[:scope]  # handle if user finding by other than id
-        prepare_model(@model)
-        render_result({success: true, data: @model}, {action: :index})
+      if model_class.respond_to?(:index_as_action!)
+        res = model_class.send :index_as_action!, request_context.to_extended_params
       else
         res = scope_responder.result
-        @models = res[:data]
-        prepare_model(@models)
-        render_result(res, action: :index)
       end
+      prepare_model(res[:data]) # deprecated, use scope_responder enhance_items
+      render_result(res, action: :index)
     end
 
     ## PRIVATE METHODS
 
     def scope_responder
-      sts = self.class.model_endpoints_settings
-      sc = sts[:scope_responder]
-      opts = (sts[:scope_responder_settings] or {})
-      opts = opts.merge({use_orm_includes: sts[:use_orm_includes]})
-      if defined?(model_class::ScopeResponder)
-        cls = model_class::ScopeResponder
-      else
-        cls = QuickScript::ModelScopeResponder
+      @scope_responder ||= begin
+        opts = {model: model_class}
+        if defined?(model_class::ScopeResponder)
+          cls = model_class::ScopeResponder
+        else
+          cls = QuickScript::ModelScopeResponder
+        end
+        cls.new(request_context, opts)
       end
-      cls.new(request_context, self.model_class, opts, &sc)
     end
 
     def model_includes
@@ -154,7 +152,7 @@ module QuickScript
       end
     end
 
-    def load_model
+    def load_model_instance
       if params[:id].present?
         @model = scope_responder.item
         raise QuickScript::Errors::ResourceNotFoundError if @model.nil?

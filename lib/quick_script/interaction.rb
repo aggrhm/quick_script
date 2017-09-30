@@ -28,8 +28,13 @@ module QuickScript
         attr_reader :params, :actor, :includes_tree, :enhances_tree
 
         def initialize(opts)
-          @params = opts[:params] || {}
-          @actor = opts[:actor]
+          if opts[:params]
+            @params = opts[:params] || {}
+            @actor = opts[:actor]
+          else
+            @params = opts
+            @actor = opts[:request_actor] || opts[:actor]
+          end
           @limit = 100
           @page = 1
           @offset = 0
@@ -40,7 +45,7 @@ module QuickScript
           @enhances = []
           @selectors = {}
           if params[:scope]
-            @selectors = JSON.parse(params[:scope])
+            @selectors = QuickScript.parse_opts(params[:scope])
           end
           @limit = params[:limit].to_i if params[:limit]
           @page = params[:page].to_i if params[:page]
@@ -55,6 +60,10 @@ module QuickScript
 
         def selector_names
           @selectors.keys
+        end
+
+        def scope
+          @selectors
         end
 
         def includes=(val)
@@ -77,13 +86,18 @@ module QuickScript
       end
 
       class ScopeResponder
-        attr_reader :request_context, :criteria
+        attr_reader :request_context, :options
 
         def initialize(request_context, opts={}, &block)
           @options = opts
           @request_context = request_context
           @names = {}.with_indifferent_access
+          prepare
           block.call(self) if block
+        end
+
+        def prepare
+
         end
 
         def scopes
@@ -95,7 +109,7 @@ module QuickScript
         end
 
         def base_scope
-          @options[:base_scope]
+          options[:base_scope]
         end
 
         def base_selectors
@@ -106,21 +120,21 @@ module QuickScript
           base_selectors.merge(request_context.selectors)
         end
 
-        def base_criteria
-          crit = base_scope
+        def base_relation
+          base_scope
         end
 
         def actor
           request_context.actor
         end
 
-        def update_criteria_from_context(opts={})
-          crit = base_criteria
+        def build_database_relation(opts={})
+          crit = base_relation
 
           query_selectors.each do |k, v|
             ds = scope_for_name(k)
 
-            if ds.nil? and @options[:strict_scopes]
+            if ds.nil? and options[:strict_scopes]
               raise QuickScript::Errors::APIError, "#{k} is not a valid scope"
             end
             next if ds.nil?
@@ -131,52 +145,54 @@ module QuickScript
               crit.merge!(ds.call(*v))
             end
           end
-          @criteria = crit
+          return crit
         end
 
-        def criteria
-          update_criteria_from_context if @criteria.nil?
-          return @criteria
-        end
-
-        def item
+        def build_database_result
           ctx = request_context
-          itm = criteria.find(ctx.params[:id])
-          return itm
-        end
-
-        def items
-          ctx = request_context
-          crit = criteria
-          return [] if crit.nil?
-          if crit.respond_to? :limit
-            items = crit.limit(ctx.limit).offset(ctx.offset).to_a
+          rel = build_database_relation
+          params = request_context.params
+          if params.key?(:id)
+            data = rel.find(params[:id])
+            ret = {success: data.present?, data: data}
           else
-            items = crit[ctx.offset..(ctx.offset + ctx.limit)]
+            data = rel.limit(ctx.limit).offset(ctx.offset).to_a
+            count = rel.count
+            pages_count = (count / ctx.limit.to_f).ceil
+            ret = {success: true, data: data, count: count, pages_count: pages_count, page: ctx.page}
           end
-          return items
+          enhance_items(data.is_a?(Array) ? data : [data])
+          return ret
+        end
+
+        def item(opts={})
+          res = result(opts)
+          res[:data]
+        end
+
+        def items(opts={})
+          res = result(opts)
+          res[:data]
+        end
+
+        def enhance_items(items)
+          # use enhances here
         end
 
         def count
-          crit = criteria
-          return 0 if crit.nil?
-          crit.count
+          res = result(opts)
+          res[:count]
+        end
+
+        def build_result
+          build_database_result
         end
 
         def result(opts={})
-          ctx = request_context
-          count = self.count
-          if count > 0
-            data = self.items
-          else
-            data = []
+          if @result.nil? || opts[:reload]
+            @result = build_result
           end
-          if ctx.limit > 0
-            pages_count = (count / ctx.limit.to_f).ceil
-          else
-            pages_count = 0
-          end
-          return {success: true, data: data, count: count, pages_count: pages_count, page: ctx.page}
+          return @result
         end
 
         def method_missing(method_sym, *args, &block)
@@ -189,24 +205,17 @@ module QuickScript
 
         attr_reader :model
 
-        def initialize(request_context, model, opts={}, &block)
-          @model = model
-
-          if opts[:allowed_scope_names]
-            @allowed_scope_names = opts[:allowed_scope_names].collect(&:to_s)
-          elsif @model.const_defined?("PUBLIC_SCOPES")
-            @allowed_scope_names = @model.const_get("PUBLIC_SCOPES").collect(&:to_s)
-          else
-            @allowed_scope_names = nil
-          end
+        def initialize(request_context, opts={}, &block)
           super(request_context, opts, &block)
+          @model = opts[:model]
+
         end
 
         def base_scope
           self.model.all
         end
 
-        def base_criteria
+        def base_relation
           crit = base_scope
           incls = query_includes
           sort = query_sort
@@ -236,6 +245,16 @@ module QuickScript
           nil
         end
 
+        def allowed_scope_names
+          if options[:allowed_scope_names]
+            @allowed_scope_names = options[:allowed_scope_names].collect(&:to_s)
+          elsif model.const_defined?("PUBLIC_SCOPES")
+            @allowed_scope_names = model.const_get("PUBLIC_SCOPES").collect(&:to_s)
+          else
+            @allowed_scope_names = nil
+          end
+        end
+
         def query_includes
           # go through allowed ones and see which are specified
           ta = QuickScript.bool_tree(allowed_query_includes || [])
@@ -250,7 +269,8 @@ module QuickScript
         end
 
         def scope_for_name(name)
-          if @allowed_scope_names && !@allowed_scope_names.include?(name.to_s)
+          asns = allowed_scope_names
+          if asns && !asns.include?(name.to_s)
             return nil
           end
           return @names[name] if @names[name]
