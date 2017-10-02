@@ -10,4 +10,62 @@ module QuickScript
 
   end
 
+  class PunditPolicy
+    attr_reader :user, :record
+
+    def authorize!(query, opts={})
+      opts[:message] ||= "You don't have permission to perform this action or view this resource."
+      if !self.send(query)
+        raise Pundit::NotAuthorizedError, query: query, record: record, policy: self, message: opts[:message]
+      end
+      return record
+    end
+
+    def initialize(user, record)
+      @user = user
+      @record = record
+    end
+
+    def index?
+      false
+    end
+
+    def view?
+      scope.where(:id => record.id).exists?
+    end
+
+    def show?
+      view?
+    end
+
+    def create?
+      false
+    end
+
+    def new?
+      create?
+    end
+
+    def update?
+      false
+    end
+
+    def edit?
+      update?
+    end
+
+    def delete?
+      update?
+    end
+
+    def destroy?
+      delete?
+    end
+
+    def scope
+      nil
+    end
+
+  end
+
 end
