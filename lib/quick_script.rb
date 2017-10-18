@@ -8,6 +8,7 @@ require 'quick_script/stateable'
 require 'quick_script/eventable'
 require 'quick_script/short_keyable'
 require 'quick_script/associations_cache'
+require 'quick_script/api_endpoints'
 require 'quick_script/model_endpoints'
 require 'quick_script/engine'
 require 'quick_script/jst_haml_processor'
@@ -32,6 +33,7 @@ module QuickScript
       self.jst_name_processor = lambda {|logical_path|
         QuickScript.jst_path_to_name(logical_path)
       }
+      self.default_model_index_method = :index_as_action!
       self.default_model_save_method = :update_as_action!
       self.default_model_delete_method = :delete_as_action!
       self.default_current_user_session_fields = ['id']
@@ -41,6 +43,7 @@ module QuickScript
     attr_accessor :jst_name_prefix
     attr_accessor :jst_name_processor
 
+    attr_accessor :default_model_index_method
     attr_accessor :default_model_save_method
     attr_accessor :default_model_delete_method
 

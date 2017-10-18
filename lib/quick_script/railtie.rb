@@ -40,6 +40,14 @@ if defined?(Rails::Railtie)
       match "#{rs}" => "#{rp}#delete", :via => :delete
       block.call if block
     end
+
+    def mount_api_endpoints(mount_path)
+      mount = QuickScript::ApiEndpoints.mounts[mount_path]
+      mount.endpoints.each do |key, val|
+        method, path = key
+        match path, to: "#{mount.controller}#handle_api_request", via: method, defaults: {qs_api_mount_path: mount.path}
+      end
+    end
   end
 
 end

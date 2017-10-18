@@ -36,10 +36,6 @@ module QuickScript
         qc.requested_includes ||= QuickScript.parse_opts(opts[:includes]) || []
         scope = qc.requested_scope
         incls = qc.requested_includes
-        if (sort = opts[:sort]).present?
-          fld,ord = sort.split(" ")
-          q.add_sort(fld, ord)
-        end
         aggs = qc.requested_aggregations = QuickScript.parse_opts(opts[:aggregations]) || []
 
         # aggregations
