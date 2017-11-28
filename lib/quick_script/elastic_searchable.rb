@@ -101,6 +101,10 @@ module QuickScript
         return ret
       end
 
+      def update_elastic_mappings
+        self.__elasticsearch__.client.indices.put_mapping(index: self.index_name, type: self.document_type, body: self.mappings.to_hash)
+      end
+
     end
 
     def update_elastic(action=:index)
