@@ -48,7 +48,7 @@ module QuickScript
           }
           if agg['filter']
             ea = {
-              filter: {term: agg['filter']},
+              filter: agg['filter'],
               aggs: {
                 filtered: ea
               }
@@ -87,6 +87,9 @@ module QuickScript
           if agg['class_name'].present?
             an = agg['association']
             ar = ret[:aggregations][an]
+            while (ar['nested'] || ar['filtered']) do
+              ar = ar['nested'] || ar['filtered'] || ar
+            end
             ids = ar['buckets'].collect{|b| b['key']}
             model_class = agg['class_name'].constantize
             ams = model_class.find(ids)

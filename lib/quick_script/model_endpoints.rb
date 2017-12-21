@@ -82,7 +82,6 @@ module QuickScript
             res = model_class.send mopts[:model_class_method], request_context.to_extended_params
           else
             # load model
-            load_model_instance
             if (mopts[:instantiate_if_nil] == true) && model_instance.nil?
               self.model_instance = model_class.new
             end
@@ -111,7 +110,7 @@ module QuickScript
     end
 
     def model_instance
-      @model
+      @model || load_model_instance
     end
 
     def index
@@ -157,6 +156,7 @@ module QuickScript
         @model = scope_responder.item
         raise QuickScript::Errors::ResourceNotFoundError if @model.nil?
       end
+      return @model
     end
 
   end
