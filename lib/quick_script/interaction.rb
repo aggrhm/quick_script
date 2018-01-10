@@ -159,6 +159,11 @@ module QuickScript
             data = rel.limit(ctx.limit).offset(ctx.offset).to_a
             count = rel.count
             pages_count = (count / ctx.limit.to_f).ceil
+            if params.key?(:first)
+              data = data.first
+            elsif params.key?(:last)
+              data = data.last
+            end
             ret = {success: true, data: data, count: count, pages_count: pages_count, page: ctx.page}
           end
           enhance_items(data.is_a?(Array) ? data : [data])
