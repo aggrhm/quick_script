@@ -63,9 +63,22 @@ module QuickScript
     end
 
     def scope
-      nil
+      Pundit.policy_scope!(user, record.class)
     end
 
+  end
+
+  class PunditScope
+    attr_reader :user, :scope
+
+    def initialize(user, scope)
+      @user = user
+      @scope = scope
+    end
+
+    def resolve
+      scope
+    end
   end
 
 end

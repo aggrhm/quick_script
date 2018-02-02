@@ -428,7 +428,10 @@ module QuickScript
     end
 
     def request_context
-      @request_context ||= QuickScript::RequestContext.new(params: params, actor: current_user)
+      @request_context ||= begin
+        actor = self.respond_to?(:current_user, true) ? current_user : nil
+        QuickScript::RequestContext.new(params: params, actor: actor)
+      end
     end
 
     def get_scoped_items(model, scope, limit, offset)
