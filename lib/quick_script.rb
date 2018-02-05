@@ -204,8 +204,7 @@ module QuickScript
   end
 
   def self.parse_template(name, vars, opts={})
-    opts[:path] ||= "mail"
-    fp = File.join Rails.root, 'app', 'views', opts[:path], name
+    fp = File.join Rails.root, 'app', 'views', name
     fp += ".html.erb" unless fp.ends_with?(".html.erb")
     tpl = File.read(fp)
     html = QuickScript::DynamicErb.new(vars).render(tpl)
