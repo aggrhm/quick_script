@@ -164,7 +164,7 @@ module QuickScript
             elsif params.key?(:last)
               data = data.last
             end
-            ret = {success: true, data: data, count: count, pages_count: pages_count, page: ctx.page}
+            ret = {success: !data.nil?, data: data, count: count, pages_count: pages_count, page: ctx.page}
           end
           enhance_items(data.is_a?(Array) ? data : [data])
           return ret
