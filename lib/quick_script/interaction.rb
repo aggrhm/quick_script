@@ -24,8 +24,8 @@ module QuickScript
 
       class RequestContext
 
-        attr_accessor :selectors, :args, :limit, :page, :offset, :includes, :enhances, :sort
-        attr_reader :params, :actor, :includes_tree, :enhances_tree
+        attr_accessor :actor, :selectors, :args, :limit, :page, :offset, :includes, :enhances, :sort
+        attr_reader :params, :includes_tree, :enhances_tree
 
         def initialize(opts)
           if opts[:params]

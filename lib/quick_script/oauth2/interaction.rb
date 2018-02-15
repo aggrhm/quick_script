@@ -44,6 +44,7 @@ module QuickScript
         end
         url = "#{prefix}#{path}"
         puts "URL: #{url}"
+        #puts "HEADERS: #{hdrs.inspect}"
         puts "PARAMS: #{params}"
         # parse params
         params.each do |k, v|
