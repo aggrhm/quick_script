@@ -231,7 +231,13 @@ module QuickScript
     "#{prefix}#{path.gsub("/", sep)}"
   end
 
-  def self.log_exception(ex)
+  def self.log_exception(ex, opts={})
+    Rails.logger.info ex.message
+    Rails.logger.info ex.backtrace.join("\n\t")
+    if defined?(ExceptionNotifier) && opts[:notify] != false
+      ExceptionNotifier.notify_exception(ex, opts)
+    end
+  rescue => ex
     Rails.logger.info ex.message
     Rails.logger.info ex.backtrace.join("\n\t")
   end
