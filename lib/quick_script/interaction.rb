@@ -83,6 +83,10 @@ module QuickScript
           return ret
         end
 
+        def to_opts(opts=nil)
+          to_extended_params(opts)
+        end
+
       end
 
       class ScopeResponder
@@ -456,4 +460,14 @@ module QuickScript
     end
 
   end
+end
+
+class Hash
+
+  def extend_with_request_context(opts)
+    opts[:params] = self
+    rc = QuickScript::RequestContext.new(opts)
+    return rc.to_extended_params
+  end
+
 end
