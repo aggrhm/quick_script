@@ -252,7 +252,7 @@ module QuickScript
           ret[hk] = self.bool_tree(hv)
         end
       else
-        ret[val] = true
+        ret[val] = {}
       end
     end
     return ret
@@ -262,10 +262,13 @@ module QuickScript
     ret = {}
     return nil if tree1.nil? || tree2.nil?
     tree1.each do |k, v|
-      if v.is_a?(Hash)
-        ret[k] = self.bool_tree_intersection(v, tree2[k])
+      t2v = tree2[k]
+      if t2v.nil?
+        next
+      elsif !v.empty?
+        ret[k] = self.bool_tree_intersection(v, t2v)
       else
-        ret[k] = v if tree2[k] == v
+        ret[k] = {}
       end
     end
     return ret
@@ -274,10 +277,10 @@ module QuickScript
   def self.bool_tree_to_array(tree)
     ret = []
     tree.each do |k, v|
-      if v.is_a?(Hash)
+      if !v.empty?
         ret << {k => self.bool_tree_to_array(v)}
       else
-        ret << k if v == true
+        ret << k
       end
     end
     return ret
