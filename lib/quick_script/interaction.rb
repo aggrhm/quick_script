@@ -138,7 +138,7 @@ module QuickScript
           query_selectors.each do |k, v|
             ds = scope_for_name(k)
 
-            if ds.nil? and options[:strict_scopes]
+            if ds.nil? and options[:strict_scopes] != false
               raise QuickScript::Errors::APIError, "#{k} is not a valid scope"
             end
             next if ds.nil?
@@ -256,12 +256,15 @@ module QuickScript
 
         def allowed_scope_names
           if options[:allowed_scope_names]
-            @allowed_scope_names = options[:allowed_scope_names].collect(&:to_s)
+            ret = options[:allowed_scope_names]
           elsif model.const_defined?("PUBLIC_SCOPES")
-            @allowed_scope_names = model.const_get("PUBLIC_SCOPES").collect(&:to_s)
+            ret = model.const_get("PUBLIC_SCOPES")
+          elsif model.respond_to?(:scope_names)
+            ret = model.scope_names
           else
-            @allowed_scope_names = nil
+            ret = @names.keys
           end
+          @allowed_scope_names = ret.collect(&:to_s)
         end
 
         def query_includes
@@ -274,7 +277,24 @@ module QuickScript
 
         def query_sort
           # eventually use allowed_query_sort_fields
-          request_context.sort
+          sort = request_context.sort
+          return nil if sort.blank?
+          sort = sort.strip
+          nsm = model.const_defined?("NAMED_SORTS") ? model.const_get("NAMED_SORTS") : {}
+          # validate sort
+          if (ns = nsm[sort]).present?
+            # handle named sort
+            sort = ns
+          else
+            validate_custom_sort!(sort)
+          end
+          return sort
+        end
+
+        def validate_custom_sort!(sort)
+          parts = sort.split(/\s+/).collect(&:downcase)
+          raise "Invalid sort #{sort}: Too long" if parts.length > 2
+          raise "Invalid sort #{sort}: Must end with asc/desc" if parts[-1] != "asc" && parts[-1] != "desc"
         end
 
         def scope_for_name(name)

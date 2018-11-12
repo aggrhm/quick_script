@@ -45,6 +45,16 @@ module QuickScript
         return res
       end
 
+      def scope_names
+        return @scope_names ||= []
+      end
+
+      def scope(name, body, &block)
+        ret = super(name, body, &block)
+        scope_names << name
+        return ret
+      end
+
     end
 
     module ActiveRecordClassMethods
