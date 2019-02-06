@@ -286,6 +286,38 @@ module QuickScript
     return ret
   end
 
+  def self.enhance_models(models, opts)
+    puts models.inspect
+    idfn = opts[:id]
+    findfn = opts[:find]
+    enhfn = opts[:enhance]
+    # get ids from models
+    idm = {}
+    models.each do |m|
+      id = idfn.call(m)
+      next if id.blank?
+      idstr = id.to_s
+      idm[idstr] ||= []
+      idm[idstr] << m
+    end
+    ids = idm.keys
+    puts "IDS======="
+    puts ids
+    return if ids.blank?
+
+    # find enhance models
+    ems = findfn.call(ids)
+    puts ems.inspect
+
+    # enhance models
+    ems.each do |em|
+      ms = idm[em.id.to_s]
+      ms.each do |m|
+        enhfn.call(m, em)
+      end
+    end
+  end
+
   class DynamicErb
 
     def initialize(vars)

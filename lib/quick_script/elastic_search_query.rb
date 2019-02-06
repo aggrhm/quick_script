@@ -129,6 +129,14 @@ module QuickScript
       @qbf << {type => opts}
     end
 
+    def add_must(type, opts)
+      @qbm << {type => opts}
+    end
+
+    def add_should(type, opts)
+      @qbs << {type => opts}
+    end
+
     def add_parsed_scope(key, val)
       if key.start_with?("with_")
         self.add_term_filter(key[5..-1], val)
