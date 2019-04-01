@@ -3,11 +3,12 @@ module QuickScript
   class ElasticSearchQuery
 
     def initialize(opts={})
-      @q = {sort: [], query:{bool: {must: [], should: [], filter: []}}, size: 50}
+      @q = {sort: [], query:{bool: {must: [], should: [], filter: [], must_not: []}}, size: 50}
       @qb = @q[:query][:bool]
       @qbm = @qb[:must]
       @qbf = @qb[:filter]
       @qbs = @qb[:should]
+      @qbmn = @qb[:must_not]
       @qs = @q[:sort]
       @page = 1
     end
@@ -135,6 +136,10 @@ module QuickScript
 
     def add_should(type, opts)
       @qbs << {type => opts}
+    end
+
+    def add_must_not(type, opts)
+      @qbmn << {type => opts}
     end
 
     def add_parsed_scope(key, val)
