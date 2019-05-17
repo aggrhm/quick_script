@@ -11,6 +11,11 @@ module QuickScript
       @qbmn = @qb[:must_not]
       @qs = @q[:sort]
       @page = 1
+      @selector_map = {}.with_indifferent_access
+      @selector_map[:must] = @qbm
+      @selector_map[:should] = @qbs
+      @selector_map[:filter] = @qbf
+      @selector_map[:must_not] = @qbmn
     end
 
     def raw_query
@@ -56,14 +61,25 @@ module QuickScript
       return (count / self.size.to_f).ceil
     end
 
+    def bool
+      return @qb
+    end
+
+    def selector_map
+      @selector_map
+    end
+
     def bool_selector_for(sel)
-      if sel == :must
-        @qbm
-      elsif sel == :should
-        @qbs
-      else
-        @qbf
-      end
+      ret = selector_map[sel]
+      ret = @qbf if ret.nil?
+      return ret
+    end
+
+    def add_clause(sel, type, opts)
+      qbl = bool_selector_for(sel)
+      c = {type => opts}
+      qbl << c
+      return c
     end
 
     def add_multimatch_query(fields, val, type=nil)
@@ -172,6 +188,14 @@ module QuickScript
         @qs << {fld => ord}
       else
         @qs << field
+      end
+    end
+
+    def ensure_array(arr)
+      if arr.is_a?(Array)
+        return arr
+      else
+        return [arr]
       end
     end
 
