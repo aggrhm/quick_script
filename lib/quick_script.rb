@@ -61,15 +61,20 @@ module QuickScript
           super
           if opts.is_a?(String)
             @message = opts
+            @human_message = nil
             @resp = {}
           else
             opts ||= {}
             @resp = opts
             @message = opts[:message]
+            @human_message = opts[:human_message]
           end
         end
         def message
           @message ||= "An error occurred at the server."
+        end
+        def human_message
+          @human_message || message
         end
         def code
           1000
