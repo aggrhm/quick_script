@@ -104,7 +104,7 @@ module QuickScript
           where(state: [nil, states[:active]])
         }
         scope :not_deleted, lambda {
-          where("state <> ?", states[:deleted])
+          where("#{table_name}.state <> ?", states[:deleted])
         }
       end
 
