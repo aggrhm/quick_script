@@ -123,6 +123,9 @@ module QuickScript
         else
           return nil
         end
+      rescue => ex
+        QuickScript.log_exception(ex)
+        return nil
       end
 
       def current_user_access_token
