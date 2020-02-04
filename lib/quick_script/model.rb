@@ -71,10 +71,14 @@ module QuickScript
             return cls.from_parent(self, src)
           else
             if opts[:autobuild]
-              self[name] = {}
-              return cls.from_parent(self, self[name])
+              if self.destroyed?
+                return cls.from_parent(self, {})
+              else
+                self[name] = {}
+                return cls.from_parent(self, self[name])
+              end
             else
-              nil
+              return nil
             end
           end
         end
