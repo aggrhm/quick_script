@@ -7,7 +7,7 @@ require 'quick_script/hash_model'
 require 'quick_script/stateable'
 require 'quick_script/eventable'
 require 'quick_script/short_keyable'
-require 'quick_script/associations_cache'
+require 'quick_script/custom_associations'
 require 'quick_script/api_endpoints'
 require 'quick_script/model_endpoints'
 require 'quick_script/engine'
@@ -296,6 +296,7 @@ module QuickScript
     idfn = opts[:id]
     findfn = opts[:find]
     enhfn = opts[:enhance]
+    pk = opts[:primary_key] || :id
     # get ids from models
     idm = {}
     models.each do |m|
@@ -316,7 +317,7 @@ module QuickScript
 
     # enhance models
     ems.each do |em|
-      ms = idm[em.id.to_s]
+      ms = idm[em.send(pk).to_s]
       ms.each do |m|
         enhfn.call(m, em)
       end

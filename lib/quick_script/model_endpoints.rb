@@ -4,7 +4,7 @@ module QuickScript
 
     def self.included(base)
       base.extend ClassMethods
-      base.before_filter :prepare_request_context
+      base.before_action :prepare_request_context
       class << base
         #private :scope_responder
         #private :prepare_model

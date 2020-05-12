@@ -55,6 +55,10 @@ module QuickScript
         return ret
       end
 
+      def raise_api_error(err)
+        raise QuickScript::APIError.new(err)
+      end
+
     end
 
     module ActiveRecordClassMethods
@@ -125,6 +129,14 @@ module QuickScript
 
     def has_present_association?(assoc)
       self.association(assoc).loaded? && self.send(assoc).present?
+    end
+
+    def raise_api_error(err)
+      raise api_error(err)
+    end
+
+    def api_error(msg)
+      return QuickScript::APIError.new(msg)
     end
 
   end
