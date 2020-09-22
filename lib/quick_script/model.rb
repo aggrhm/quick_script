@@ -45,6 +45,12 @@ module QuickScript
         return res
       end
 
+      def create_as_action!(opts)
+        m = self.new
+        res = m.update_as_action!(opts)
+        return res
+      end
+
       def scope_names
         return @scope_names ||= []
       end

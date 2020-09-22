@@ -454,7 +454,7 @@ module QuickScript
     def request_context
       @request_context ||= begin
         actor = self.respond_to?(:current_user, true) ? current_user : nil
-        QuickScript::RequestContext.new(params: params, actor: actor)
+        QuickScript::RequestContext.new(params: params.to_unsafe_h, actor: actor)
       end
     end
 
