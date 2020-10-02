@@ -145,6 +145,19 @@ module QuickScript
       return QuickScript::APIError.new(msg)
     end
 
+    def associations_to_api(assocs, opts={})
+      ret = {}
+      incl = opts[:includes] || {}
+      assocs.each do |assoc|
+        if incl[assoc.to_s]
+          val = self.send(assoc)
+          aopts = opts.merge(embedded: true, includes: incl[assoc.to_s])
+          ret[assoc.to_sym] = val ? val.to_api(aopts) : nil
+        end
+      end
+      return ret
+    end
+
   end
 
 end
