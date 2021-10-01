@@ -11,21 +11,36 @@ module QuickScript
 
     module ClassMethods
 
-      def enum_methods!(enum, opts)
-        enum = enum.to_s
-        define_method "#{enum}?" do |opt|
-          val = send(enum)
-          if opt.class == Array
-            return opt.collect{|a| opts[a]}.include? val
+      def enum_methods!(name, enum_map)
+        orig_enum_map = enum_map
+        enum_map = enum_map.with_indifferent_access
+        name = name.to_s
+        define_method "#{name}?" do |opt|
+          val = send(name)
+          if opt.is_a?(Array)
+            return opt.collect{|a| enum_map[a]}.include? val
           else
-            return val == opts[opt]
+            return val == enum_map[opt] || val == opt.to_s.to_i
           end
         end
-        define_method "#{enum}!" do |opt|
-          send("#{enum}=", opts.fetch(opt))
-          if self.respond_to? "#{enum}_changed_at"
-            send("#{enum}_changed_at=", Time.now)
+        define_method "#{name}!" do |opt|
+          # determine value
+          if opt.blank?
+            val = nil
+          else
+            val = enum_map[opt]
+            val = opt.to_s.to_i if val.nil?
+            raise "Value #{opt} not found for #{name}" if !enum_map.values.include?(val)
           end
+          send("#{name}=", val)
+          if self.respond_to? "#{name}_changed_at"
+            send("#{name}_changed_at=", Time.now)
+          end
+          val
+        end
+        define_method "#{name}_key" do
+          val = send(name)
+          orig_enum_map.invert[val]
         end
       end
 
