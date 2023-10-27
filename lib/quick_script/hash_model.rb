@@ -36,18 +36,19 @@ module QuickScript
         define_method "#{name}=" do |val|
           fopts = self.class.fields[name]
           ft = fopts[:type]
+          sv = val
 
-          case ft.to_s
-          when "Integer"
-            sv = val.to_i
-          when "Float"
-            sv = val.to_f
-          when "Time"
-            sv = val.to_i
-          when "boolean"
-            sv = QuickScript.parse_bool(val)
-          else
-            sv = val
+          if !sv.nil?
+            case ft.to_s
+            when "Integer"
+              sv = sv.to_i
+            when "Float"
+              sv = sv.to_f
+            when "Time"
+              sv = sv.to_i
+            when "boolean"
+              sv = QuickScript.parse_bool(sv)
+            end
           end
           self.attributes[name.to_s] = sv
         end
