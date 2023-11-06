@@ -36,9 +36,11 @@ module QuickScript
         mp = ms.pluralize
         #puts "Adding route for #{rp}"
         ep = EndpointBuilder.new(mount: self, class_name: model)
-        ep.get mp, class_name: model, class_action: QuickScript.config.default_model_index_method
-        ep.post ms, class_name: model, action: QuickScript.config.default_model_save_method, instantiate_if_nil: true
-        ep.delete ms, class_name: model, action: QuickScript.config.default_model_delete_method
+        if opts[:crud] != false
+          ep.get mp, class_name: model, class_action: QuickScript.config.default_model_index_method
+          ep.post ms, class_name: model, action: QuickScript.config.default_model_save_method, instantiate_if_nil: true
+          ep.delete ms, class_name: model, action: QuickScript.config.default_model_delete_method
+        end
         ep.instance_exec(&block) if block
       end
 
